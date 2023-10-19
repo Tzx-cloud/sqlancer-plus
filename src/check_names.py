@@ -55,4 +55,5 @@ if __name__ == '__main__':
     name_to_files["Y"] = get_java_files(os.path.join(cwd, "src", "sqlancer", "yugabyte"))  # has both YCQL and YSQL prefixes
     name_to_files["Doris"] = get_java_files(os.path.join(cwd, "src", "sqlancer", "doris"))
     name_to_files["StoneDB"] = get_java_files(os.path.join(cwd, "src", "sqlancer", "stonedb"))
+    name_to_files["General"] = get_java_files(os.path.join(cwd, "src", "sqlancer", "general"))
     verify_all_dbs(name_to_files)
