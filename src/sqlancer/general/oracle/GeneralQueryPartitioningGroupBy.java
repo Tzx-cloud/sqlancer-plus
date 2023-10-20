@@ -15,9 +15,9 @@ import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.ast.GeneralExpression;
 
-public class GeneralQueryPartitioningGroupByTester extends GeneralQueryPartitioningBase {
+public class GeneralQueryPartitioningGroupBy extends GeneralQueryPartitioningBase {
 
-    public GeneralQueryPartitioningGroupByTester(GeneralGlobalState state) {
+    public GeneralQueryPartitioningGroupBy(GeneralGlobalState state) {
         super(state);
         GeneralErrors.addGroupByErrors(errors);
     }

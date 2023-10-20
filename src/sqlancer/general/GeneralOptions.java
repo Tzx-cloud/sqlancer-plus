@@ -1,18 +1,24 @@
 package sqlancer.general;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+
 import sqlancer.DBMSSpecificOptions;
 import sqlancer.OracleFactory;
 import sqlancer.common.oracle.CompositeTestOracle;
 import sqlancer.common.oracle.TestOracle;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
-import sqlancer.general.test.*;
-
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import sqlancer.general.oracle.GeneralNoRECOracle;
+import sqlancer.general.oracle.GeneralQueryPartitioningAggregate;
+import sqlancer.general.oracle.GeneralQueryPartitioningDistinct;
+import sqlancer.general.oracle.GeneralQueryPartitioningGroupBy;
+import sqlancer.general.oracle.GeneralQueryPartitioningHaving;
+import sqlancer.general.oracle.GeneralQueryPartitioningWhere;
 
 @Parameters(commandDescription = "General")
 public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.GeneralOracleFactory> {
@@ -98,44 +104,44 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
         HAVING {
             @Override
             public TestOracle<GeneralGlobalState> create(GeneralGlobalState globalState) throws SQLException {
-                return new GeneralQueryPartitioningHavingTester(globalState);
+                return new GeneralQueryPartitioningHaving(globalState);
             }
         },
         WHERE {
             @Override
             public TestOracle<GeneralGlobalState> create(GeneralGlobalState globalState) throws SQLException {
-                return new GeneralQueryPartitioningWhereTester(globalState);
+                return new GeneralQueryPartitioningWhere(globalState);
             }
         },
         GROUP_BY {
             @Override
             public TestOracle<GeneralGlobalState> create(GeneralGlobalState globalState) throws SQLException {
-                return new GeneralQueryPartitioningGroupByTester(globalState);
+                return new GeneralQueryPartitioningGroupBy(globalState);
             }
         },
         AGGREGATE {
 
             @Override
             public TestOracle<GeneralGlobalState> create(GeneralGlobalState globalState) throws SQLException {
-                return new GeneralQueryPartitioningAggregateTester(globalState);
+                return new GeneralQueryPartitioningAggregate(globalState);
             }
 
         },
         DISTINCT {
             @Override
             public TestOracle<GeneralGlobalState> create(GeneralGlobalState globalState) throws SQLException {
-                return new GeneralQueryPartitioningDistinctTester(globalState);
+                return new GeneralQueryPartitioningDistinct(globalState);
             }
         },
         QUERY_PARTITIONING {
             @Override
             public TestOracle<GeneralGlobalState> create(GeneralGlobalState globalState) throws SQLException {
                 List<TestOracle<GeneralGlobalState>> oracles = new ArrayList<>();
-                oracles.add(new GeneralQueryPartitioningWhereTester(globalState));
-                oracles.add(new GeneralQueryPartitioningHavingTester(globalState));
-                oracles.add(new GeneralQueryPartitioningAggregateTester(globalState));
-                oracles.add(new GeneralQueryPartitioningDistinctTester(globalState));
-                oracles.add(new GeneralQueryPartitioningGroupByTester(globalState));
+                oracles.add(new GeneralQueryPartitioningWhere(globalState));
+                oracles.add(new GeneralQueryPartitioningHaving(globalState));
+                oracles.add(new GeneralQueryPartitioningAggregate(globalState));
+                oracles.add(new GeneralQueryPartitioningDistinct(globalState));
+                oracles.add(new GeneralQueryPartitioningGroupBy(globalState));
                 return new CompositeTestOracle<GeneralGlobalState>(oracles, globalState);
             }
         };

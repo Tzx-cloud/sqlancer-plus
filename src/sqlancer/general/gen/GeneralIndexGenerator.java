@@ -1,5 +1,7 @@
 package sqlancer.general.gen;
 
+import java.util.List;
+
 import sqlancer.Randomly;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.query.ExpectedErrors;
@@ -9,8 +11,6 @@ import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.ast.GeneralExpression;
-
-import java.util.List;
 
 public final class GeneralIndexGenerator {
 

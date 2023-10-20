@@ -1,10 +1,24 @@
 package sqlancer.general.gen;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import sqlancer.IgnoreMeException;
 import sqlancer.Randomly;
 import sqlancer.common.ast.BinaryOperatorNode.Operator;
-import sqlancer.common.ast.newast.*;
+import sqlancer.common.ast.newast.ColumnReferenceNode;
+import sqlancer.common.ast.newast.NewBetweenOperatorNode;
+import sqlancer.common.ast.newast.NewBinaryOperatorNode;
+import sqlancer.common.ast.newast.NewCaseOperatorNode;
+import sqlancer.common.ast.newast.NewFunctionNode;
+import sqlancer.common.ast.newast.NewInOperatorNode;
+import sqlancer.common.ast.newast.NewOrderingTerm;
 import sqlancer.common.ast.newast.NewOrderingTerm.Ordering;
+import sqlancer.common.ast.newast.NewTernaryNode;
+import sqlancer.common.ast.newast.NewUnaryPostfixOperatorNode;
+import sqlancer.common.ast.newast.NewUnaryPrefixOperatorNode;
+import sqlancer.common.ast.newast.Node;
 import sqlancer.common.gen.UntypedExpressionGenerator;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
@@ -12,10 +26,6 @@ import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.GeneralSchema.GeneralDataType;
 import sqlancer.general.ast.GeneralConstant;
 import sqlancer.general.ast.GeneralExpression;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public final class GeneralExpressionGenerator
         extends UntypedExpressionGenerator<Node<GeneralExpression>, GeneralColumn> {
@@ -68,49 +78,48 @@ public final class GeneralExpressionGenerator
         }
         Expression expr = Randomly.fromList(possibleOptions);
         switch (expr) {
-            case COLLATE:
-                return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                        GeneralCollate.getRandom());
-            case UNARY_PREFIX:
-                return new NewUnaryPrefixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                        GeneralUnaryPrefixOperator.getRandom());
-            case UNARY_POSTFIX:
-                return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                        GeneralUnaryPostfixOperator.getRandom());
-            case BINARY_COMPARISON:
-                Operator op = GeneralBinaryComparisonOperator.getRandom();
-                return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                        generateExpression(depth + 1), op);
-            case BINARY_LOGICAL:
-                op = GeneralBinaryLogicalOperator.getRandom();
-                return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                        generateExpression(depth + 1), op);
-            case BINARY_ARITHMETIC:
-                return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                        generateExpression(depth + 1), GeneralBinaryArithmeticOperator.getRandom());
-            case CAST:
-                return new GeneralCastOperation(generateExpression(depth + 1),
-                        GeneralCompositeDataType.getRandomWithoutNull());
-            case FUNC:
-                DBFunction func = DBFunction.getRandom();
-                return new NewFunctionNode<GeneralExpression, DBFunction>(generateExpressions(func.getNrArgs()), func);
-            case BETWEEN:
-                return new NewBetweenOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                        generateExpression(depth + 1), generateExpression(depth + 1), Randomly.getBoolean());
-            case IN:
-                return new NewInOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                        generateExpressions(Randomly.smallNumber() + 1, depth + 1), Randomly.getBoolean());
-            case CASE:
-                int nr = Randomly.smallNumber() + 1;
-                return new NewCaseOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                        generateExpressions(nr, depth + 1), generateExpressions(nr, depth + 1),
-                        generateExpression(depth + 1));
-            case LIKE_ESCAPE:
-                return new NewTernaryNode<GeneralExpression>(generateExpression(depth + 1),
-                        generateExpression(depth + 1),
-                        generateExpression(depth + 1), "LIKE", "ESCAPE");
-            default:
-                throw new AssertionError();
+        case COLLATE:
+            return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
+                    GeneralCollate.getRandom());
+        case UNARY_PREFIX:
+            return new NewUnaryPrefixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
+                    GeneralUnaryPrefixOperator.getRandom());
+        case UNARY_POSTFIX:
+            return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
+                    GeneralUnaryPostfixOperator.getRandom());
+        case BINARY_COMPARISON:
+            Operator op = GeneralBinaryComparisonOperator.getRandom();
+            return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
+                    generateExpression(depth + 1), op);
+        case BINARY_LOGICAL:
+            op = GeneralBinaryLogicalOperator.getRandom();
+            return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
+                    generateExpression(depth + 1), op);
+        case BINARY_ARITHMETIC:
+            return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
+                    generateExpression(depth + 1), GeneralBinaryArithmeticOperator.getRandom());
+        case CAST:
+            return new GeneralCastOperation(generateExpression(depth + 1),
+                    GeneralCompositeDataType.getRandomWithoutNull());
+        case FUNC:
+            DBFunction func = DBFunction.getRandom();
+            return new NewFunctionNode<GeneralExpression, DBFunction>(generateExpressions(func.getNrArgs()), func);
+        case BETWEEN:
+            return new NewBetweenOperatorNode<GeneralExpression>(generateExpression(depth + 1),
+                    generateExpression(depth + 1), generateExpression(depth + 1), Randomly.getBoolean());
+        case IN:
+            return new NewInOperatorNode<GeneralExpression>(generateExpression(depth + 1),
+                    generateExpressions(Randomly.smallNumber() + 1, depth + 1), Randomly.getBoolean());
+        case CASE:
+            int nr = Randomly.smallNumber() + 1;
+            return new NewCaseOperatorNode<GeneralExpression>(generateExpression(depth + 1),
+                    generateExpressions(nr, depth + 1), generateExpressions(nr, depth + 1),
+                    generateExpression(depth + 1));
+        case LIKE_ESCAPE:
+            return new NewTernaryNode<GeneralExpression>(generateExpression(depth + 1), generateExpression(depth + 1),
+                    generateExpression(depth + 1), "LIKE", "ESCAPE");
+        default:
+            throw new AssertionError();
         }
     }
 
@@ -127,38 +136,38 @@ public final class GeneralExpressionGenerator
         }
         GeneralDataType type = GeneralDataType.getRandomWithoutNull();
         switch (type) {
-            case INT:
-                if (!globalState.getDbmsSpecificOptions().testIntConstants) {
-                    throw new IgnoreMeException();
-                }
-                return GeneralConstant.createIntConstant(globalState.getRandomly().getInteger());
-            case DATE:
-                if (!globalState.getDbmsSpecificOptions().testDateConstants) {
-                    throw new IgnoreMeException();
-                }
-                return GeneralConstant.createDateConstant(globalState.getRandomly().getInteger());
-            case TIMESTAMP:
-                if (!globalState.getDbmsSpecificOptions().testTimestampConstants) {
-                    throw new IgnoreMeException();
-                }
-                return GeneralConstant.createTimestampConstant(globalState.getRandomly().getInteger());
-            case VARCHAR:
-                if (!globalState.getDbmsSpecificOptions().testStringConstants) {
-                    throw new IgnoreMeException();
-                }
-                return GeneralConstant.createStringConstant(globalState.getRandomly().getString());
-            case BOOLEAN:
-                if (!globalState.getDbmsSpecificOptions().testBooleanConstants) {
-                    throw new IgnoreMeException();
-                }
-                return GeneralConstant.createBooleanConstant(Randomly.getBoolean());
-            case FLOAT:
-                if (!globalState.getDbmsSpecificOptions().testFloatConstants) {
-                    throw new IgnoreMeException();
-                }
-                return GeneralConstant.createFloatConstant(globalState.getRandomly().getDouble());
-            default:
-                throw new AssertionError();
+        case INT:
+            if (!globalState.getDbmsSpecificOptions().testIntConstants) {
+                throw new IgnoreMeException();
+            }
+            return GeneralConstant.createIntConstant(globalState.getRandomly().getInteger());
+        case DATE:
+            if (!globalState.getDbmsSpecificOptions().testDateConstants) {
+                throw new IgnoreMeException();
+            }
+            return GeneralConstant.createDateConstant(globalState.getRandomly().getInteger());
+        case TIMESTAMP:
+            if (!globalState.getDbmsSpecificOptions().testTimestampConstants) {
+                throw new IgnoreMeException();
+            }
+            return GeneralConstant.createTimestampConstant(globalState.getRandomly().getInteger());
+        case VARCHAR:
+            if (!globalState.getDbmsSpecificOptions().testStringConstants) {
+                throw new IgnoreMeException();
+            }
+            return GeneralConstant.createStringConstant(globalState.getRandomly().getString());
+        case BOOLEAN:
+            if (!globalState.getDbmsSpecificOptions().testBooleanConstants) {
+                throw new IgnoreMeException();
+            }
+            return GeneralConstant.createBooleanConstant(Randomly.getBoolean());
+        case FLOAT:
+            if (!globalState.getDbmsSpecificOptions().testFloatConstants) {
+                throw new IgnoreMeException();
+            }
+            return GeneralConstant.createFloatConstant(globalState.getRandomly().getDouble());
+        default:
+            throw new AssertionError();
         }
     }
 

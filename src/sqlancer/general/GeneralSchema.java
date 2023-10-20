@@ -1,19 +1,23 @@
 package sqlancer.general;
 
-import sqlancer.IgnoreMeException;
-import sqlancer.Randomly;
-import sqlancer.SQLConnection;
-import sqlancer.common.DBMSCommon;
-import sqlancer.common.schema.*;
-import sqlancer.general.GeneralProvider.GeneralGlobalState;
-import sqlancer.general.GeneralSchema.GeneralTable;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import sqlancer.IgnoreMeException;
+import sqlancer.Randomly;
+import sqlancer.SQLConnection;
+import sqlancer.common.DBMSCommon;
+import sqlancer.common.schema.AbstractRelationalTable;
+import sqlancer.common.schema.AbstractSchema;
+import sqlancer.common.schema.AbstractTableColumn;
+import sqlancer.common.schema.AbstractTables;
+import sqlancer.common.schema.TableIndex;
+import sqlancer.general.GeneralProvider.GeneralGlobalState;
+import sqlancer.general.GeneralSchema.GeneralTable;
 
 public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTable> {
 
@@ -123,7 +127,8 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         private final boolean isPrimaryKey;
         private final boolean isNullable;
 
-        public GeneralColumn(String name, GeneralCompositeDataType columnType, boolean isPrimaryKey, boolean isNullable) {
+        public GeneralColumn(String name, GeneralCompositeDataType columnType, boolean isPrimaryKey,
+                boolean isNullable) {
             super(name, null, columnType);
             this.isPrimaryKey = isPrimaryKey;
             this.isNullable = isNullable;

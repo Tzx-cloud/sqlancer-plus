@@ -10,9 +10,9 @@ import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralToStringVisitor;
 
-public class GeneralQueryPartitioningWhereTester extends GeneralQueryPartitioningBase {
+public class GeneralQueryPartitioningWhere extends GeneralQueryPartitioningBase {
 
-    public GeneralQueryPartitioningWhereTester(GeneralGlobalState state) {
+    public GeneralQueryPartitioningWhere(GeneralGlobalState state) {
         super(state);
         GeneralErrors.addGroupByErrors(errors);
     }

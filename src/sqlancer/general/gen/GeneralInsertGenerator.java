@@ -1,17 +1,17 @@
 package sqlancer.general.gen;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import sqlancer.Randomly;
 import sqlancer.common.gen.AbstractInsertGenerator;
 import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.SQLQueryAdapter;
+import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
-import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralToStringVisitor;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class GeneralInsertGenerator extends AbstractInsertGenerator<GeneralColumn> {
 

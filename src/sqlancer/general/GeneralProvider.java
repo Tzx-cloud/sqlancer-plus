@@ -1,17 +1,32 @@
 package sqlancer.general;
 
-import com.google.auto.service.AutoService;
-import sqlancer.*;
-import sqlancer.common.query.ExpectedErrors;
-import sqlancer.common.query.SQLQueryAdapter;
-import sqlancer.common.query.SQLQueryProvider;
-import sqlancer.general.gen.*;
-
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import com.google.auto.service.AutoService;
+
+import sqlancer.AbstractAction;
+import sqlancer.DatabaseProvider;
+import sqlancer.IgnoreMeException;
+import sqlancer.MainOptions;
+import sqlancer.Randomly;
+import sqlancer.SQLConnection;
+import sqlancer.SQLGlobalState;
+import sqlancer.SQLProviderAdapter;
+import sqlancer.StatementExecutor;
+import sqlancer.common.query.ExpectedErrors;
+import sqlancer.common.query.SQLQueryAdapter;
+import sqlancer.common.query.SQLQueryProvider;
+import sqlancer.general.gen.GeneralDeleteGenerator;
+import sqlancer.general.gen.GeneralIndexGenerator;
+import sqlancer.general.gen.GeneralInsertGenerator;
+import sqlancer.general.gen.GeneralRandomQuerySynthesizer;
+import sqlancer.general.gen.GeneralTableGenerator;
+import sqlancer.general.gen.GeneralUpdateGenerator;
+import sqlancer.general.gen.GeneralViewGenerator;
 
 @AutoService(DatabaseProvider.class)
 public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralGlobalState, GeneralOptions> {

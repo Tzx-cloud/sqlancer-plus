@@ -1,5 +1,12 @@
 package sqlancer.general.oracle;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import sqlancer.IgnoreMeException;
 import sqlancer.Randomly;
 import sqlancer.SQLConnection;
@@ -14,20 +21,17 @@ import sqlancer.common.query.SQLancerResultSet;
 import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema;
-import sqlancer.general.GeneralSchema.*;
+import sqlancer.general.GeneralSchema.GeneralColumn;
+import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
+import sqlancer.general.GeneralSchema.GeneralDataType;
+import sqlancer.general.GeneralSchema.GeneralTable;
+import sqlancer.general.GeneralSchema.GeneralTables;
 import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralJoin;
 import sqlancer.general.ast.GeneralSelect;
 import sqlancer.general.gen.GeneralExpressionGenerator;
 import sqlancer.general.gen.GeneralExpressionGenerator.GeneralCastOperation;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements TestOracle<GeneralGlobalState> {
 

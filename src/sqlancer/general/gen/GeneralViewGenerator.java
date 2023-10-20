@@ -3,8 +3,8 @@ package sqlancer.general.gen;
 import sqlancer.Randomly;
 import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.SQLQueryAdapter;
-import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralErrors;
+import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralToStringVisitor;
 
 public final class GeneralViewGenerator {
@@ -26,7 +26,8 @@ public final class GeneralViewGenerator {
             sb.append(i);
         }
         sb.append(") AS ");
-        sb.append(GeneralToStringVisitor.asString(GeneralRandomQuerySynthesizer.generateSelect(globalState, nrColumns)));
+        sb.append(
+                GeneralToStringVisitor.asString(GeneralRandomQuerySynthesizer.generateSelect(globalState, nrColumns)));
         ExpectedErrors errors = new ExpectedErrors();
         GeneralErrors.addExpressionErrors(errors);
         GeneralErrors.addGroupByErrors(errors);

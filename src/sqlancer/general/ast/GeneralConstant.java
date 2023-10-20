@@ -1,9 +1,9 @@
 package sqlancer.general.ast;
 
-import sqlancer.common.ast.newast.Node;
-
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+
+import sqlancer.common.ast.newast.Node;
 
 public class GeneralConstant implements Node<GeneralExpression> {
 

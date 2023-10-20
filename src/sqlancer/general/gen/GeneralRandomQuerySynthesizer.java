@@ -1,5 +1,9 @@
 package sqlancer.general.gen;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import sqlancer.Randomly;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.ast.newast.TableReferenceNode;
@@ -10,10 +14,6 @@ import sqlancer.general.ast.GeneralConstant;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralJoin;
 import sqlancer.general.ast.GeneralSelect;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public final class GeneralRandomQuerySynthesizer {
 
@@ -55,7 +55,8 @@ public final class GeneralRandomQuerySynthesizer {
         }
 
         if (Randomly.getBoolean()) {
-            select.setLimitClause(GeneralConstant.createIntConstant(Randomly.getNotCachedInteger(0, Integer.MAX_VALUE)));
+            select.setLimitClause(
+                    GeneralConstant.createIntConstant(Randomly.getNotCachedInteger(0, Integer.MAX_VALUE)));
         }
         if (Randomly.getBoolean()) {
             select.setOffsetClause(

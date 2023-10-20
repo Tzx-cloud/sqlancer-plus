@@ -1,17 +1,17 @@
 package sqlancer.general.gen;
 
+import java.util.List;
+
 import sqlancer.Randomly;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.gen.AbstractUpdateGenerator;
 import sqlancer.common.query.SQLQueryAdapter;
+import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
-import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.ast.GeneralExpression;
-
-import java.util.List;
 
 public final class GeneralUpdateGenerator extends AbstractUpdateGenerator<GeneralColumn> {
 

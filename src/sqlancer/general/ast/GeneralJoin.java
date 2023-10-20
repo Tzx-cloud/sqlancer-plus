@@ -1,5 +1,8 @@
 package sqlancer.general.ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import sqlancer.Randomly;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.ast.newast.TableReferenceNode;
@@ -7,9 +10,6 @@ import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.gen.GeneralExpressionGenerator;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class GeneralJoin implements Node<GeneralExpression> {
 
@@ -36,8 +36,8 @@ public class GeneralJoin implements Node<GeneralExpression> {
     }
 
     public GeneralJoin(TableReferenceNode<GeneralExpression, GeneralTable> leftTable,
-                       TableReferenceNode<GeneralExpression, GeneralTable> rightTable, JoinType joinType,
-                       Node<GeneralExpression> whereCondition) {
+            TableReferenceNode<GeneralExpression, GeneralTable> rightTable, JoinType joinType,
+            Node<GeneralExpression> whereCondition) {
         this.leftTable = leftTable;
         this.rightTable = rightTable;
         this.joinType = joinType;
@@ -100,22 +100,22 @@ public class GeneralJoin implements Node<GeneralExpression> {
     }
 
     public static GeneralJoin createRightOuterJoin(TableReferenceNode<GeneralExpression, GeneralTable> left,
-                                                   TableReferenceNode<GeneralExpression, GeneralTable> right, Node<GeneralExpression> predicate) {
+            TableReferenceNode<GeneralExpression, GeneralTable> right, Node<GeneralExpression> predicate) {
         return new GeneralJoin(left, right, JoinType.RIGHT, predicate);
     }
 
     public static GeneralJoin createLeftOuterJoin(TableReferenceNode<GeneralExpression, GeneralTable> left,
-                                                  TableReferenceNode<GeneralExpression, GeneralTable> right, Node<GeneralExpression> predicate) {
+            TableReferenceNode<GeneralExpression, GeneralTable> right, Node<GeneralExpression> predicate) {
         return new GeneralJoin(left, right, JoinType.LEFT, predicate);
     }
 
     public static GeneralJoin createInnerJoin(TableReferenceNode<GeneralExpression, GeneralTable> left,
-                                              TableReferenceNode<GeneralExpression, GeneralTable> right, Node<GeneralExpression> predicate) {
+            TableReferenceNode<GeneralExpression, GeneralTable> right, Node<GeneralExpression> predicate) {
         return new GeneralJoin(left, right, JoinType.INNER, predicate);
     }
 
     public static Node<GeneralExpression> createNaturalJoin(TableReferenceNode<GeneralExpression, GeneralTable> left,
-                                                            TableReferenceNode<GeneralExpression, GeneralTable> right, OuterType naturalJoinType) {
+            TableReferenceNode<GeneralExpression, GeneralTable> right, OuterType naturalJoinType) {
         GeneralJoin join = new GeneralJoin(left, right, JoinType.NATURAL, null);
         join.setOuterType(naturalJoinType);
         return join;

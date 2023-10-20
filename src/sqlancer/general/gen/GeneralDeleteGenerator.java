@@ -3,9 +3,9 @@ package sqlancer.general.gen;
 import sqlancer.Randomly;
 import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.SQLQueryAdapter;
+import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralTable;
-import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralToStringVisitor;
 
 public final class GeneralDeleteGenerator {

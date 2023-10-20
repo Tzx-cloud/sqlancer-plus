@@ -14,10 +14,10 @@ import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.ast.GeneralExpression;
 
-public class GeneralQueryPartitioningHavingTester extends GeneralQueryPartitioningBase
+public class GeneralQueryPartitioningHaving extends GeneralQueryPartitioningBase
         implements TestOracle<GeneralGlobalState> {
 
-    public GeneralQueryPartitioningHavingTester(GeneralGlobalState state) {
+    public GeneralQueryPartitioningHaving(GeneralGlobalState state) {
         super(state);
         GeneralErrors.addGroupByErrors(errors);
     }
