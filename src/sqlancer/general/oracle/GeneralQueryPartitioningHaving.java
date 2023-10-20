@@ -1,18 +1,18 @@
-package sqlancer.general.test;
-
-import sqlancer.ComparatorHelper;
-import sqlancer.Randomly;
-import sqlancer.common.ast.newast.Node;
-import sqlancer.common.oracle.TestOracle;
-import sqlancer.general.GeneralProvider.GeneralGlobalState;
-import sqlancer.general.GeneralErrors;
-import sqlancer.general.GeneralToStringVisitor;
-import sqlancer.general.ast.GeneralExpression;
+package sqlancer.general.oracle;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import sqlancer.ComparatorHelper;
+import sqlancer.Randomly;
+import sqlancer.common.ast.newast.Node;
+import sqlancer.common.oracle.TestOracle;
+import sqlancer.general.GeneralErrors;
+import sqlancer.general.GeneralProvider.GeneralGlobalState;
+import sqlancer.general.GeneralToStringVisitor;
+import sqlancer.general.ast.GeneralExpression;
 
 public class GeneralQueryPartitioningHavingTester extends GeneralQueryPartitioningBase
         implements TestOracle<GeneralGlobalState> {

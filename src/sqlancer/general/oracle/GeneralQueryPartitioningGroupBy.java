@@ -1,18 +1,23 @@
-package sqlancer.general.test;
-
-import sqlancer.ComparatorHelper;
-import sqlancer.Randomly;
-import sqlancer.general.GeneralProvider.GeneralGlobalState;
-import sqlancer.general.GeneralErrors;
-import sqlancer.general.GeneralToStringVisitor;
+package sqlancer.general.oracle;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class GeneralQueryPartitioningDistinctTester extends GeneralQueryPartitioningBase {
+import sqlancer.ComparatorHelper;
+import sqlancer.Randomly;
+import sqlancer.common.ast.newast.ColumnReferenceNode;
+import sqlancer.common.ast.newast.Node;
+import sqlancer.general.GeneralErrors;
+import sqlancer.general.GeneralProvider.GeneralGlobalState;
+import sqlancer.general.GeneralSchema.GeneralColumn;
+import sqlancer.general.GeneralToStringVisitor;
+import sqlancer.general.ast.GeneralExpression;
 
-    public GeneralQueryPartitioningDistinctTester(GeneralGlobalState state) {
+public class GeneralQueryPartitioningGroupByTester extends GeneralQueryPartitioningBase {
+
+    public GeneralQueryPartitioningGroupByTester(GeneralGlobalState state) {
         super(state);
         GeneralErrors.addGroupByErrors(errors);
     }
@@ -20,14 +25,12 @@ public class GeneralQueryPartitioningDistinctTester extends GeneralQueryPartitio
     @Override
     public void check() throws SQLException {
         super.check();
-        select.setDistinct(true);
+        select.setGroupByExpressions(select.getFetchColumns());
         select.setWhereClause(null);
         String originalQueryString = GeneralToStringVisitor.asString(select);
 
         List<String> resultSet = ComparatorHelper.getResultSetFirstColumnAsString(originalQueryString, errors, state);
-        if (Randomly.getBoolean()) {
-            select.setDistinct(false);
-        }
+
         select.setWhereClause(predicate);
         String firstQueryString = GeneralToStringVisitor.asString(select);
         select.setWhereClause(negatedPredicate);
@@ -39,6 +42,12 @@ public class GeneralQueryPartitioningDistinctTester extends GeneralQueryPartitio
                 secondQueryString, thirdQueryString, combinedString, true, state, errors);
         ComparatorHelper.assumeResultSetsAreEqual(resultSet, secondResultSet, originalQueryString, combinedString,
                 state, ComparatorHelper::canonicalizeResultValue);
+    }
+
+    @Override
+    List<Node<GeneralExpression>> generateFetchColumns() {
+        return Randomly.nonEmptySubset(targetTables.getColumns()).stream()
+                .map(c -> new ColumnReferenceNode<GeneralExpression, GeneralColumn>(c)).collect(Collectors.toList());
     }
 
 }

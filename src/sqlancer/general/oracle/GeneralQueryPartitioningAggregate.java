@@ -1,27 +1,36 @@
-package sqlancer.general.test;
-
-import sqlancer.ComparatorHelper;
-import sqlancer.IgnoreMeException;
-import sqlancer.Randomly;
-import sqlancer.common.ast.newast.*;
-import sqlancer.common.oracle.TestOracle;
-import sqlancer.common.query.SQLQueryAdapter;
-import sqlancer.common.query.SQLancerResultSet;
-import sqlancer.general.GeneralProvider.GeneralGlobalState;
-import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
-import sqlancer.general.GeneralSchema.GeneralDataType;
-import sqlancer.general.gen.GeneralExpressionGenerator.*;
-import sqlancer.general.GeneralErrors;
-import sqlancer.general.GeneralToStringVisitor;
-import sqlancer.general.ast.GeneralExpression;
-import sqlancer.general.ast.GeneralSelect;
+package sqlancer.general.oracle;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class GeneralQueryPartitioningAggregateTester extends GeneralQueryPartitioningBase
+import sqlancer.ComparatorHelper;
+import sqlancer.IgnoreMeException;
+import sqlancer.Randomly;
+import sqlancer.common.ast.newast.NewAliasNode;
+import sqlancer.common.ast.newast.NewBinaryOperatorNode;
+import sqlancer.common.ast.newast.NewFunctionNode;
+import sqlancer.common.ast.newast.NewUnaryPostfixOperatorNode;
+import sqlancer.common.ast.newast.NewUnaryPrefixOperatorNode;
+import sqlancer.common.ast.newast.Node;
+import sqlancer.common.oracle.TestOracle;
+import sqlancer.common.query.SQLQueryAdapter;
+import sqlancer.common.query.SQLancerResultSet;
+import sqlancer.general.GeneralErrors;
+import sqlancer.general.GeneralProvider.GeneralGlobalState;
+import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
+import sqlancer.general.GeneralSchema.GeneralDataType;
+import sqlancer.general.GeneralToStringVisitor;
+import sqlancer.general.ast.GeneralExpression;
+import sqlancer.general.ast.GeneralSelect;
+import sqlancer.general.gen.GeneralExpressionGenerator.GeneralAggregateFunction;
+import sqlancer.general.gen.GeneralExpressionGenerator.GeneralBinaryArithmeticOperator;
+import sqlancer.general.gen.GeneralExpressionGenerator.GeneralCastOperation;
+import sqlancer.general.gen.GeneralExpressionGenerator.GeneralUnaryPostfixOperator;
+import sqlancer.general.gen.GeneralExpressionGenerator.GeneralUnaryPrefixOperator;
+
+public class GeneralQueryPartitioningAggregate extends GeneralQueryPartitioningBase
         implements TestOracle<GeneralGlobalState> {
 
     private String firstResult;
@@ -29,7 +38,7 @@ public class GeneralQueryPartitioningAggregateTester extends GeneralQueryPartiti
     private String originalQuery;
     private String metamorphicQuery;
 
-    public GeneralQueryPartitioningAggregateTester(GeneralGlobalState state) {
+    public GeneralQueryPartitioningAggregate(GeneralGlobalState state) {
         super(state);
         GeneralErrors.addGroupByErrors(errors);
     }
@@ -70,7 +79,8 @@ public class GeneralQueryPartitioningAggregateTester extends GeneralQueryPartiti
     }
 
     private String createMetamorphicUnionQuery(GeneralSelect select,
-                                               NewFunctionNode<GeneralExpression, GeneralAggregateFunction> aggregate, List<Node<GeneralExpression>> from) {
+            NewFunctionNode<GeneralExpression, GeneralAggregateFunction> aggregate,
+            List<Node<GeneralExpression>> from) {
         String metamorphicQuery;
         Node<GeneralExpression> whereClause = gen.generateExpression();
         Node<GeneralExpression> negatedClause = new NewUnaryPrefixOperatorNode<>(whereClause,
@@ -111,7 +121,8 @@ public class GeneralQueryPartitioningAggregateTester extends GeneralQueryPartiti
         }
     }
 
-    private List<Node<GeneralExpression>> mapped(NewFunctionNode<GeneralExpression, GeneralAggregateFunction> aggregate) {
+    private List<Node<GeneralExpression>> mapped(
+            NewFunctionNode<GeneralExpression, GeneralAggregateFunction> aggregate) {
         GeneralCastOperation count;
         switch (aggregate.getFunc()) {
         case COUNT:
@@ -120,8 +131,8 @@ public class GeneralQueryPartitioningAggregateTester extends GeneralQueryPartiti
         case SUM:
             return aliasArgs(Arrays.asList(aggregate));
         case AVG:
-            NewFunctionNode<GeneralExpression, GeneralAggregateFunction> sum = new NewFunctionNode<>(aggregate.getArgs(),
-                    GeneralAggregateFunction.SUM);
+            NewFunctionNode<GeneralExpression, GeneralAggregateFunction> sum = new NewFunctionNode<>(
+                    aggregate.getArgs(), GeneralAggregateFunction.SUM);
             count = new GeneralCastOperation(new NewFunctionNode<>(aggregate.getArgs(), GeneralAggregateFunction.COUNT),
                     new GeneralCompositeDataType(GeneralDataType.FLOAT, 8));
             return aliasArgs(Arrays.asList(sum, count));
@@ -134,8 +145,8 @@ public class GeneralQueryPartitioningAggregateTester extends GeneralQueryPartiti
                     new NewFunctionNode<GeneralExpression, GeneralAggregateFunction>(aggregate.getArgs(),
                             GeneralAggregateFunction.COUNT),
                     new GeneralCompositeDataType(GeneralDataType.FLOAT, 8));
-            NewFunctionNode<GeneralExpression, GeneralAggregateFunction> avg = new NewFunctionNode<>(aggregate.getArgs(),
-                    GeneralAggregateFunction.AVG);
+            NewFunctionNode<GeneralExpression, GeneralAggregateFunction> avg = new NewFunctionNode<>(
+                    aggregate.getArgs(), GeneralAggregateFunction.AVG);
             return aliasArgs(Arrays.asList(sumSquared, count, avg));
         default:
             throw new AssertionError(aggregate.getFunc());
@@ -165,7 +176,7 @@ public class GeneralQueryPartitioningAggregateTester extends GeneralQueryPartiti
     }
 
     private GeneralSelect getSelect(List<Node<GeneralExpression>> aggregates, List<Node<GeneralExpression>> from,
-                                    Node<GeneralExpression> whereClause, List<Node<GeneralExpression>> joinList) {
+            Node<GeneralExpression> whereClause, List<Node<GeneralExpression>> joinList) {
         GeneralSelect leftSelect = new GeneralSelect();
         leftSelect.setFetchColumns(aggregates);
         leftSelect.setFromList(from);

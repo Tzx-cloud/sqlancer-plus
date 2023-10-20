@@ -1,4 +1,9 @@
-package sqlancer.general.test;
+package sqlancer.general.oracle;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import sqlancer.Randomly;
 import sqlancer.common.ast.newast.ColumnReferenceNode;
@@ -7,21 +12,16 @@ import sqlancer.common.ast.newast.TableReferenceNode;
 import sqlancer.common.gen.ExpressionGenerator;
 import sqlancer.common.oracle.TernaryLogicPartitioningOracleBase;
 import sqlancer.common.oracle.TestOracle;
+import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
+import sqlancer.general.GeneralSchema;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralSchema.GeneralTables;
-import sqlancer.general.GeneralErrors;
-import sqlancer.general.GeneralSchema;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralJoin;
 import sqlancer.general.ast.GeneralSelect;
 import sqlancer.general.gen.GeneralExpressionGenerator;
-
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class GeneralQueryPartitioningBase
         extends TernaryLogicPartitioningOracleBase<Node<GeneralExpression>, GeneralGlobalState>
@@ -60,7 +60,8 @@ public class GeneralQueryPartitioningBase
             columns.add(new ColumnReferenceNode<>(new GeneralColumn("*", null, false, false)));
         } else {
             columns = Randomly.nonEmptySubset(targetTables.getColumns()).stream()
-                    .map(c -> new ColumnReferenceNode<GeneralExpression, GeneralColumn>(c)).collect(Collectors.toList());
+                    .map(c -> new ColumnReferenceNode<GeneralExpression, GeneralColumn>(c))
+                    .collect(Collectors.toList());
         }
         return columns;
     }

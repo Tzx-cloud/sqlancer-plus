@@ -1,4 +1,4 @@
-package sqlancer.general.test;
+package sqlancer.general.oracle;
 
 import sqlancer.IgnoreMeException;
 import sqlancer.Randomly;
@@ -11,16 +11,16 @@ import sqlancer.common.oracle.NoRECBase;
 import sqlancer.common.oracle.TestOracle;
 import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.common.query.SQLancerResultSet;
-import sqlancer.general.GeneralProvider.GeneralGlobalState;
-import sqlancer.general.GeneralSchema.*;
-import sqlancer.general.gen.GeneralExpressionGenerator.GeneralCastOperation;
 import sqlancer.general.GeneralErrors;
+import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema;
+import sqlancer.general.GeneralSchema.*;
 import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralJoin;
 import sqlancer.general.ast.GeneralSelect;
 import sqlancer.general.gen.GeneralExpressionGenerator;
+import sqlancer.general.gen.GeneralExpressionGenerator.GeneralCastOperation;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -96,8 +96,8 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
     }
 
     private int getFirstQueryCount(SQLConnection con, List<Node<GeneralExpression>> tableList,
-                                   List<GeneralColumn> columns, Node<GeneralExpression> randomWhereCondition, List<Node<GeneralExpression>> joins)
-            throws SQLException {
+                                   List<GeneralColumn> columns, Node<GeneralExpression> randomWhereCondition,
+                                   List<Node<GeneralExpression>> joins) throws SQLException {
         GeneralSelect select = new GeneralSelect();
         // select.setGroupByClause(groupBys);
         // GeneralAggregate aggr = new GeneralAggregate(
