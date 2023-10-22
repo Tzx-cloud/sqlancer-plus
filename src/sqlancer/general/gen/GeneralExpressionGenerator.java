@@ -52,13 +52,13 @@ public final class GeneralExpressionGenerator
             return new NewFunctionNode<>(generateExpressions(aggregate.getNrArgs(), depth + 1), aggregate);
         }
         List<Expression> possibleOptions = new ArrayList<>(Arrays.asList(Expression.values()));
-        if (!globalState.getDbmsSpecificOptions().testCollate) {
+        if (!globalState.getDbmsSpecificOptions().testCollate | true) {
             possibleOptions.remove(Expression.COLLATE);
         }
-        if (!globalState.getDbmsSpecificOptions().testFunctions) {
+        if (!globalState.getDbmsSpecificOptions().testFunctions | true) {
             possibleOptions.remove(Expression.FUNC);
         }
-        if (!globalState.getDbmsSpecificOptions().testCasts) {
+        if (!globalState.getDbmsSpecificOptions().testCasts | true) {
             possibleOptions.remove(Expression.CAST);
         }
         if (!globalState.getDbmsSpecificOptions().testBetween) {
@@ -76,6 +76,9 @@ public final class GeneralExpressionGenerator
         if (!globalState.getDbmsSpecificOptions().testBinaryLogicals) {
             possibleOptions.remove(Expression.BINARY_LOGICAL);
         }
+        possibleOptions.remove(Expression.LIKE_ESCAPE);
+        possibleOptions.remove(Expression.UNARY_POSTFIX);
+        possibleOptions.remove(Expression.UNARY_PREFIX);
         Expression expr = Randomly.fromList(possibleOptions);
         switch (expr) {
         case COLLATE:
@@ -141,31 +144,31 @@ public final class GeneralExpressionGenerator
                 throw new IgnoreMeException();
             }
             return GeneralConstant.createIntConstant(globalState.getRandomly().getInteger());
-        case DATE:
-            if (!globalState.getDbmsSpecificOptions().testDateConstants) {
-                throw new IgnoreMeException();
-            }
-            return GeneralConstant.createDateConstant(globalState.getRandomly().getInteger());
-        case TIMESTAMP:
-            if (!globalState.getDbmsSpecificOptions().testTimestampConstants) {
-                throw new IgnoreMeException();
-            }
-            return GeneralConstant.createTimestampConstant(globalState.getRandomly().getInteger());
-        case VARCHAR:
-            if (!globalState.getDbmsSpecificOptions().testStringConstants) {
-                throw new IgnoreMeException();
-            }
-            return GeneralConstant.createStringConstant(globalState.getRandomly().getString());
-        case BOOLEAN:
-            if (!globalState.getDbmsSpecificOptions().testBooleanConstants) {
-                throw new IgnoreMeException();
-            }
-            return GeneralConstant.createBooleanConstant(Randomly.getBoolean());
-        case FLOAT:
-            if (!globalState.getDbmsSpecificOptions().testFloatConstants) {
-                throw new IgnoreMeException();
-            }
-            return GeneralConstant.createFloatConstant(globalState.getRandomly().getDouble());
+        // case DATE:
+        // if (!globalState.getDbmsSpecificOptions().testDateConstants) {
+        // throw new IgnoreMeException();
+        // }
+        // return GeneralConstant.createDateConstant(globalState.getRandomly().getInteger());
+        // case TIMESTAMP:
+        // if (!globalState.getDbmsSpecificOptions().testTimestampConstants) {
+        // throw new IgnoreMeException();
+        // }
+        // return GeneralConstant.createTimestampConstant(globalState.getRandomly().getInteger());
+        // case VARCHAR:
+        // if (!globalState.getDbmsSpecificOptions().testStringConstants) {
+        // throw new IgnoreMeException();
+        // }
+        // return GeneralConstant.createStringConstant(globalState.getRandomly().getString());
+        // case BOOLEAN:
+        // if (!globalState.getDbmsSpecificOptions().testBooleanConstants) {
+        // throw new IgnoreMeException();
+        // }
+        // return GeneralConstant.createBooleanConstant(Randomly.getBoolean());
+        // case FLOAT:
+        // if (!globalState.getDbmsSpecificOptions().testFloatConstants) {
+        // throw new IgnoreMeException();
+        // }
+        // return GeneralConstant.createFloatConstant(globalState.getRandomly().getDouble());
         default:
             throw new AssertionError();
         }
@@ -382,7 +385,9 @@ public final class GeneralExpressionGenerator
     }
 
     public enum GeneralBinaryArithmeticOperator implements Operator {
-        CONCAT("||"), ADD("+"), SUB("-"), MULT("*"), DIV("/"), MOD("%"), AND("&"), OR("|"), LSHIFT("<<"), RSHIFT(">>");
+        CONCAT("||"), ADD("+"), SUB("-"), MULT("*"), DIV("/"), MOD("%"), AND("&"), OR("|");
+        // CONCAT("||"), ADD("+"), SUB("-"), MULT("*"), DIV("/"), MOD("%"), AND("&"), OR("|"), LSHIFT("<<"),
+        // RSHIFT(">>");
 
         private String textRepr;
 
@@ -402,9 +407,9 @@ public final class GeneralExpressionGenerator
     }
 
     public enum GeneralBinaryComparisonOperator implements Operator {
-        EQUALS("="), GREATER(">"), GREATER_EQUALS(">="), SMALLER("<"), SMALLER_EQUALS("<="), NOT_EQUALS("!="),
-        LIKE("LIKE"), NOT_LIKE("NOT LIKE"), SIMILAR_TO("SIMILAR TO"), NOT_SIMILAR_TO("NOT SIMILAR TO"),
-        REGEX_POSIX("~"), REGEX_POSIT_NOT("!~");
+        EQUALS("="), GREATER(">"), GREATER_EQUALS(">="), SMALLER("<"), SMALLER_EQUALS("<="), NOT_EQUALS("!=");
+        // LIKE("LIKE"), NOT_LIKE("NOT LIKE"), SIMILAR_TO("SIMILAR TO"), NOT_SIMILAR_TO("NOT SIMILAR TO");
+        // REGEX_POSIX("~"), REGEX_POSIT_NOT("!~");
 
         private String textRepr;
 

@@ -9,7 +9,6 @@ import sqlancer.ComparatorHelper;
 import sqlancer.IgnoreMeException;
 import sqlancer.Randomly;
 import sqlancer.common.ast.newast.NewAliasNode;
-import sqlancer.common.ast.newast.NewBinaryOperatorNode;
 import sqlancer.common.ast.newast.NewFunctionNode;
 import sqlancer.common.ast.newast.NewUnaryPostfixOperatorNode;
 import sqlancer.common.ast.newast.NewUnaryPrefixOperatorNode;
@@ -19,13 +18,10 @@ import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.common.query.SQLancerResultSet;
 import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
-import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
-import sqlancer.general.GeneralSchema.GeneralDataType;
 import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralSelect;
 import sqlancer.general.gen.GeneralExpressionGenerator.GeneralAggregateFunction;
-import sqlancer.general.gen.GeneralExpressionGenerator.GeneralBinaryArithmeticOperator;
 import sqlancer.general.gen.GeneralExpressionGenerator.GeneralCastOperation;
 import sqlancer.general.gen.GeneralExpressionGenerator.GeneralUnaryPostfixOperator;
 import sqlancer.general.gen.GeneralExpressionGenerator.GeneralUnaryPrefixOperator;
@@ -123,31 +119,31 @@ public class GeneralQueryPartitioningAggregate extends GeneralQueryPartitioningB
 
     private List<Node<GeneralExpression>> mapped(
             NewFunctionNode<GeneralExpression, GeneralAggregateFunction> aggregate) {
-        GeneralCastOperation count;
+        // GeneralCastOperation count;
         switch (aggregate.getFunc()) {
         case COUNT:
         case MAX:
         case MIN:
         case SUM:
             return aliasArgs(Arrays.asList(aggregate));
-        case AVG:
-            NewFunctionNode<GeneralExpression, GeneralAggregateFunction> sum = new NewFunctionNode<>(
-                    aggregate.getArgs(), GeneralAggregateFunction.SUM);
-            count = new GeneralCastOperation(new NewFunctionNode<>(aggregate.getArgs(), GeneralAggregateFunction.COUNT),
-                    new GeneralCompositeDataType(GeneralDataType.FLOAT, 8));
-            return aliasArgs(Arrays.asList(sum, count));
-        case STDDEV_POP:
-            NewFunctionNode<GeneralExpression, GeneralAggregateFunction> sumSquared = new NewFunctionNode<>(
-                    Arrays.asList(new NewBinaryOperatorNode<>(aggregate.getArgs().get(0), aggregate.getArgs().get(0),
-                            GeneralBinaryArithmeticOperator.MULT)),
-                    GeneralAggregateFunction.SUM);
-            count = new GeneralCastOperation(
-                    new NewFunctionNode<GeneralExpression, GeneralAggregateFunction>(aggregate.getArgs(),
-                            GeneralAggregateFunction.COUNT),
-                    new GeneralCompositeDataType(GeneralDataType.FLOAT, 8));
-            NewFunctionNode<GeneralExpression, GeneralAggregateFunction> avg = new NewFunctionNode<>(
-                    aggregate.getArgs(), GeneralAggregateFunction.AVG);
-            return aliasArgs(Arrays.asList(sumSquared, count, avg));
+        // case AVG:
+        // NewFunctionNode<GeneralExpression, GeneralAggregateFunction> sum = new NewFunctionNode<>(
+        // aggregate.getArgs(), GeneralAggregateFunction.SUM);
+        // count = new GeneralCastOperation(new NewFunctionNode<>(aggregate.getArgs(), GeneralAggregateFunction.COUNT),
+        // new GeneralCompositeDataType(GeneralDataType.FLOAT, 8));
+        // return aliasArgs(Arrays.asList(sum, count));
+        // case STDDEV_POP:
+        // NewFunctionNode<GeneralExpression, GeneralAggregateFunction> sumSquared = new NewFunctionNode<>(
+        // Arrays.asList(new NewBinaryOperatorNode<>(aggregate.getArgs().get(0), aggregate.getArgs().get(0),
+        // GeneralBinaryArithmeticOperator.MULT)),
+        // GeneralAggregateFunction.SUM);
+        // count = new GeneralCastOperation(
+        // new NewFunctionNode<GeneralExpression, GeneralAggregateFunction>(aggregate.getArgs(),
+        // GeneralAggregateFunction.COUNT),
+        // new GeneralCompositeDataType(GeneralDataType.FLOAT, 8));
+        // NewFunctionNode<GeneralExpression, GeneralAggregateFunction> avg = new NewFunctionNode<>(
+        // aggregate.getArgs(), GeneralAggregateFunction.AVG);
+        // return aliasArgs(Arrays.asList(sumSquared, count, avg));
         default:
             throw new AssertionError(aggregate.getFunc());
         }

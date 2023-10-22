@@ -66,7 +66,7 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
     }
 
     private int getSecondQuery(List<Node<GeneralExpression>> tableList, Node<GeneralExpression> randomWhereCondition,
-                               List<Node<GeneralExpression>> joins) throws SQLException {
+            List<Node<GeneralExpression>> joins) throws SQLException {
         GeneralSelect select = new GeneralSelect();
         // select.setGroupByClause(groupBys);
         // GeneralExpression isTrue = GeneralPostfixOperation.create(randomWhereCondition,
@@ -100,8 +100,8 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
     }
 
     private int getFirstQueryCount(SQLConnection con, List<Node<GeneralExpression>> tableList,
-                                   List<GeneralColumn> columns, Node<GeneralExpression> randomWhereCondition,
-                                   List<Node<GeneralExpression>> joins) throws SQLException {
+            List<GeneralColumn> columns, Node<GeneralExpression> randomWhereCondition,
+            List<Node<GeneralExpression>> joins) throws SQLException {
         GeneralSelect select = new GeneralSelect();
         // select.setGroupByClause(groupBys);
         // GeneralAggregate aggr = new GeneralAggregate(

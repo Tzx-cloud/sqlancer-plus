@@ -17,16 +17,11 @@ import sqlancer.SQLConnection;
 import sqlancer.SQLGlobalState;
 import sqlancer.SQLProviderAdapter;
 import sqlancer.StatementExecutor;
-import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.common.query.SQLQueryProvider;
-import sqlancer.general.gen.GeneralDeleteGenerator;
 import sqlancer.general.gen.GeneralIndexGenerator;
 import sqlancer.general.gen.GeneralInsertGenerator;
-import sqlancer.general.gen.GeneralRandomQuerySynthesizer;
 import sqlancer.general.gen.GeneralTableGenerator;
-import sqlancer.general.gen.GeneralUpdateGenerator;
-import sqlancer.general.gen.GeneralViewGenerator;
 
 @AutoService(DatabaseProvider.class)
 public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralGlobalState, GeneralOptions> {
@@ -37,22 +32,22 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
     public enum Action implements AbstractAction<GeneralGlobalState> {
 
-        INSERT(GeneralInsertGenerator::getQuery), //
-        CREATE_INDEX(GeneralIndexGenerator::getQuery), //
-        VACUUM((g) -> new SQLQueryAdapter("VACUUM;")), //
-        ANALYZE((g) -> new SQLQueryAdapter("ANALYZE;")), //
-        DELETE(GeneralDeleteGenerator::generate), //
-        UPDATE(GeneralUpdateGenerator::getQuery), //
-        CREATE_VIEW(GeneralViewGenerator::generate), //
-        EXPLAIN((g) -> {
-            ExpectedErrors errors = new ExpectedErrors();
-            GeneralErrors.addExpressionErrors(errors);
-            GeneralErrors.addGroupByErrors(errors);
-            return new SQLQueryAdapter(
-                    "EXPLAIN " + GeneralToStringVisitor
-                            .asString(GeneralRandomQuerySynthesizer.generateSelect(g, Randomly.smallNumber() + 1)),
-                    errors);
-        });
+        INSERT(GeneralInsertGenerator::getQuery); //
+        // CREATE_INDEX(GeneralIndexGenerator::getQuery); //
+        // VACUUM((g) -> new SQLQueryAdapter("VACUUM;")), //
+        // ANALYZE((g) -> new SQLQueryAdapter("ANALYZE;")); //
+        // DELETE(GeneralDeleteGenerator::generate), //
+        // UPDATE(GeneralUpdateGenerator::getQuery), //
+        // CREATE_VIEW(GeneralViewGenerator::generate), //
+        // EXPLAIN((g) -> {
+        // ExpectedErrors errors = new ExpectedErrors();
+        // GeneralErrors.addExpressionErrors(errors);
+        // GeneralErrors.addGroupByErrors(errors);
+        // return new SQLQueryAdapter(
+        // "EXPLAIN " + GeneralToStringVisitor
+        // .asString(GeneralRandomQuerySynthesizer.generateSelect(g, Randomly.smallNumber() + 1)),
+        // errors);
+        // })
 
         private final SQLQueryProvider<GeneralGlobalState> sqlQueryProvider;
 
@@ -71,21 +66,20 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         switch (a) {
         case INSERT:
             return r.getInteger(0, globalState.getOptions().getMaxNumberInserts());
-        case CREATE_INDEX:
-            if (!globalState.getDbmsSpecificOptions().testIndexes) {
-                return 0;
-            }
-            // fall through
-        case UPDATE:
-            return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
-        case VACUUM: // seems to be ignored
-        case ANALYZE: // seems to be ignored
-        case EXPLAIN:
-            return r.getInteger(0, 2);
-        case DELETE:
-            return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumDeletes + 1);
-        case CREATE_VIEW:
-            return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumViews + 1);
+        // case CREATE_INDEX:
+        //     if (!globalState.getDbmsSpecificOptions().testIndexes) {
+        //         return 0;
+        //     }
+        //     // fall through
+        //     return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
+        // case VACUUM: // seems to be ignored
+        // case ANALYZE: // seems to be ignored
+            // case EXPLAIN:
+            // return r.getInteger(0, 2);
+        // case DELETE:
+        // return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumDeletes + 1);
+        // case CREATE_VIEW:
+        // return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumViews + 1);
         default:
             throw new AssertionError(a);
         }
@@ -139,19 +133,36 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
     @Override
     public SQLConnection createDatabase(GeneralGlobalState globalState) throws SQLException {
-        String databaseFile = System.getProperty("duckdb.database.file", "");
-        String url = "jdbc:duckdb:" + databaseFile;
-        tryDeleteDatabase(databaseFile);
+        // String databaseFile = System.getProperty("duckdb.database.file", "");
+        // String url = "jdbc:duckdb:" + databaseFile;
+        // tryDeleteDatabase(databaseFile);
 
-        MainOptions options = globalState.getOptions();
-        if (!(options.isDefaultUsername() && options.isDefaultPassword())) {
-            throw new AssertionError("DuckDB doesn't support credentials (username/password)");
+        // MainOptions options = globalState.getOptions();
+        // if (!(options.isDefaultUsername() && options.isDefaultPassword())) {
+        //     throw new AssertionError("DuckDB doesn't support credentials (username/password)");
+        // }
+
+        // Connection conn = DriverManager.getConnection(url);
+        // Statement stmt = conn.createStatement();
+        // stmt.execute("PRAGMA checkpoint_threshold='1 byte';");
+        // stmt.close();
+        String username = "test";
+        String password = "";
+        String host = globalState.getOptions().getHost();
+        int port = globalState.getOptions().getPort();
+        String url = String.format("jdbc:trino://%s:%d", host, port);
+        Connection conn = DriverManager.getConnection(url, username, password);
+        String databaseName = "memory." + globalState.getDatabaseName();
+        try (Statement s = conn.createStatement()) {
+            s.execute("DROP SCHEMA IF EXISTS " + databaseName + " CASCADE");
+        }
+        try (Statement s = conn.createStatement()) {
+            s.execute("CREATE SCHEMA " +databaseName);
+        }
+        try (Statement s = conn.createStatement()) {
+            s.execute("USE " +databaseName);
         }
 
-        Connection conn = DriverManager.getConnection(url);
-        Statement stmt = conn.createStatement();
-        stmt.execute("PRAGMA checkpoint_threshold='1 byte';");
-        stmt.close();
         return new SQLConnection(conn);
     }
 

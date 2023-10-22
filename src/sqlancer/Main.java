@@ -35,6 +35,7 @@ import sqlancer.cosmos.CosmosProvider;
 import sqlancer.databend.DatabendProvider;
 import sqlancer.doris.DorisProvider;
 import sqlancer.duckdb.DuckDBProvider;
+import sqlancer.general.GeneralProvider;
 import sqlancer.h2.H2Provider;
 import sqlancer.hsqldb.HSQLDBProvider;
 import sqlancer.mariadb.MariaDBProvider;
@@ -713,6 +714,7 @@ public final class Main {
             providers.add(new DatabendProvider());
             providers.add(new DorisProvider());
             providers.add(new DuckDBProvider());
+            providers.add(new GeneralProvider());
             providers.add(new H2Provider());
             providers.add(new HSQLDBProvider());
             providers.add(new MariaDBProvider());

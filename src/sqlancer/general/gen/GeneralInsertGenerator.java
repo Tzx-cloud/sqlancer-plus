@@ -3,7 +3,6 @@ package sqlancer.general.gen;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import sqlancer.Randomly;
 import sqlancer.common.gen.AbstractInsertGenerator;
 import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.SQLQueryAdapter;
@@ -37,17 +36,17 @@ public class GeneralInsertGenerator extends AbstractInsertGenerator<GeneralColum
         sb.append(" VALUES ");
         insertColumns(columns);
         GeneralErrors.addInsertErrors(errors);
-        return new SQLQueryAdapter(sb.toString(), errors);
+        return new SQLQueryAdapter(sb.toString(), errors, false, false);
     }
 
     @Override
     protected void insertValue(GeneralColumn columnGeneral) {
         // TODO: select a more meaningful value
-        if (Randomly.getBooleanWithRatherLowProbability()) {
-            sb.append("DEFAULT");
-        } else {
-            sb.append(GeneralToStringVisitor.asString(new GeneralExpressionGenerator(globalState).generateConstant()));
-        }
+        // if (Randomly.getBooleanWithRatherLowProbability()) {
+        // sb.append("DEFAULT");
+        // } else {
+        sb.append(GeneralToStringVisitor.asString(new GeneralExpressionGenerator(globalState).generateConstant()));
+        // }
     }
 
 }
