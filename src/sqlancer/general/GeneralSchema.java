@@ -294,7 +294,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         // }
         DatabaseMetaData metaData = con.getMetaData();
         // TODO only for less than 10 tables
-        ResultSet tables = metaData.getTables(null, null, "t_", null);
+        ResultSet tables = metaData.getTables(null, null, "T_", null);
         while (tables.next()) {
             tableNames.add(tables.getString("TABLE_NAME"));
         }

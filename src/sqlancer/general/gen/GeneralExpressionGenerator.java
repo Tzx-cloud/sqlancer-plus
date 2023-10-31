@@ -385,7 +385,7 @@ public final class GeneralExpressionGenerator
     }
 
     public enum GeneralBinaryArithmeticOperator implements Operator {
-        CONCAT("||"), ADD("+"), SUB("-"), MULT("*"), DIV("/"), MOD("%"), AND("&"), OR("|");
+        CONCAT("||"), ADD("+"), SUB("-"), MULT("*"), DIV("/"), MOD("%");// AND("&"), OR("|");
         // CONCAT("||"), ADD("+"), SUB("-"), MULT("*"), DIV("/"), MOD("%"), AND("&"), OR("|"), LSHIFT("<<"),
         // RSHIFT(">>");
 

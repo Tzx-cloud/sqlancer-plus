@@ -15,6 +15,7 @@ public class GeneralQueryPartitioningWhere extends GeneralQueryPartitioningBase 
     public GeneralQueryPartitioningWhere(GeneralGlobalState state) {
         super(state);
         GeneralErrors.addGroupByErrors(errors);
+        GeneralErrors.addExpressionErrors(errors);
     }
 
     @Override

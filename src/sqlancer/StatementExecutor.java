@@ -71,7 +71,8 @@ public class StatementExecutor<G extends GlobalState<?, ?, ?>, A extends Abstrac
                 } while (nextAction.canBeRetried() && !success
                         && nrTries++ < globalState.getOptions().getNrStatementRetryCount());
             } catch (IgnoreMeException ignored) {
-
+                // add something here Maybe...
+                // System.out.println(ignored.getMessage());
             }
             if (query != null && query.couldAffectSchema()) {
                 globalState.updateSchema();

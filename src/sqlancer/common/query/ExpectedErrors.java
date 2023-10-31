@@ -67,13 +67,16 @@ public class ExpectedErrors {
         if (error == null) {
             throw new IllegalArgumentException();
         }
+        if (error.toLowerCase().contains("syntax")) {
+            return true;
+        }
         for (String s : this.errors) {
             if (error.contains(s)) {
                 return true;
             }
         }
         for (Pattern p : this.regexes) {
-            if (p.matcher(error).find()) {
+            if (p.matcher(error).matches()) {
                 return true;
             }
         }

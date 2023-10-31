@@ -10,7 +10,7 @@ public final class GeneralErrors {
     }
 
     public static void addExpressionErrors(ExpectedErrors errors) {
-        errors.addRegex(Pattern.compile("^(?!.*syntax).*$"));
+        errors.addRegex(Pattern.compile(".*", Pattern.DOTALL));
         // errors.add("with non-constant precision is not supported");
         // errors.add("Like pattern must not end with escape character");
         // errors.add("Could not convert string");
@@ -91,7 +91,7 @@ public final class GeneralErrors {
     // }
 
     public static void addInsertErrors(ExpectedErrors errors) {
-        errors.addRegex(Pattern.compile("^(?!.*syntax).*$"));
+        errors.addRegex(Pattern.compile(".*"));
 
         // addRegexErrors(errors);
         // addFunctionErrors(errors);

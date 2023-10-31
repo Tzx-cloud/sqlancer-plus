@@ -150,18 +150,30 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         String password = "";
         String host = globalState.getOptions().getHost();
         int port = globalState.getOptions().getPort();
-        String url = String.format("jdbc:trino://%s:%d", host, port);
+        // String url = String.format("jdbc:trino://%s:%d", host, port);
+        // Connection conn = DriverManager.getConnection(url, username, password);
+        // String databaseName = "memory." + globalState.getDatabaseName();
+        // try (Statement s = conn.createStatement()) {
+        //     s.execute("DROP SCHEMA IF EXISTS " + databaseName + " CASCADE");
+        // }
+        // try (Statement s = conn.createStatement()) {
+        //     s.execute("CREATE SCHEMA " +databaseName);
+        // }
+        // try (Statement s = conn.createStatement()) {
+        //     s.execute("USE " +databaseName);
+        // }
+        String databaseName =  globalState.getDatabaseName();
+        String url = String.format("jdbc:ignite:thin://%s:%d/%s", host, port, databaseName);
         Connection conn = DriverManager.getConnection(url, username, password);
-        String databaseName = "memory." + globalState.getDatabaseName();
-        try (Statement s = conn.createStatement()) {
-            s.execute("DROP SCHEMA IF EXISTS " + databaseName + " CASCADE");
-        }
-        try (Statement s = conn.createStatement()) {
-            s.execute("CREATE SCHEMA " +databaseName);
-        }
-        try (Statement s = conn.createStatement()) {
-            s.execute("USE " +databaseName);
-        }
+        // try (Statement s = conn.createStatement()) {
+        //     s.execute("DROP SCHEMA IF EXISTS " + databaseName);
+        // }
+        // try (Statement s = conn.createStatement()) {
+        //     s.execute("CREATE SCHEMA " +databaseName);
+        // }
+        // try (Statement s = conn.createStatement()) {
+        //     s.execute("USE " +databaseName);
+        // }
 
         return new SQLConnection(conn);
     }

@@ -42,10 +42,10 @@ public class GeneralTableGenerator {
             // if (globalState.getDbmsSpecificOptions().testIndexes && Randomly.getBooleanWithRatherLowProbability()) {
             //     sb.append(" UNIQUE");
             // }
-            if (globalState.getDbmsSpecificOptions().testNotNullConstraints
-                    && Randomly.getBooleanWithRatherLowProbability()) {
-                sb.append(" NOT NULL");
-            }
+            // if (globalState.getDbmsSpecificOptions().testNotNullConstraints
+            //         && Randomly.getBooleanWithRatherLowProbability()) {
+            //     sb.append(" NOT NULL");
+            // }
             // if (globalState.getDbmsSpecificOptions().testCheckConstraints
             // && Randomly.getBooleanWithRatherLowProbability()) {
             // sb.append(" CHECK(");
@@ -59,13 +59,15 @@ public class GeneralTableGenerator {
             //     sb.append(")");
             // }
         }
-        // if (globalState.getDbmsSpecificOptions().testIndexes && Randomly.getBoolean()) {
-        //     errors.add("Invalid type for index");
-        //     List<GeneralColumn> primaryKeyColumns = Randomly.nonEmptySubset(columns);
-        //     sb.append(", PRIMARY KEY(");
-        //     sb.append(primaryKeyColumns.stream().map(c -> c.getName()).collect(Collectors.joining(", ")));
-        //     sb.append(")");
-        // }
+        // get a new List that is the columns pop one item
+        List<GeneralColumn> columnsWithoutLast = new ArrayList<>(columns.subList(0, columns.size() - 1));
+        if (globalState.getDbmsSpecificOptions().testIndexes ) {
+            errors.add("Invalid type for index");
+            List<GeneralColumn> primaryKeyColumns = Randomly.nonEmptySubset(columnsWithoutLast);
+            sb.append(", PRIMARY KEY(");
+            sb.append(primaryKeyColumns.stream().map(c -> c.getName()).collect(Collectors.joining(", ")));
+            sb.append(")");
+        }
         sb.append(")");
         return new SQLQueryAdapter(sb.toString(), errors, true, false);
     }
@@ -76,7 +78,7 @@ public class GeneralTableGenerator {
 
     private static List<GeneralColumn> getNewColumns() {
         List<GeneralColumn> columns = new ArrayList<>();
-        for (int i = 0; i < Randomly.smallNumber() + 1; i++) {
+        for (int i = 0; i < Randomly.smallNumber() + 2; i++) {
             String columnName = String.format("c%d", i);
             GeneralCompositeDataType columnType = GeneralCompositeDataType.getRandomWithoutNull();
             columns.add(new GeneralColumn(columnName, columnType, false, false));

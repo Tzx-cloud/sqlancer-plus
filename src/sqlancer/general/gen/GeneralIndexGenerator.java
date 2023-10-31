@@ -53,6 +53,7 @@ public final class GeneralIndexGenerator {
         if (globalState.getDbmsSpecificOptions().testRowid) {
             errors.add("Cannot create an index on the rowid!");
         }
+        errors.add("Syntax");
         return new SQLQueryAdapter(sb.toString(), errors, true);
     }
 
