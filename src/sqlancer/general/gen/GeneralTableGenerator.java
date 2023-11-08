@@ -2,6 +2,7 @@ package sqlancer.general.gen;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import sqlancer.Randomly;
@@ -12,10 +13,16 @@ import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
+import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.ast.GeneralExpression;
 
 public class GeneralTableGenerator {
+    private GeneralTable table;
+
+    public GeneralTable getTable() {
+        return table;
+    }
 
     public SQLQueryAdapter getQuery(GeneralGlobalState globalState) {
         ExpectedErrors errors = new ExpectedErrors();
@@ -25,8 +32,8 @@ public class GeneralTableGenerator {
         sb.append(tableName);
         sb.append("(");
         List<GeneralColumn> columns = getNewColumns();
-        UntypedExpressionGenerator<Node<GeneralExpression>, GeneralColumn> gen = new GeneralExpressionGenerator(
-                globalState).setColumns(columns);
+        // UntypedExpressionGenerator<Node<GeneralExpression>, GeneralColumn> gen = new GeneralExpressionGenerator(
+        //         globalState).setColumns(columns);
         for (int i = 0; i < columns.size(); i++) {
             if (i != 0) {
                 sb.append(", ");
@@ -60,15 +67,23 @@ public class GeneralTableGenerator {
             // }
         }
         // get a new List that is the columns pop one item
-        List<GeneralColumn> columnsWithoutLast = new ArrayList<>(columns.subList(0, columns.size() - 1));
-        if (globalState.getDbmsSpecificOptions().testIndexes ) {
-            errors.add("Invalid type for index");
-            List<GeneralColumn> primaryKeyColumns = Randomly.nonEmptySubset(columnsWithoutLast);
+        // List<GeneralColumn> columnsWithoutLast = new ArrayList<>(columns.subList(0, columns.size() - 1));
+        List<GeneralColumn> columnsToAdd = new ArrayList<>();
+        if (globalState.getDbmsSpecificOptions().testIndexes) {
+            List<GeneralColumn> primaryKeyColumns = Randomly.nonEmptySubset(new ArrayList<>(columns.subList(0, columns.size() - 1)));
             sb.append(", PRIMARY KEY(");
             sb.append(primaryKeyColumns.stream().map(c -> c.getName()).collect(Collectors.joining(", ")));
             sb.append(")");
+            // operate on the columns: if the column name is in primaryKeyColumns, then it is a primary key
+            for (GeneralColumn c : columns) {
+                columnsToAdd.add(new GeneralColumn(c.getName(), c.getType(), primaryKeyColumns.contains(c), false));
+            }
+        } else {
+            columnsToAdd = columns;
         }
         sb.append(")");
+        errors.addRegex(Pattern.compile(".*"));
+        this.table = new GeneralTable(tableName, columnsToAdd, false);
         return new SQLQueryAdapter(sb.toString(), errors, true, false);
     }
 
