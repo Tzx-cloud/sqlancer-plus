@@ -5,6 +5,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import com.google.auto.service.AutoService;
 
@@ -19,6 +22,9 @@ import sqlancer.SQLProviderAdapter;
 import sqlancer.StatementExecutor;
 import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.common.query.SQLQueryProvider;
+import sqlancer.common.schema.AbstractTable;
+import sqlancer.general.GeneralSchema.GeneralTable;
+import sqlancer.general.GeneralSchema.GeneralTables;
 import sqlancer.general.gen.GeneralIndexGenerator;
 import sqlancer.general.gen.GeneralInsertGenerator;
 import sqlancer.general.gen.GeneralTableGenerator;
@@ -32,8 +38,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
     public enum Action implements AbstractAction<GeneralGlobalState> {
 
-        INSERT(GeneralInsertGenerator::getQuery); //
-        // CREATE_INDEX(GeneralIndexGenerator::getQuery); //
+        INSERT(GeneralInsertGenerator::getQuery), //
+        CREATE_INDEX(GeneralIndexGenerator::getQuery); //
         // VACUUM((g) -> new SQLQueryAdapter("VACUUM;")), //
         // ANALYZE((g) -> new SQLQueryAdapter("ANALYZE;")); //
         // DELETE(GeneralDeleteGenerator::generate), //
@@ -66,12 +72,12 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         switch (a) {
         case INSERT:
             return r.getInteger(0, globalState.getOptions().getMaxNumberInserts());
-        // case CREATE_INDEX:
-        //     if (!globalState.getDbmsSpecificOptions().testIndexes) {
-        //         return 0;
-        //     }
-        //     // fall through
-        //     return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
+        case CREATE_INDEX:
+            if (!globalState.getDbmsSpecificOptions().testIndexes) {
+                return 0;
+            }
+            // fall through
+            return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
         // case VACUUM: // seems to be ignored
         // case ANALYZE: // seems to be ignored
             // case EXPLAIN:
@@ -86,25 +92,59 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     }
 
     public static class GeneralGlobalState extends SQLGlobalState<GeneralOptions, GeneralSchema> {
+        private GeneralSchema schema = new GeneralSchema(new ArrayList<>());
+        private HashMap<String, Float> overallGeneratorScore;
+        private HashMap<String, Float> singleStatementScore;
+
+        @Override
+        public GeneralSchema getSchema() {
+            // TODO should we also check here if the saved schema match the jdbc schema?
+            return schema;
+        }
+
+        public void setSchema(List<GeneralTable> tables) {
+            this.schema = new GeneralSchema(tables);
+        }
+
+        @Override
+        public void updateSchema() throws Exception {
+            for (AbstractTable<?, ?, ?> table : schema.getDatabaseTables()) {
+            table.recomputeCount();
+        }
+        }
 
         @Override
         protected GeneralSchema readSchema() throws SQLException {
             return GeneralSchema.fromConnection(getConnection(), getDatabaseName());
         }
 
+        public void addScore() {
+
+        }
     }
 
     @Override
     public void generateDatabase(GeneralGlobalState globalState) throws Exception {
         for (int i = 0; i < Randomly.fromOptions(1, 2); i++) {
             boolean success;
+            int nrTries = 0;
             do {
-                SQLQueryAdapter qt = new GeneralTableGenerator().getQuery(globalState);
+                GeneralTableGenerator tableGenerator = new GeneralTableGenerator();
+                SQLQueryAdapter qt = tableGenerator.getQuery(globalState);
+                GeneralTable table = tableGenerator.getTable();
+                //TODO add error handling here
+                
                 success = globalState.executeStatement(qt);
-            } while (!success);
+                if (success) {
+                    List<GeneralTable> databaseTables = new ArrayList<>(globalState.getSchema().getDatabaseTables());
+                    // globalState.getSchema().addDatabaseTable(table);
+                    databaseTables.add(table);
+                    globalState.setSchema(databaseTables);
+                }
+            } while (!success && nrTries++ < 100);
         }
         if (globalState.getSchema().getDatabaseTables().isEmpty()) {
-            throw new IgnoreMeException(); // TODO
+            throw new AssertionError("Failed to create any table"); // TODO
         }
         StatementExecutor<GeneralGlobalState, Action> se = new StatementExecutor<>(globalState, Action.values(),
                 GeneralProvider::mapActions, (q) -> {
@@ -146,8 +186,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         // Statement stmt = conn.createStatement();
         // stmt.execute("PRAGMA checkpoint_threshold='1 byte';");
         // stmt.close();
-        String username = "test";
-        String password = "";
+        String username = globalState.getOptions().getUserName();
+        String password = globalState.getOptions().getPassword();
         String host = globalState.getOptions().getHost();
         int port = globalState.getOptions().getPort();
         // String url = String.format("jdbc:trino://%s:%d", host, port);
@@ -163,8 +203,9 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         //     s.execute("USE " +databaseName);
         // }
         String databaseName =  globalState.getDatabaseName();
-        String url = String.format("jdbc:ignite:thin://%s:%d/%s", host, port, databaseName);
+        String url = String.format("jdbc:postgresql://%s:%d/", host, port, databaseName);
         Connection conn = DriverManager.getConnection(url, username, password);
+        // Connection conn = DriverManager.getConnection(url);
         // try (Statement s = conn.createStatement()) {
         //     s.execute("DROP SCHEMA IF EXISTS " + databaseName);
         // }

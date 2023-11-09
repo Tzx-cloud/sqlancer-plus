@@ -1,6 +1,7 @@
 package sqlancer.general.gen;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import sqlancer.Randomly;
 import sqlancer.common.ast.newast.Node;
@@ -54,7 +55,8 @@ public final class GeneralIndexGenerator {
             errors.add("Cannot create an index on the rowid!");
         }
         errors.add("Syntax");
-        return new SQLQueryAdapter(sb.toString(), errors, true);
+        errors.addRegex(Pattern.compile(".*", Pattern.DOTALL));
+        return new SQLQueryAdapter(sb.toString(), errors, true, false);
     }
 
 }

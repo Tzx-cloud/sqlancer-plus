@@ -91,7 +91,7 @@ public final class GeneralErrors {
     // }
 
     public static void addInsertErrors(ExpectedErrors errors) {
-        errors.addRegex(Pattern.compile(".*"));
+        errors.addRegex(Pattern.compile(".*", Pattern.DOTALL));
 
         // addRegexErrors(errors);
         // addFunctionErrors(errors);
