@@ -202,9 +202,23 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         // try (Statement s = conn.createStatement()) {
         //     s.execute("USE " +databaseName);
         // }
-        String databaseName =  globalState.getDatabaseName();
-        String url = String.format("jdbc:postgresql://%s:%d/", host, port, databaseName);
+
+        // // ---------------- crate ----------------
+        // String databaseName = globalState.getDatabaseName();
+        // String url = String.format("jdbc:postgresql://%s:%d/", host, port, databaseName);
+        // Connection conn = DriverManager.getConnection(url, username, password);
+        // // ---------------- crate ----------------
+
+
+        // ---------------- hive ----------------
+        String databaseName = globalState.getDatabaseName();
+        String url = String.format("jdbc:hive2://%s:%d/default", host, port, databaseName);
         Connection conn = DriverManager.getConnection(url, username, password);
+        // ---------------- hive ----------------
+
+            
+
+
         // Connection conn = DriverManager.getConnection(url);
         // try (Statement s = conn.createStatement()) {
         //     s.execute("DROP SCHEMA IF EXISTS " + databaseName);

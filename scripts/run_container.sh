@@ -17,3 +17,10 @@ current_dir=$(pwd)
 docker stop crate-test
 docker rm crate-test
 docker run --name crate-test -d -p 10003:4200 -p 10004:5432 crate  -Cdiscovery.type=single-node
+
+
+# Run apache/hive
+# export HIVE_VERSION=4.0.0-beta-2-SNAPSHOT
+# docker stop hive-test
+# docker rm hive-test
+# docker run -d -p 10005:10000 -p 10006:10002 --env SERVICE_NAME=hiveserver2 --name hive-test apache/hive:${HIVE_VERSION}

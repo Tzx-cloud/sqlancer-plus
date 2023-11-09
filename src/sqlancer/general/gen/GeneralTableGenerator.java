@@ -69,7 +69,7 @@ public class GeneralTableGenerator {
         // get a new List that is the columns pop one item
         // List<GeneralColumn> columnsWithoutLast = new ArrayList<>(columns.subList(0, columns.size() - 1));
         List<GeneralColumn> columnsToAdd = new ArrayList<>();
-        if (globalState.getDbmsSpecificOptions().testIndexes) {
+        if (globalState.getDbmsSpecificOptions().testIndexes && !Randomly.getBooleanWithRatherLowProbability()) {
             List<GeneralColumn> primaryKeyColumns = Randomly.nonEmptySubset(new ArrayList<>(columns.subList(0, columns.size() - 1)));
             sb.append(", PRIMARY KEY(");
             sb.append(primaryKeyColumns.stream().map(c -> c.getName()).collect(Collectors.joining(", ")));
