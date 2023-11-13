@@ -1,6 +1,9 @@
 package sqlancer.general;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -10,6 +13,7 @@ import com.beust.jcommander.Parameters;
 
 import sqlancer.DBMSSpecificOptions;
 import sqlancer.OracleFactory;
+import sqlancer.DatabaseEngineFactory;
 import sqlancer.common.oracle.CompositeTestOracle;
 import sqlancer.common.oracle.TestOracle;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
@@ -146,11 +150,63 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             }
         };
 
+    };
+
+    @Parameter(names = "--database-engine")
+    public GeneralDatabaseEngineFactory databaseEngine = GeneralDatabaseEngineFactory.CRATE;
+
+    public enum GeneralDatabaseEngineFactory implements DatabaseEngineFactory<GeneralGlobalState> {
+        CRATE {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:postgresql://localhost:10004/?user=crate");
+            }
+        },
+        MYSQL {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:mysql://localhost:23306/?user=root&password=root");
+            }
+        };
+
+        private boolean isNewSchema = true;
+
+        public boolean isNewSchema() {
+            return isNewSchema;
+        }
+
+        @Override
+        public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
+                throws SQLException {
+            Connection conn = DriverManager.getConnection(getJDBCString(globalState));
+            try (Statement s = conn.createStatement()) {
+                s.execute("DROP DATABASE IF EXISTS " + databaseName);
+                globalState.getState().logStatement("DROP DATABASE IF EXISTS " + databaseName);
+                s.execute("CREATE DATABASE " + databaseName);
+                globalState.getState().logStatement("CREATE DATABASE " + databaseName);
+                s.execute("USE " + databaseName);
+                globalState.getState().logStatement("USE " + databaseName);
+                isNewSchema = true;
+            } catch (SQLException e) {
+                isNewSchema = false;
+                for (int i = 0; i < 100; i++) {
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP TABLE %s_t%d", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
+                }
+            }
+            return conn;
+        }
     }
 
     @Override
     public List<GeneralOracleFactory> getTestOracleFactory() {
         return oracles;
+    }
+
+    public GeneralDatabaseEngineFactory getDatabaseEngineFactory() {
+        return databaseEngine;
     }
 
 }

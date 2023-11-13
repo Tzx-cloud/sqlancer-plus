@@ -27,13 +27,20 @@ public class GeneralTableGenerator {
     public SQLQueryAdapter getQuery(GeneralGlobalState globalState) {
         ExpectedErrors errors = new ExpectedErrors();
         StringBuilder sb = new StringBuilder();
-        String tableName = globalState.getSchema().getFreeTableName();
+        String tableName;
+        // TODO check if this is correct
+        if (globalState.getOption("CREATE_DATABASE")) {
+            tableName = globalState.getSchema().getFreeTableName();
+        } else {
+            tableName = String.format("%s_%s", globalState.getDatabaseName(),
+                    globalState.getSchema().getFreeTableName());
+        }
         sb.append("CREATE TABLE ");
         sb.append(tableName);
         sb.append("(");
         List<GeneralColumn> columns = getNewColumns();
         // UntypedExpressionGenerator<Node<GeneralExpression>, GeneralColumn> gen = new GeneralExpressionGenerator(
-        //         globalState).setColumns(columns);
+        // globalState).setColumns(columns);
         for (int i = 0; i < columns.size(); i++) {
             if (i != 0) {
                 sb.append(", ");
@@ -47,11 +54,11 @@ public class GeneralTableGenerator {
             // sb.append(getRandomCollate());
             // }
             // if (globalState.getDbmsSpecificOptions().testIndexes && Randomly.getBooleanWithRatherLowProbability()) {
-            //     sb.append(" UNIQUE");
+            // sb.append(" UNIQUE");
             // }
             // if (globalState.getDbmsSpecificOptions().testNotNullConstraints
-            //         && Randomly.getBooleanWithRatherLowProbability()) {
-            //     sb.append(" NOT NULL");
+            // && Randomly.getBooleanWithRatherLowProbability()) {
+            // sb.append(" NOT NULL");
             // }
             // if (globalState.getDbmsSpecificOptions().testCheckConstraints
             // && Randomly.getBooleanWithRatherLowProbability()) {
@@ -61,16 +68,17 @@ public class GeneralTableGenerator {
             // sb.append(")");
             // }
             // if (Randomly.getBoolean() && globalState.getDbmsSpecificOptions().testDefaultValues) {
-            //     sb.append(" DEFAULT(");
-            //     sb.append(GeneralToStringVisitor.asString(gen.generateConstant()));
-            //     sb.append(")");
+            // sb.append(" DEFAULT(");
+            // sb.append(GeneralToStringVisitor.asString(gen.generateConstant()));
+            // sb.append(")");
             // }
         }
         // get a new List that is the columns pop one item
         // List<GeneralColumn> columnsWithoutLast = new ArrayList<>(columns.subList(0, columns.size() - 1));
         List<GeneralColumn> columnsToAdd = new ArrayList<>();
         if (globalState.getDbmsSpecificOptions().testIndexes && !Randomly.getBooleanWithRatherLowProbability()) {
-            List<GeneralColumn> primaryKeyColumns = Randomly.nonEmptySubset(new ArrayList<>(columns.subList(0, columns.size() - 1)));
+            List<GeneralColumn> primaryKeyColumns = Randomly
+                    .nonEmptySubset(new ArrayList<>(columns.subList(0, columns.size() - 1)));
             sb.append(", PRIMARY KEY(");
             sb.append(primaryKeyColumns.stream().map(c -> c.getName()).collect(Collectors.joining(", ")));
             sb.append(")");

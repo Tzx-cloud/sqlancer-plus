@@ -12,6 +12,7 @@ import java.util.List;
 import com.google.auto.service.AutoService;
 
 import sqlancer.AbstractAction;
+import sqlancer.DatabaseEngineFactory;
 import sqlancer.DatabaseProvider;
 import sqlancer.IgnoreMeException;
 import sqlancer.MainOptions;
@@ -51,7 +52,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         // GeneralErrors.addGroupByErrors(errors);
         // return new SQLQueryAdapter(
         // "EXPLAIN " + GeneralToStringVisitor
-        // .asString(GeneralRandomQuerySynthesizer.generateSelect(g, Randomly.smallNumber() + 1)),
+        // .asString(GeneralRandomQuerySynthesizer.generateSelect(g,
+        // Randomly.smallNumber() + 1)),
         // errors);
         // })
 
@@ -80,10 +82,11 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
         // case VACUUM: // seems to be ignored
         // case ANALYZE: // seems to be ignored
-            // case EXPLAIN:
-            // return r.getInteger(0, 2);
+        // case EXPLAIN:
+        // return r.getInteger(0, 2);
         // case DELETE:
-        // return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumDeletes + 1);
+        // return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumDeletes +
+        // 1);
         // case CREATE_VIEW:
         // return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumViews + 1);
         default:
@@ -95,11 +98,20 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         private GeneralSchema schema = new GeneralSchema(new ArrayList<>());
         private HashMap<String, Float> overallGeneratorScore;
         private HashMap<String, Float> singleStatementScore;
+        private HashMap<String, Boolean> optionMap = new HashMap<>();
 
         @Override
         public GeneralSchema getSchema() {
             // TODO should we also check here if the saved schema match the jdbc schema?
             return schema;
+        }
+
+        public void setOption(String option, Boolean value) {
+            optionMap.put(option, value);
+        }
+
+        public Boolean getOption(String option) {
+            return optionMap.get(option);
         }
 
         public void setSchema(List<GeneralTable> tables) {
@@ -109,8 +121,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         @Override
         public void updateSchema() throws Exception {
             for (AbstractTable<?, ?, ?> table : schema.getDatabaseTables()) {
-            table.recomputeCount();
-        }
+                table.recomputeCount();
+            }
         }
 
         @Override
@@ -132,8 +144,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 GeneralTableGenerator tableGenerator = new GeneralTableGenerator();
                 SQLQueryAdapter qt = tableGenerator.getQuery(globalState);
                 GeneralTable table = tableGenerator.getTable();
-                //TODO add error handling here
-                
+                // TODO add error handling here
+
                 success = globalState.executeStatement(qt);
                 if (success) {
                     List<GeneralTable> databaseTables = new ArrayList<>(globalState.getSchema().getDatabaseTables());
@@ -173,62 +185,13 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
     @Override
     public SQLConnection createDatabase(GeneralGlobalState globalState) throws SQLException {
-        // String databaseFile = System.getProperty("duckdb.database.file", "");
-        // String url = "jdbc:duckdb:" + databaseFile;
-        // tryDeleteDatabase(databaseFile);
-
-        // MainOptions options = globalState.getOptions();
-        // if (!(options.isDefaultUsername() && options.isDefaultPassword())) {
-        //     throw new AssertionError("DuckDB doesn't support credentials (username/password)");
-        // }
-
-        // Connection conn = DriverManager.getConnection(url);
-        // Statement stmt = conn.createStatement();
-        // stmt.execute("PRAGMA checkpoint_threshold='1 byte';");
-        // stmt.close();
-        String username = globalState.getOptions().getUserName();
-        String password = globalState.getOptions().getPassword();
-        String host = globalState.getOptions().getHost();
-        int port = globalState.getOptions().getPort();
-        // String url = String.format("jdbc:trino://%s:%d", host, port);
-        // Connection conn = DriverManager.getConnection(url, username, password);
-        // String databaseName = "memory." + globalState.getDatabaseName();
-        // try (Statement s = conn.createStatement()) {
-        //     s.execute("DROP SCHEMA IF EXISTS " + databaseName + " CASCADE");
-        // }
-        // try (Statement s = conn.createStatement()) {
-        //     s.execute("CREATE SCHEMA " +databaseName);
-        // }
-        // try (Statement s = conn.createStatement()) {
-        //     s.execute("USE " +databaseName);
-        // }
-
-        // // ---------------- crate ----------------
-        // String databaseName = globalState.getDatabaseName();
-        // String url = String.format("jdbc:postgresql://%s:%d/", host, port, databaseName);
-        // Connection conn = DriverManager.getConnection(url, username, password);
-        // // ---------------- crate ----------------
-
-
-        // ---------------- hive ----------------
+        DatabaseEngineFactory<GeneralGlobalState> databaseEngineFactory = globalState.getDbmsSpecificOptions()
+                .getDatabaseEngineFactory();
         String databaseName = globalState.getDatabaseName();
-        String url = String.format("jdbc:hive2://%s:%d/default", host, port, databaseName);
-        Connection conn = DriverManager.getConnection(url, username, password);
-        // ---------------- hive ----------------
 
-            
-
-
-        // Connection conn = DriverManager.getConnection(url);
-        // try (Statement s = conn.createStatement()) {
-        //     s.execute("DROP SCHEMA IF EXISTS " + databaseName);
-        // }
-        // try (Statement s = conn.createStatement()) {
-        //     s.execute("CREATE SCHEMA " +databaseName);
-        // }
-        // try (Statement s = conn.createStatement()) {
-        //     s.execute("USE " +databaseName);
-        // }
+        // Try CREATE DATABASE:
+        Connection conn = databaseEngineFactory.cleanOrSetUpDatabase(globalState, databaseName);
+        globalState.setOption("CREATE_DATABASE", databaseEngineFactory.isNewSchema());
 
         return new SQLConnection(conn);
     }

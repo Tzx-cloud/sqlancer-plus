@@ -164,7 +164,6 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         return new GeneralTables(Randomly.nonEmptySubset(getDatabaseTables()));
     }
 
-
     private static GeneralCompositeDataType getColumnType(int type) {
         switch (type) {
         case Types.INTEGER:
@@ -195,64 +194,64 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
     }
 
     // private static GeneralCompositeDataType getColumnType(String typeString) {
-    //     GeneralDataType primitiveType;
-    //     int size = -1;
-    //     // if (typeString.startsWith("DECIMAL")) { // Ugly hack
-    //     // return new GeneralCompositeDataType(GeneralDataType.FLOAT, 8);
-    //     // }
-    //     switch (typeString) {
-    //     case "INTEGER":
-    //         primitiveType = GeneralDataType.INT;
-    //         size = 4;
-    //         break;
-    //     case "4":
-    //         primitiveType = GeneralDataType.INT;
-    //         size = 4;
-    //         break;
-    //     case "SMALLINT":
-    //         primitiveType = GeneralDataType.INT;
-    //         size = 2;
-    //         break;
-    //     case "BIGINT":
-    //     case "HUGEINT": // TODO: 16-bit int
-    //         primitiveType = GeneralDataType.INT;
-    //         size = 8;
-    //         break;
-    //     case "TINYINT":
-    //         primitiveType = GeneralDataType.INT;
-    //         size = 1;
-    //         break;
-    //     // case "VARCHAR":
-    //     // primitiveType = GeneralDataType.VARCHAR;
-    //     // break;
-    //     // case "FLOAT":
-    //     // primitiveType = GeneralDataType.FLOAT;
-    //     // size = 4;
-    //     // break;
-    //     // case "DOUBLE":
-    //     // primitiveType = GeneralDataType.FLOAT;
-    //     // size = 8;
-    //     // break;
-    //     // case "BOOLEAN":
-    //     // primitiveType = GeneralDataType.BOOLEAN;
-    //     // break;
-    //     // case "DATE":
-    //     // primitiveType = GeneralDataType.DATE;
-    //     // break;
-    //     // case "TIMESTAMP":
-    //     // primitiveType = GeneralDataType.TIMESTAMP;
-    //     // break;
-    //     case "NULL":
-    //         primitiveType = GeneralDataType.NULL;
-    //         break;
-    //     case "INTERVAL":
-    //         throw new IgnoreMeException();
-    //     // TODO: caused when a view contains a computation like ((TIMESTAMP '1970-01-05 11:26:57')-(TIMESTAMP
-    //     // '1969-12-29 06:50:27'))
-    //     default:
-    //         throw new AssertionError(typeString);
-    //     }
-    //     return new GeneralCompositeDataType(primitiveType, size);
+    // GeneralDataType primitiveType;
+    // int size = -1;
+    // // if (typeString.startsWith("DECIMAL")) { // Ugly hack
+    // // return new GeneralCompositeDataType(GeneralDataType.FLOAT, 8);
+    // // }
+    // switch (typeString) {
+    // case "INTEGER":
+    // primitiveType = GeneralDataType.INT;
+    // size = 4;
+    // break;
+    // case "4":
+    // primitiveType = GeneralDataType.INT;
+    // size = 4;
+    // break;
+    // case "SMALLINT":
+    // primitiveType = GeneralDataType.INT;
+    // size = 2;
+    // break;
+    // case "BIGINT":
+    // case "HUGEINT": // TODO: 16-bit int
+    // primitiveType = GeneralDataType.INT;
+    // size = 8;
+    // break;
+    // case "TINYINT":
+    // primitiveType = GeneralDataType.INT;
+    // size = 1;
+    // break;
+    // // case "VARCHAR":
+    // // primitiveType = GeneralDataType.VARCHAR;
+    // // break;
+    // // case "FLOAT":
+    // // primitiveType = GeneralDataType.FLOAT;
+    // // size = 4;
+    // // break;
+    // // case "DOUBLE":
+    // // primitiveType = GeneralDataType.FLOAT;
+    // // size = 8;
+    // // break;
+    // // case "BOOLEAN":
+    // // primitiveType = GeneralDataType.BOOLEAN;
+    // // break;
+    // // case "DATE":
+    // // primitiveType = GeneralDataType.DATE;
+    // // break;
+    // // case "TIMESTAMP":
+    // // primitiveType = GeneralDataType.TIMESTAMP;
+    // // break;
+    // case "NULL":
+    // primitiveType = GeneralDataType.NULL;
+    // break;
+    // case "INTERVAL":
+    // throw new IgnoreMeException();
+    // // TODO: caused when a view contains a computation like ((TIMESTAMP '1970-01-05 11:26:57')-(TIMESTAMP
+    // // '1969-12-29 06:50:27'))
+    // default:
+    // throw new AssertionError(typeString);
+    // }
+    // return new GeneralCompositeDataType(primitiveType, size);
     // }
 
     public static class GeneralTable extends AbstractRelationalTable<GeneralColumn, TableIndex, GeneralGlobalState> {
@@ -266,7 +265,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
     public static GeneralSchema fromConnection(SQLConnection con, String databaseName) throws SQLException {
         List<GeneralTable> databaseTables = new ArrayList<>();
         List<String> tableNames = getTableNames(con);
-        
+
         for (String tableName : tableNames) {
             if (DBMSCommon.matchesIndexName(tableName)) {
                 continue; // TODO: unexpected?
@@ -313,9 +312,9 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                 int dataType = rs.getInt("DATA_TYPE");
                 boolean isNullable = rs.getString("IS_NULLABLE").contentEquals("true");
                 // try (ResultSet rs2 = metaData.getPrimaryKeys(null, null, tableName)) {
-                //     while (rs2.next()) {
-                //         primaryColumnName = rs2.getString("COLUMN_NAME");
-                //     }
+                // while (rs2.next()) {
+                // primaryColumnName = rs2.getString("COLUMN_NAME");
+                // }
                 // }
                 boolean isPrimaryKey = primaryColumnName != null && primaryColumnName.contentEquals(columnName);
                 GeneralColumn c = new GeneralColumn(columnName, getColumnType(dataType), isPrimaryKey, isNullable);
@@ -332,4 +331,18 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         return columns;
     }
 
+    @Override
+    public String getFreeTableName() {
+        // TODO Auto-generated method stub
+        int i = 0;
+        if (Randomly.getBooleanWithRatherLowProbability()) {
+            i = (int) Randomly.getNotCachedInteger(0, 10);
+        }
+        do {
+            String tableName = String.format("t%d", i++);
+            if (super.getDatabaseTables().stream().noneMatch(t -> t.getName().endsWith(tableName))) {
+                return tableName;
+            }
+        } while (true);
+    }
 }

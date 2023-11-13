@@ -58,36 +58,36 @@ public final class GeneralErrors {
     }
 
     // private static void addRegexErrors(ExpectedErrors errors) {
-    //     // errors.add("missing ]");
-    //     // errors.add("missing )");
-    //     // errors.add("invalid escape sequence");
-    //     // errors.add("no argument for repetition operator: ");
-    //     // errors.add("bad repetition operator");
-    //     // errors.add("trailing \\");
-    //     // errors.add("invalid perl operator");
-    //     // errors.add("invalid character class range");
-    //     // errors.add("width is not integer");
+    // // errors.add("missing ]");
+    // // errors.add("missing )");
+    // // errors.add("invalid escape sequence");
+    // // errors.add("no argument for repetition operator: ");
+    // // errors.add("bad repetition operator");
+    // // errors.add("trailing \\");
+    // // errors.add("invalid perl operator");
+    // // errors.add("invalid character class range");
+    // // errors.add("width is not integer");
     // }
 
     // private static void addFunctionErrors(ExpectedErrors errors) {
-    //     // errors.add("SUBSTRING cannot handle negative lengths");
-    //     // errors.add("is undefined outside [-1,1]"); // ACOS etc
-    //     // errors.add("invalid type specifier"); // PRINTF
-    //     // errors.add("argument index out of range"); // PRINTF
-    //     // errors.add("invalid format string"); // PRINTF
-    //     // errors.add("number is too big"); // PRINTF
-    //     // errors.add("Like pattern must not end with escape character!"); // LIKE
-    //     // errors.add("Could not choose a best candidate function for the function call \"date_part"); // date_part
-    //     // errors.add("extract specifier"); // date_part
-    //     // errors.add("not recognized"); // date_part
-    //     // errors.add("not supported"); // date_part
-    //     // errors.add("Failed to cast");
-    //     // errors.add("Conversion Error");
-    //     // errors.add("Could not cast value");
-    //     // errors.add("Insufficient padding in RPAD"); // RPAD
-    //     // errors.add("Could not choose a best candidate function for the function call"); // monthname
-    //     // errors.add("expected a numeric precision field"); // ROUND
-    //     // errors.add("with non-constant precision is not supported"); // ROUND
+    // // errors.add("SUBSTRING cannot handle negative lengths");
+    // // errors.add("is undefined outside [-1,1]"); // ACOS etc
+    // // errors.add("invalid type specifier"); // PRINTF
+    // // errors.add("argument index out of range"); // PRINTF
+    // // errors.add("invalid format string"); // PRINTF
+    // // errors.add("number is too big"); // PRINTF
+    // // errors.add("Like pattern must not end with escape character!"); // LIKE
+    // // errors.add("Could not choose a best candidate function for the function call \"date_part"); // date_part
+    // // errors.add("extract specifier"); // date_part
+    // // errors.add("not recognized"); // date_part
+    // // errors.add("not supported"); // date_part
+    // // errors.add("Failed to cast");
+    // // errors.add("Conversion Error");
+    // // errors.add("Could not cast value");
+    // // errors.add("Insufficient padding in RPAD"); // RPAD
+    // // errors.add("Could not choose a best candidate function for the function call"); // monthname
+    // // errors.add("expected a numeric precision field"); // ROUND
+    // // errors.add("with non-constant precision is not supported"); // ROUND
     // }
 
     public static void addInsertErrors(ExpectedErrors errors) {
