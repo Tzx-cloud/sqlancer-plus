@@ -167,6 +167,12 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:mysql://localhost:23306/?user=root&password=root");
             }
+        },
+        DOLT {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:mysql://localhost:10007/?user=root");
+            }
         };
 
         private boolean isNewSchema = true;

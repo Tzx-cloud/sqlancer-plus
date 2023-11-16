@@ -25,3 +25,8 @@ current_dir=$(pwd)
 # docker stop hive-test
 # docker rm hive-test
 # docker run -d -p 10005:10000 -p 10006:10002 --env SERVICE_NAME=hiveserver2 --name hive-test apache/hive:${HIVE_VERSION}
+
+# Run dolt-server
+# docker stop dolt-test
+# docker rm dolt-test
+# docker run --name dolt-test -d -p 10007:3306 dolthub/dolt-sql-server:latest
