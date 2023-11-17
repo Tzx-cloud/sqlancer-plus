@@ -173,6 +173,12 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:mysql://localhost:10007/?user=root");
             }
+        },
+        RISINGWAVE {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:postgresql://localhost:10009/dev?user=root");
+            }
         };
 
         private boolean isNewSchema = true;

@@ -30,3 +30,8 @@ current_dir=$(pwd)
 # docker stop dolt-test
 # docker rm dolt-test
 # docker run --name dolt-test -d -p 10007:3306 dolthub/dolt-sql-server:latest
+
+# Run risingwave
+# docker stop risingwave-test
+# docker rm risingwave-test
+# docker run --name risingwave-test -d -p 10008:4566 risingwavelabs/risingwave:latest
