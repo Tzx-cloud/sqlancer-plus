@@ -12,8 +12,8 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
 import sqlancer.DBMSSpecificOptions;
-import sqlancer.OracleFactory;
 import sqlancer.DatabaseEngineFactory;
+import sqlancer.OracleFactory;
 import sqlancer.common.oracle.CompositeTestOracle;
 import sqlancer.common.oracle.TestOracle;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
@@ -162,6 +162,14 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
                 return String.format("jdbc:postgresql://localhost:10004/?user=crate");
             }
         },
+        FIREBIRD {
+
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:firebirdsql://localhost:10008/default?user=SYSDBA&password=masterkey");
+            }
+
+        },
         MYSQL {
             @Override
             public String getJDBCString(GeneralGlobalState globalState) {
@@ -210,6 +218,7 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             }
             return conn;
         }
+
     }
 
     @Override

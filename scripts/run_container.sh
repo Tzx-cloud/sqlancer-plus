@@ -35,3 +35,8 @@ current_dir=$(pwd)
 # docker stop risingwave-test
 # docker rm risingwave-test
 # docker run --name risingwave-test -d -p 10008:4566 risingwavelabs/risingwave:latest
+
+# reproduce: /usr/local/firebird/bin/isql
+docker stop firebird-test
+docker rm firebird-test
+docker run --name firebird-test -e ISC_PASSWORD='masterkey' -e FIREBIRD_DATABASE='default' -d -p 10008:3050 jacobalberty/firebird
