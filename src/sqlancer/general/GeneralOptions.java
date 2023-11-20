@@ -166,7 +166,7 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
 
             @Override
             public String getJDBCString(GeneralGlobalState globalState) {
-                return String.format("jdbc:firebirdsql://localhost:10008/default?user=SYSDBA&password=masterkey");
+                return String.format("jdbc:firebirdsql://localhost:10009//app/default?user=SYSDBA&password=masterkey");
             }
 
         },
@@ -185,9 +185,54 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
         RISINGWAVE {
             @Override
             public String getJDBCString(GeneralGlobalState globalState) {
-                return String.format("jdbc:postgresql://localhost:10009/dev?user=root");
+                return String.format("jdbc:postgresql://localhost:10008/dev?user=root");
             }
-        };
+        },
+        DUCKDB {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                String databaseFile = System.getProperty("duckdb.database.file", "");
+                return String.format("jdbc:duckdb:" + databaseFile);
+            }
+
+            @Override
+            public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
+                    throws SQLException {
+                Connection conn = DriverManager.getConnection(getJDBCString(globalState));
+                return conn;
+            }
+        },
+        POSTGRESQL {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:postgresql://localhost:10010/?user=postgres&password=postgres");
+            }
+        },
+        COCKROACHDB {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:postgresql://localhost:10011/?user=root");
+            }
+        },
+        TIDB {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:mysql://localhost:10013/?user=root");
+            }
+        },
+        SQLITE {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:sqlite:file::memory:?cache=shared");
+            }
+            @Override
+            public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
+                    throws SQLException {
+                Connection conn = DriverManager.getConnection(getJDBCString(globalState));
+                return conn;
+            }
+        },
+        ;
 
         private boolean isNewSchema = true;
 

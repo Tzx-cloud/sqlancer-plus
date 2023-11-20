@@ -37,6 +37,23 @@ current_dir=$(pwd)
 # docker run --name risingwave-test -d -p 10008:4566 risingwavelabs/risingwave:latest
 
 # reproduce: /usr/local/firebird/bin/isql
-docker stop firebird-test
-docker rm firebird-test
-docker run --name firebird-test -e ISC_PASSWORD='masterkey' -e FIREBIRD_DATABASE='default' -d -p 10008:3050 jacobalberty/firebird
+# docker stop firebird-test
+# docker rm firebird-test
+# # docker run --name firebird-test -e ISC_PASSWORD='masterkey' -e FIREBIRD_DATABASE='default' -d -p 10009:3050 jacobalberty/firebird
+# docker build -t firebird-source-build scripts/Docker/firebird
+# docker run --name firebird-test -d -p 10009:3050 firebird-source-build
+
+# Run Postgres
+# docker stop postgres-test
+# docker rm postgres-test
+# docker run --name postgres-test -e POSTGRES_PASSWORD=postgres -d -p 10010:5432 postgres
+
+# Run CockroachDB
+# docker stop cockroach-test
+# docker rm cockroach-test
+# docker run --name cockroach-test -d -p 10011:26257 -p 10012:8080 cockroachdb/cockroach:latest start-single-node --insecure
+
+# Run TiDB
+# docker stop tidb-test
+# docker rm tidb-test
+# docker run --name tidb-test -d -p 10013:4000 -p 10014:10080 pingcap/tidb:nightly
