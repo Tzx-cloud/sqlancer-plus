@@ -57,3 +57,14 @@ current_dir=$(pwd)
 # docker stop tidb-test
 # docker rm tidb-test
 # docker run --name tidb-test -d -p 10013:4000 -p 10014:10080 pingcap/tidb:nightly
+
+# Run Umbra
+# umbra_path=$current_dir/resources/umbra
+# pid=$(ps -ef | grep "/home/suyang/Projects/sqlancer-scale/resources/umbra/bin/server" | grep -v grep | awk '{print $2}')
+# echo $pid
+# kill -9 $pid
+# rm -f $umbra_path/database/*
+# rm -f $umbra_path/database/.test.db.lock
+# nohup $umbra_path/bin/server --createdb $umbra_path/database/test.db --port=10015 > /dev/null 2>&1 &
+# sleep 1
+# psql -h /tmp -p 10015 -U postgres -c "ALTER USER postgres with password 'postgres';"

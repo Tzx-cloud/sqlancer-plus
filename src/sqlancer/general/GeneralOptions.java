@@ -232,6 +232,12 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
                 return conn;
             }
         },
+        UMBRA {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:postgresql://localhost:10015/?user=postgres&password=postgres");
+            }
+        },
         ;
 
         private boolean isNewSchema = true;
