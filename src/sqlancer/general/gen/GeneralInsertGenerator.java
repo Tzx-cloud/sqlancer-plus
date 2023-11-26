@@ -11,6 +11,7 @@ import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralToStringVisitor;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 
 public class GeneralInsertGenerator extends AbstractInsertGenerator<GeneralColumn> {
 
@@ -27,6 +28,7 @@ public class GeneralInsertGenerator extends AbstractInsertGenerator<GeneralColum
 
     private SQLQueryAdapter generate() {
         sb.append("INSERT INTO ");
+        globalState.getHandler().addScore(GeneratorNode.INSERT);
         GeneralTable table = globalState.getSchema().getRandomTable(t -> !t.isView());
         List<GeneralColumn> columns = table.getRandomNonEmptyColumnSubset();
         sb.append(table.getName());

@@ -93,6 +93,9 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
     @Parameter(names = "--max-num-updates", description = "The maximum number of UPDATE statements that are issued for a database", arity = 1)
     public int maxNumUpdates = 5;
 
+    @Parameter(names = "--enable-error-handling", description = "Enable error handling", arity = 1)
+    public boolean enableErrorHandling = true;
+
     @Parameter(names = "--oracle")
     public List<GeneralOracleFactory> oracles = Arrays.asList(GeneralOracleFactory.QUERY_PARTITIONING);
 
@@ -225,6 +228,7 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:sqlite:file::memory:?cache=shared");
             }
+
             @Override
             public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
                     throws SQLException {
@@ -237,8 +241,7 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:postgresql://localhost:10015/?user=postgres&password=postgres");
             }
-        },
-        ;
+        },;
 
         private boolean isNewSchema = true;
 

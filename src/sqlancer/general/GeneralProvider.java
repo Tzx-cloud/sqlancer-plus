@@ -2,11 +2,8 @@ package sqlancer.general;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
@@ -15,17 +12,17 @@ import sqlancer.AbstractAction;
 import sqlancer.DatabaseEngineFactory;
 import sqlancer.DatabaseProvider;
 import sqlancer.IgnoreMeException;
-import sqlancer.MainOptions;
 import sqlancer.Randomly;
 import sqlancer.SQLConnection;
 import sqlancer.SQLGlobalState;
 import sqlancer.SQLProviderAdapter;
 import sqlancer.StatementExecutor;
+import sqlancer.common.query.Query;
 import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.common.query.SQLQueryProvider;
 import sqlancer.common.schema.AbstractTable;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralSchema.GeneralTable;
-import sqlancer.general.GeneralSchema.GeneralTables;
 import sqlancer.general.gen.GeneralIndexGenerator;
 import sqlancer.general.gen.GeneralInsertGenerator;
 import sqlancer.general.gen.GeneralTableGenerator;
@@ -96,9 +93,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
     public static class GeneralGlobalState extends SQLGlobalState<GeneralOptions, GeneralSchema> {
         private GeneralSchema schema = new GeneralSchema(new ArrayList<>());
-        private HashMap<String, Float> overallGeneratorScore;
-        private HashMap<String, Float> singleStatementScore;
-        private HashMap<String, Boolean> optionMap = new HashMap<>();
+        private GeneralErrorHandler handler = new GeneralErrorHandler();
 
         @Override
         public GeneralSchema getSchema() {
@@ -106,12 +101,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             return schema;
         }
 
-        public void setOption(String option, Boolean value) {
-            optionMap.put(option, value);
-        }
-
-        public Boolean getOption(String option) {
-            return optionMap.get(option);
+        public GeneralErrorHandler getHandler() {
+            return handler;
         }
 
         public void setSchema(List<GeneralTable> tables) {
@@ -130,9 +121,46 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             return GeneralSchema.fromConnection(getConnection(), getDatabaseName());
         }
 
-        public void addScore() {
-
+        // Override execute statement
+        @Override
+        public boolean executeStatement(Query<SQLConnection> q, String... fills) throws Exception {
+            boolean success = false;
+            try {
+                success = super.executeStatement(q, fills);
+            } catch (Exception e) {
+                handler.appendScoreToTable(false);
+                throw e;
+            }
+            // I guess we want to make sure if the syntax is correct
+            handler.appendScoreToTable(success);
+            return success;
         }
+
+        @Override
+        public void updateOptions() {
+            if (getDbmsSpecificOptions().enableErrorHandling) {
+                handler.updateGeneratorOptions();
+                handler.printStatistics();
+                handler.saveStatistics(this);
+            }
+        }
+
+        // @Override
+        // public SQLancerResultSet executeStatementAndGet(Query<SQLConnection> q,
+        // String... fills) throws Exception {
+        // SQLancerResultSet result;
+        // try {
+        // result = super.executeStatementAndGet(q, fills);
+        // } catch (Exception e) {
+        // // if the query just fails
+        // handler.appendScoreToTable(false);
+        // throw e;
+        // }
+        // // We need to append later, because we need to know if the oracle check it
+        // correct
+        // handler.setExecutionStatus(result != null);
+        // return result;
+        // }
     }
 
     @Override
@@ -191,7 +219,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
         // Try CREATE DATABASE:
         Connection conn = databaseEngineFactory.cleanOrSetUpDatabase(globalState, databaseName);
-        globalState.setOption("CREATE_DATABASE", databaseEngineFactory.isNewSchema());
+        globalState.getHandler().setOption(GeneratorNode.CREATE_DATABASE, databaseEngineFactory.isNewSchema());
 
         return new SQLConnection(conn);
     }

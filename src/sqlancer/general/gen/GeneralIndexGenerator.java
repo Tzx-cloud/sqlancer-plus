@@ -11,6 +11,7 @@ import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralToStringVisitor;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.ast.GeneralExpression;
 
 public final class GeneralIndexGenerator {
@@ -21,9 +22,11 @@ public final class GeneralIndexGenerator {
     public static SQLQueryAdapter getQuery(GeneralGlobalState globalState) {
         ExpectedErrors errors = new ExpectedErrors();
         StringBuilder sb = new StringBuilder();
+        globalState.getHandler().addScore(GeneratorNode.CREATE_INDEX);
         sb.append("CREATE ");
         if (Randomly.getBoolean()) {
             errors.add("Cant create unique index, table contains duplicate data on indexed column(s)");
+            globalState.getHandler().addScore(GeneratorNode.UNIQUE_INDEX);
             sb.append("UNIQUE ");
         }
         sb.append("INDEX ");

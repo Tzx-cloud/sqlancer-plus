@@ -15,6 +15,7 @@ import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralToStringVisitor;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.ast.GeneralExpression;
 
 public class GeneralTableGenerator {
@@ -29,7 +30,7 @@ public class GeneralTableGenerator {
         StringBuilder sb = new StringBuilder();
         String tableName;
         // TODO check if this is correct
-        if (globalState.getOption("CREATE_DATABASE")) {
+        if (globalState.getHandler().getOption(GeneratorNode.CREATE_DATABASE)) {
             tableName = globalState.getSchema().getFreeTableName();
         } else {
             tableName = String.format("%s_%s", globalState.getDatabaseName(),
@@ -38,7 +39,7 @@ public class GeneralTableGenerator {
         sb.append("CREATE TABLE ");
         sb.append(tableName);
         sb.append("(");
-        List<GeneralColumn> columns = getNewColumns();
+        List<GeneralColumn> columns = getNewColumns(globalState);
         // UntypedExpressionGenerator<Node<GeneralExpression>, GeneralColumn> gen = new GeneralExpressionGenerator(
         // globalState).setColumns(columns);
         for (int i = 0; i < columns.size(); i++) {
@@ -79,6 +80,7 @@ public class GeneralTableGenerator {
         if (globalState.getDbmsSpecificOptions().testIndexes && !Randomly.getBooleanWithRatherLowProbability()) {
             List<GeneralColumn> primaryKeyColumns = Randomly
                     .nonEmptySubset(new ArrayList<>(columns.subList(0, columns.size() - 1)));
+            globalState.getHandler().addScore(GeneratorNode.PRIMARY_KEY);
             sb.append(", PRIMARY KEY(");
             sb.append(primaryKeyColumns.stream().map(c -> c.getName()).collect(Collectors.joining(", ")));
             sb.append(")");
@@ -99,11 +101,15 @@ public class GeneralTableGenerator {
         return Randomly.fromOptions("NOCASE", "NOACCENT", "NOACCENT.NOCASE", "C", "POSIX");
     }
 
-    private static List<GeneralColumn> getNewColumns() {
+    private static List<GeneralColumn> getNewColumns(GeneralGlobalState globalState) {
         List<GeneralColumn> columns = new ArrayList<>();
         for (int i = 0; i < Randomly.smallNumber() + 2; i++) {
             String columnName = String.format("c%d", i);
+            globalState.getHandler().addScore(GeneratorNode.COLUMN_NUM);
             GeneralCompositeDataType columnType = GeneralCompositeDataType.getRandomWithoutNull();
+            // TODO Handle IllegalArgumentExeption?
+            globalState.getHandler()
+                    .addScore(GeneratorNode.valueOf("COLUMN_" + columnType.getPrimitiveDataType().toString()));
             columns.add(new GeneralColumn(columnName, columnType, false, false));
         }
         return columns;

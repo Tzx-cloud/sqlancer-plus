@@ -148,6 +148,9 @@ public abstract class GlobalState<O extends DBMSSpecificOptions<?>, S extends Ab
         }
     }
 
+    public void updateOptions() {
+    }
+
     protected abstract S readSchema() throws Exception;
 
 }

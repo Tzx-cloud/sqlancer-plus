@@ -23,8 +23,13 @@ public class GeneralQueryPartitioningWhere extends GeneralQueryPartitioningBase 
         super.check();
         select.setWhereClause(null);
         String originalQueryString = GeneralToStringVisitor.asString(select);
-
-        List<String> resultSet = ComparatorHelper.getResultSetFirstColumnAsString(originalQueryString, errors, state);
+        List<String> resultSet;
+        try {
+            resultSet = ComparatorHelper.getResultSetFirstColumnAsString(originalQueryString, errors, state);
+        } catch (Exception e) {
+            state.getHandler().appendScoreToTable(false);
+            throw e;
+        }
 
         boolean orderBy = Randomly.getBooleanWithRatherLowProbability();
         if (orderBy) {
@@ -37,10 +42,24 @@ public class GeneralQueryPartitioningWhere extends GeneralQueryPartitioningBase 
         select.setWhereClause(isNullPredicate);
         String thirdQueryString = GeneralToStringVisitor.asString(select);
         List<String> combinedString = new ArrayList<>();
-        List<String> secondResultSet = ComparatorHelper.getCombinedResultSet(firstQueryString, secondQueryString,
-                thirdQueryString, combinedString, !orderBy, state, errors);
-        ComparatorHelper.assumeResultSetsAreEqual(resultSet, secondResultSet, originalQueryString, combinedString,
-                state, ComparatorHelper::canonicalizeResultValue);
+
+        List<String> secondResultSet;
+        try {
+            secondResultSet = ComparatorHelper.getCombinedResultSet(firstQueryString, secondQueryString,
+                    thirdQueryString, combinedString, !orderBy, state, errors);
+        } catch (Exception e) {
+            state.getHandler().appendScoreToTable(false);
+            throw e;
+        }
+        try {
+            ComparatorHelper.assumeResultSetsAreEqual(resultSet, secondResultSet, originalQueryString, combinedString,
+                    state, ComparatorHelper::canonicalizeResultValue);
+        } catch (AssertionError e) {
+            // TODO we need to give some information to the handler here
+            // state.getHandler().printStatistics();
+            throw e;
+        }
+        state.getHandler().appendScoreToTable(true);
     }
 
 }

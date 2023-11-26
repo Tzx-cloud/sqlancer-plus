@@ -20,6 +20,8 @@ import sqlancer.common.ast.newast.NewUnaryPostfixOperatorNode;
 import sqlancer.common.ast.newast.NewUnaryPrefixOperatorNode;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.gen.UntypedExpressionGenerator;
+import sqlancer.general.GeneralErrorHandler;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
@@ -43,6 +45,7 @@ public final class GeneralExpressionGenerator
 
     @Override
     protected Node<GeneralExpression> generateExpression(int depth) {
+        GeneralErrorHandler handler = globalState.getHandler();
         if (depth >= globalState.getOptions().getMaxExpressionDepth() || Randomly.getBoolean()) {
             return generateLeafNode();
         }
@@ -52,34 +55,42 @@ public final class GeneralExpressionGenerator
             return new NewFunctionNode<>(generateExpressions(aggregate.getNrArgs(), depth + 1), aggregate);
         }
         List<Expression> possibleOptions = new ArrayList<>(Arrays.asList(Expression.values()));
-        if (!globalState.getDbmsSpecificOptions().testCollate | true) {
+        if (!globalState.getDbmsSpecificOptions().testCollate | !handler.getOption(GeneratorNode.COLLATE)) {
             possibleOptions.remove(Expression.COLLATE);
         }
-        if (!globalState.getDbmsSpecificOptions().testFunctions | true) {
+        if (!globalState.getDbmsSpecificOptions().testFunctions | !handler.getOption(GeneratorNode.FUNC)) {
             possibleOptions.remove(Expression.FUNC);
         }
-        if (!globalState.getDbmsSpecificOptions().testCasts | true) {
+        if (!globalState.getDbmsSpecificOptions().testCasts | !handler.getOption(GeneratorNode.CAST)) {
             possibleOptions.remove(Expression.CAST);
         }
-        if (!globalState.getDbmsSpecificOptions().testBetween) {
+        if (!globalState.getDbmsSpecificOptions().testBetween | !handler.getOption(GeneratorNode.BETWEEN)) {
             possibleOptions.remove(Expression.BETWEEN);
         }
-        if (!globalState.getDbmsSpecificOptions().testIn) {
+        if (!globalState.getDbmsSpecificOptions().testIn | !handler.getOption(GeneratorNode.IN)) {
             possibleOptions.remove(Expression.IN);
         }
-        if (!globalState.getDbmsSpecificOptions().testCase) {
+        if (!globalState.getDbmsSpecificOptions().testCase | !handler.getOption(GeneratorNode.CASE)) {
             possibleOptions.remove(Expression.CASE);
         }
-        if (!globalState.getDbmsSpecificOptions().testBinaryComparisons) {
+        if (!globalState.getDbmsSpecificOptions().testBinaryComparisons
+                | !handler.getOption(GeneratorNode.BINARY_COMPARISON)) {
             possibleOptions.remove(Expression.BINARY_COMPARISON);
         }
-        if (!globalState.getDbmsSpecificOptions().testBinaryLogicals) {
+        if (!globalState.getDbmsSpecificOptions().testBinaryLogicals
+                | !handler.getOption(GeneratorNode.BINARY_LOGICAL)) {
             possibleOptions.remove(Expression.BINARY_LOGICAL);
         }
         possibleOptions.remove(Expression.LIKE_ESCAPE);
-        possibleOptions.remove(Expression.UNARY_POSTFIX);
-        possibleOptions.remove(Expression.UNARY_PREFIX);
+        if (!handler.getOption(GeneratorNode.UNARY_POSTFIX)) {
+            possibleOptions.remove(Expression.UNARY_POSTFIX);
+        }
+        if (!handler.getOption(GeneratorNode.UNARY_PREFIX)) {
+            possibleOptions.remove(Expression.UNARY_PREFIX);
+        }
         Expression expr = Randomly.fromList(possibleOptions);
+        // TODO Handle IllegalArgumentException
+        globalState.getHandler().addScore(GeneratorNode.valueOf(expr.toString()));
         switch (expr) {
         case COLLATE:
             return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
@@ -91,7 +102,12 @@ public final class GeneralExpressionGenerator
             return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     GeneralUnaryPostfixOperator.getRandom());
         case BINARY_COMPARISON:
-            Operator op = GeneralBinaryComparisonOperator.getRandom();
+            Operator op;
+            do {
+                op = GeneralBinaryComparisonOperator.getRandom();
+            } while (!handler.getOption(GeneratorNode.valueOf(op.toString()))
+                    | Randomly.getBooleanWithSmallProbability());
+            handler.addScore(GeneratorNode.valueOf(op.toString()));
             return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     generateExpression(depth + 1), op);
         case BINARY_LOGICAL:
@@ -99,13 +115,25 @@ public final class GeneralExpressionGenerator
             return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     generateExpression(depth + 1), op);
         case BINARY_ARITHMETIC:
+            do {
+                op = GeneralBinaryArithmeticOperator.getRandom();
+            } while (!handler.getOption(GeneratorNode.valueOf("OP" + op.toString()))
+                    | Randomly.getBooleanWithSmallProbability());
+            handler.addScore(GeneratorNode.valueOf("OP" + op.toString()));
             return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                    generateExpression(depth + 1), GeneralBinaryArithmeticOperator.getRandom());
+                    generateExpression(depth + 1), op);
         case CAST:
             return new GeneralCastOperation(generateExpression(depth + 1),
                     GeneralCompositeDataType.getRandomWithoutNull());
         case FUNC:
-            DBFunction func = DBFunction.getRandom();
+            DBFunction func;
+            // Check if the function is supported by the DBMS
+            do {
+                func = DBFunction.getRandom();
+                // TODO Handle IllegalArgumentException
+            } while (!handler.getOption(GeneratorNode.valueOf(func.toString()))
+                    | Randomly.getBooleanWithSmallProbability());
+            handler.addScore(GeneratorNode.valueOf(func.toString()));
             return new NewFunctionNode<GeneralExpression, DBFunction>(generateExpressions(func.getNrArgs()), func);
         case BETWEEN:
             return new NewBetweenOperatorNode<GeneralExpression>(generateExpression(depth + 1),
