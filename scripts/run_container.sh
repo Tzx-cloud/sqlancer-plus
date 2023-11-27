@@ -68,3 +68,13 @@ current_dir=$(pwd)
 # nohup $umbra_path/bin/server --createdb $umbra_path/database/test.db --port=10015 > /dev/null 2>&1 &
 # sleep 1
 # psql -h /tmp -p 10015 -U postgres -c "ALTER USER postgres with password 'postgres';"
+
+# Run MariaDB
+# docker stop mariadb-test
+# docker rm mariadb-test
+# docker run --name mariadb-test -e MYSQL_ROOT_PASSWORD=root -d -p 10016:3306 mariadb:latest
+
+# Run Immudb
+# docker stop immudb-test
+# docker rm immudb-test
+# docker run --name immudb-test -d -p 10017:5432 codenotary/immudb:latest
