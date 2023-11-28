@@ -87,7 +87,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         public String toString() {
             switch (getPrimitiveDataType()) {
             case INT:
-                return Randomly.fromOptions("INT");
+                return Randomly.fromOptions("INT", "INTEGER");
             // switch (size) {
             // case 8:
             // return Randomly.fromOptions("BIGINT", "INT8");
