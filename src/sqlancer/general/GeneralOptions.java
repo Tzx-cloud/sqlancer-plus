@@ -241,6 +241,24 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:postgresql://localhost:10015/?user=postgres&password=postgres");
             }
+
+            @Override
+            public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
+                    throws SQLException {
+                Connection conn = DriverManager.getConnection(getJDBCString(globalState));
+                setIsNewSchema(false);
+                for (int i = 0; i < 100; i++) {
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP TABLE %s_t%d", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
+                }
+                try (Statement s = conn.createStatement()) {
+                    s.execute("set debug.storage = 'P';");
+                    globalState.getState().logStatement("set debug.storage = 'P';");
+                }
+                return conn;
+            }
         },
         MARIADB {
             @Override
@@ -260,6 +278,10 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
 
         public boolean isNewSchema() {
             return isNewSchema;
+        }
+
+        public void setIsNewSchema(boolean isNewSchema) {
+            this.isNewSchema = isNewSchema;
         }
 
         @Override

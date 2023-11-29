@@ -289,9 +289,6 @@ public final class GeneralExpressionGenerator
         SUFFIX(2), //
         INSTR(2), //
         PRINTF(1, true), //
-        REGEXP_MATCHES(2), //
-        REGEXP_REPLACE(3), //
-        STRIP_ACCENTS(1), //
 
         // date functions
         DATE_PART(2), AGE(2),
