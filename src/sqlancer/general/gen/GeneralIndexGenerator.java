@@ -30,9 +30,14 @@ public final class GeneralIndexGenerator {
             sb.append("UNIQUE ");
         }
         sb.append("INDEX ");
-        sb.append(globalState.getDatabaseName()+ "_"+ (Randomly.fromOptions("i0", "i1", "i2", "i3", "i4"))); // cannot query this information
-        sb.append(" ON ");
         GeneralTable table = globalState.getSchema().getRandomTable(t -> !t.isView());
+        String indexPrefix = globalState.getHandler().getOption(GeneratorNode.CREATE_DATABASE) ? ""
+                : globalState.getDatabaseName() + "_";
+        String indexName = table.getName() + Randomly.fromOptions("i0", "i1", "i2", "i3", "i4");
+        // TODO: make it schema aware
+        // String indexName = table.getName() + (table.getIndexes().isEmpty() ? "i0" : "i" + table.getIndexes().size());
+        sb.append(indexPrefix+ indexName); 
+        sb.append(" ON ");
         sb.append(table.getName());
         sb.append("(");
         List<GeneralColumn> columns = table.getRandomNonEmptyColumnSubset();
