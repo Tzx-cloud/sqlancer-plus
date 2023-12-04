@@ -6,11 +6,13 @@ import java.util.List;
 
 import sqlancer.ComparatorHelper;
 import sqlancer.Randomly;
+import sqlancer.Reproducer;
 import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralToStringVisitor;
 
 public class GeneralQueryPartitioningWhere extends GeneralQueryPartitioningBase {
+    private Reproducer<GeneralGlobalState> reproducer;
 
     public GeneralQueryPartitioningWhere(GeneralGlobalState state) {
         super(state);
@@ -18,8 +20,49 @@ public class GeneralQueryPartitioningWhere extends GeneralQueryPartitioningBase 
         GeneralErrors.addExpressionErrors(errors);
     }
 
+    private class GeneralQueryPartitioningWhereReproducer implements Reproducer<GeneralGlobalState> {
+        final String firstQueryString;
+        final String secondQueryString;
+        final String thirdQueryString;
+        final String originalQueryString;
+        final boolean orderBy;
+        private String errorMessage;
+
+        GeneralQueryPartitioningWhereReproducer(String firstQueryString, String secondQueryString,
+                String thirdQueryString, String originalQueryString, boolean orderBy, String errorMessage) {
+            this.firstQueryString = firstQueryString;
+            this.secondQueryString = secondQueryString;
+            this.thirdQueryString = thirdQueryString;
+            this.originalQueryString = originalQueryString;
+            this.orderBy = orderBy;
+            this.errorMessage = errorMessage;
+        }
+        
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+
+        @Override
+        public boolean bugStillTriggers(GeneralGlobalState globalState) {
+            try {
+                List<String> resultSet = ComparatorHelper.getResultSetFirstColumnAsString(originalQueryString, errors, globalState);
+                List<String> combinedString1 = new ArrayList<>();
+                List<String> secondResultSet1 = ComparatorHelper.getCombinedResultSet(firstQueryString,
+                        secondQueryString, thirdQueryString, combinedString1, !orderBy, globalState, errors);
+                ComparatorHelper.assumeResultSetsAreEqual(resultSet, secondResultSet1, originalQueryString,
+                        combinedString1, globalState, ComparatorHelper::canonicalizeResultValue);
+            } catch (AssertionError triggeredError) {
+                this.errorMessage = triggeredError.getMessage();
+                return true;
+            } catch (SQLException ignored) {
+            }
+            return false;
+        }
+    }
+
     @Override
     public void check() throws SQLException {
+        reproducer = null;
         super.check();
         select.setWhereClause(null);
         String originalQueryString = GeneralToStringVisitor.asString(select);
@@ -57,9 +100,16 @@ public class GeneralQueryPartitioningWhere extends GeneralQueryPartitioningBase 
         } catch (AssertionError e) {
             // TODO we need to give some information to the handler here
             // state.getHandler().printStatistics();
+            reproducer = new GeneralQueryPartitioningWhereReproducer(firstQueryString, secondQueryString,
+                    thirdQueryString, originalQueryString, orderBy, e.getMessage());
             throw e;
         }
         state.getHandler().appendScoreToTable(true);
+    }
+
+    @Override
+    public Reproducer<GeneralGlobalState> getLastReproducer() {
+        return reproducer;
     }
 
 }

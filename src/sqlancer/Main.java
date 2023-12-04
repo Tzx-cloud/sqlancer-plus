@@ -481,7 +481,9 @@ public final class Main {
                     newGlobalState.setMainOptions(options);
                     newGlobalState.setDbmsSpecificOptions(command);
                     QueryManager<C> newManager = new QueryManager<>(newGlobalState);
-                    newGlobalState.setStateLogger(new StateLogger(databaseName, provider, options));
+                    StateLogger newLogger = new StateLogger(databaseName, provider, options);
+                    newLogger.currentFileWriter = newLogger.getReduceFileWriter();
+                    newGlobalState.setStateLogger(newLogger);
                     newGlobalState.setManager(newManager);
 
                     Reducer<G> reducer = new StatementReducer<>(provider);
@@ -493,13 +495,13 @@ public final class Main {
                     }
 
                     try {
-                        logger.getReduceFileWriter().close();
-                        logger.reduceFileWriter = null;
+                        newLogger.getReduceFileWriter().close();
+                        newLogger.reduceFileWriter = null;
                     } catch (IOException e) {
                         throw new AssertionError(e);
                     }
 
-                    throw new AssertionError("Found a potential bug, please check reducer log for detail.");
+                    throw new AssertionError("Found a potential bug, please check reducer log for detail.\n" + reproducer.getErrorMessage());
                 }
             }
         }
