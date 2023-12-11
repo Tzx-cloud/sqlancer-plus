@@ -92,7 +92,7 @@ public class GeneralTableGenerator {
             columnsToAdd = columns;
         }
         sb.append(")");
-        errors.addRegex(Pattern.compile(".*"));
+        errors.addRegex(Pattern.compile(".*", Pattern.DOTALL));
         this.table = new GeneralTable(tableName, columnsToAdd, false);
         return new SQLQueryAdapter(sb.toString(), errors, true, false);
     }

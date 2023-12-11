@@ -72,3 +72,8 @@ current_dir=$(pwd)
 # docker stop immudb-test
 # docker rm immudb-test
 # docker run --name immudb-test -d -p 10017:5432 codenotary/immudb:latest
+
+# Run QuestDB
+# docker stop questdb-test
+# docker rm questdb-test
+# docker run --name questdb-test -d -p 10018:8812 -p 10019:9009 questdb/questdb:7.3.2

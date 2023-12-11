@@ -272,6 +272,12 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
                 return String.format("jdbc:postgresql://localhost:10017/defaultdb?sslmode=allow&preferQueryMode=simple&user=immudb&password=immudb");
             }
         },
+        QUESTDB {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:postgresql://localhost:10018/?user=admin&password=quest");
+            }
+        },
         ;
 
         private boolean isNewSchema = true;
