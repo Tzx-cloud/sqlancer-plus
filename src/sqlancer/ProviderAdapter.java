@@ -12,7 +12,6 @@ import sqlancer.common.DBMSCommon;
 import sqlancer.common.oracle.CompositeTestOracle;
 import sqlancer.common.oracle.TestOracle;
 import sqlancer.common.schema.AbstractSchema;
-import sqlancer.general.GeneralProvider.GeneralGlobalState;
 
 public abstract class ProviderAdapter<G extends GlobalState<O, ? extends AbstractSchema<G, ?>, C>, O extends DBMSSpecificOptions<? extends OracleFactory<G>>, C extends SQLancerDBConnection>
         implements DatabaseProvider<G, O, C> {

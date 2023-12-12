@@ -22,7 +22,6 @@ import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralSelect;
 import sqlancer.general.gen.GeneralExpressionGenerator.GeneralAggregateFunction;
-import sqlancer.general.gen.GeneralExpressionGenerator.GeneralCastOperation;
 import sqlancer.general.gen.GeneralExpressionGenerator.GeneralUnaryPostfixOperator;
 import sqlancer.general.gen.GeneralExpressionGenerator.GeneralUnaryPrefixOperator;
 

@@ -6,17 +6,13 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import sqlancer.Randomly;
-import sqlancer.common.ast.newast.Node;
-import sqlancer.common.gen.UntypedExpressionGenerator;
 import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.GeneralSchema.GeneralTable;
-import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
-import sqlancer.general.ast.GeneralExpression;
 
 public class GeneralTableGenerator {
     private GeneralTable table;

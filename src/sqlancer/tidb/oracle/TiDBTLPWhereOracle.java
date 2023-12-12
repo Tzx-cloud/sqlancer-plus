@@ -53,12 +53,6 @@ public class TiDBTLPWhereOracle extends TiDBTLPBase {
             }
             return false;
         }
-
-        @Override
-        public String getErrorMessage() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'getErrorMessage'");
-        }
     }
 
     @Override
