@@ -53,6 +53,12 @@ public class SQLite3NoRECOracle extends NoRECBase<SQLite3GlobalState> implements
         public boolean bugStillTriggers(SQLite3GlobalState globalState) {
             return !Objects.equals(optimizedQuery.apply(globalState), unoptimizedQuery.apply(globalState));
         }
+
+        @Override
+        public String getErrorMessage() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'getErrorMessage'");
+        }
     }
 
     public SQLite3NoRECOracle(SQLite3GlobalState globalState) {
