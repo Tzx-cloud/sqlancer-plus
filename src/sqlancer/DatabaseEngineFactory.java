@@ -8,5 +8,7 @@ public interface DatabaseEngineFactory<G extends GlobalState<?, ?, ?>> {
 
     Connection cleanOrSetUpDatabase(G globalState, String databaseName) throws SQLException;
 
+    void syncData(G globalState) throws SQLException;
+
     boolean isNewSchema();
 }

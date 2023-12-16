@@ -17,6 +17,7 @@ import sqlancer.OracleFactory;
 import sqlancer.common.oracle.CompositeTestOracle;
 import sqlancer.common.oracle.TestOracle;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
+import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.oracle.GeneralNoRECOracle;
 import sqlancer.general.oracle.GeneralQueryPartitioningAggregate;
 import sqlancer.general.oracle.GeneralQueryPartitioningDistinct;
@@ -163,6 +164,16 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             @Override
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:postgresql://localhost:10004/?user=crate");
+            }
+
+            @Override
+            public void syncData(GeneralGlobalState globalState) throws SQLException {
+                for (GeneralTable table : globalState.getSchema().getDatabaseTables()) {
+                    try (Statement s = globalState.getConnection().createStatement()) {
+                        s.execute(String.format("REFRESH TABLE %s", table.getName()));
+                        globalState.getState().logStatement(String.format("REFRESH TABLE %s", table.getName()));
+                    }
+                }
             }
         },
         FIREBIRD {
@@ -312,6 +323,10 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
                 }
             }
             return conn;
+        }
+
+        @Override
+        public void syncData(GeneralGlobalState globalState) throws SQLException {
         }
 
     }
