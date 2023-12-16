@@ -24,7 +24,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
     public enum GeneralDataType {
 
         // INT, VARCHAR, BOOLEAN, FLOAT, DATE, TIMESTAMP, NULL;
-        INT, NULL;
+        INT, NULL, BOOLEAN, STRING;
 
         public static GeneralDataType getRandomWithoutNull() {
             GeneralDataType dt;
@@ -32,6 +32,10 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                 dt = Randomly.fromOptions(values());
             } while (dt == GeneralDataType.NULL);
             return dt;
+        }
+
+        public GeneralCompositeDataType get() {
+            return new GeneralCompositeDataType(this, 0);
         }
 
     }
@@ -68,12 +72,12 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             // case FLOAT:
             // size = Randomly.fromOptions(4, 8);
             // break;
-            // case BOOLEAN:
-            // case VARCHAR:
-            // case DATE:
-            // case TIMESTAMP:
-            // size = 0;
-            // break;
+            case BOOLEAN:
+            case STRING:
+                // case DATE:
+                // case TIMESTAMP:
+                size = 0;
+                break;
             default:
                 throw new AssertionError(type);
             }
@@ -98,8 +102,8 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             // default:
             // throw new AssertionError(size);
             // }
-            // case VARCHAR:
-            // return "VARCHAR";
+            case STRING:
+                return "VARCHAR";
             // case FLOAT:
             // switch (size) {
             // case 8:
@@ -109,8 +113,8 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             // default:
             // throw new AssertionError(size);
             // }
-            // case BOOLEAN:
-            // return Randomly.fromOptions("BOOLEAN", "BOOL");
+            case BOOLEAN:
+                return Randomly.fromOptions("BOOLEAN", "BOOL");
             // case TIMESTAMP:
             // return Randomly.fromOptions("TIMESTAMP", "DATETIME");
             // case DATE:

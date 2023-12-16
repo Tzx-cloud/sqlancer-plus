@@ -50,6 +50,11 @@ public class SQLite3NoRECOracle extends NoRECBase<SQLite3GlobalState> implements
         }
 
         @Override
+        public String getErrorMessage() {
+            throw new AssertionError();
+        }
+
+        @Override
         public boolean bugStillTriggers(SQLite3GlobalState globalState) {
             return !Objects.equals(optimizedQuery.apply(globalState), unoptimizedQuery.apply(globalState));
         }

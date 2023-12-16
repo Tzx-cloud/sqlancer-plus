@@ -37,7 +37,7 @@ public class GeneralQueryPartitioningWhere extends GeneralQueryPartitioningBase 
             this.orderBy = orderBy;
             this.errorMessage = errorMessage;
         }
-        
+
         public String getErrorMessage() {
             return errorMessage;
         }
@@ -45,7 +45,8 @@ public class GeneralQueryPartitioningWhere extends GeneralQueryPartitioningBase 
         @Override
         public boolean bugStillTriggers(GeneralGlobalState globalState) {
             try {
-                List<String> resultSet = ComparatorHelper.getResultSetFirstColumnAsString(originalQueryString, errors, globalState);
+                List<String> resultSet = ComparatorHelper.getResultSetFirstColumnAsString(originalQueryString, errors,
+                        globalState);
                 List<String> combinedString1 = new ArrayList<>();
                 List<String> secondResultSet1 = ComparatorHelper.getCombinedResultSet(firstQueryString,
                         secondQueryString, thirdQueryString, combinedString1, !orderBy, globalState, errors);

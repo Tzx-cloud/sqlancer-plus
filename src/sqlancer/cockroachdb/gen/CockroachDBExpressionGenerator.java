@@ -358,4 +358,10 @@ public class CockroachDBExpressionGenerator
         return new CockroachDBUnaryPostfixOperation(expr, CockroachDBUnaryPostfixOperator.IS_NULL);
     }
 
+    @Override
+    public CockroachDBExpression generateExpression() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateExpression'");
+    }
+
 }

@@ -560,4 +560,16 @@ public class YSQLExpressionGenerator implements ExpressionGenerator<YSQLExpressi
         UNARY_OPERATION, FUNCTION, CAST, BINARY_ARITHMETIC_EXPRESSION
     }
 
+    @Override
+    public List<YSQLExpression> generateOrderBys() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateOrderBys'");
+    }
+
+    @Override
+    public YSQLExpression generateExpression() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateExpression'");
+    }
+
 }

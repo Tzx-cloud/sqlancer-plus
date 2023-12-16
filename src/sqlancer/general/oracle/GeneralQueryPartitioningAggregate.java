@@ -22,8 +22,8 @@ import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralSelect;
 import sqlancer.general.gen.GeneralExpressionGenerator.GeneralAggregateFunction;
-import sqlancer.general.gen.GeneralExpressionGenerator.GeneralUnaryPostfixOperator;
-import sqlancer.general.gen.GeneralExpressionGenerator.GeneralUnaryPrefixOperator;
+import sqlancer.general.ast.GeneralUnaryPostfixOperator;
+import sqlancer.general.ast.GeneralUnaryPrefixOperator;
 
 public class GeneralQueryPartitioningAggregate extends GeneralQueryPartitioningBase
         implements TestOracle<GeneralGlobalState> {
@@ -44,13 +44,17 @@ public class GeneralQueryPartitioningAggregate extends GeneralQueryPartitioningB
         GeneralAggregateFunction aggregateFunction = Randomly.fromOptions(GeneralAggregateFunction.MAX,
                 GeneralAggregateFunction.MIN, GeneralAggregateFunction.SUM, GeneralAggregateFunction.COUNT,
                 GeneralAggregateFunction.AVG/* , GeneralAggregateFunction.STDDEV_POP */);
-        NewFunctionNode<GeneralExpression, GeneralAggregateFunction> aggregate = gen
-                .generateArgsForAggregate(aggregateFunction);
+        NewFunctionNode<GeneralExpression, GeneralAggregateFunction> aggregate = new NewFunctionNode<GeneralExpression, GeneralAggregateFunction>(
+                null, aggregateFunction);
+        if (aggregate.getArgs() == null) {
+            // TODO throw unsupported assertion
+            throw new UnsupportedOperationException("Unimplemented method 'generateExpression'");
+        }
         List<Node<GeneralExpression>> fetchColumns = new ArrayList<>();
         fetchColumns.add(aggregate);
-        while (Randomly.getBooleanWithRatherLowProbability()) {
-            fetchColumns.add(gen.generateAggregate());
-        }
+        // while (Randomly.getBooleanWithRatherLowProbability()) {
+        // fetchColumns.add(gen.generateAggregate());
+        // }
         select.setFetchColumns(Arrays.asList(aggregate));
         if (Randomly.getBooleanWithRatherLowProbability()) {
             select.setOrderByExpressions(gen.generateOrderBys());

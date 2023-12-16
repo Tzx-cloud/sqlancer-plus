@@ -1,5 +1,7 @@
 package sqlancer.common.gen;
 
+import java.util.List;
+
 public interface ExpressionGenerator<E> {
 
     /**
@@ -29,4 +31,11 @@ public interface ExpressionGenerator<E> {
      */
     E isNull(E expr);
 
+    List<E> generateOrderBys();
+
+    E generateExpression();
+
+    E generateHavingClause();
+
+    List<E> generateExpressions(int nr);
 }

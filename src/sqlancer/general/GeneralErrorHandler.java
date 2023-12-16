@@ -13,19 +13,20 @@ public class GeneralErrorHandler implements ErrorHandler {
     private ArrayList<HashMap<GeneratorNode, Integer>> generatorTable;
     private HashMap<GeneratorNode, Integer> generatorScore;
     private static HashMap<GeneratorNode, Boolean> generatorOptions = new HashMap<>();
+    private static HashMap<String, Boolean> generatorCompositeOptions = new HashMap<>();
 
     public enum GeneratorNode {
         // Meta nodes
-        EXECUTION_STATUS,
+        EXECUTION_STATUS, UNTYPE_EXPR,
 
         // Statement-level nodes
         CREATE_TABLE, CREATE_INDEX, INSERT, SELECT, UPDATE, DELETE, CREATE_VIEW, EXPLAIN, ANALYZE, VACUUM,
         CREATE_DATABASE,
         // Clause level nodes
-        UNIQUE_INDEX, PRIMARY_KEY, COLUMN_NUM, COLUMN_INT,
+        UNIQUE_INDEX, PRIMARY_KEY, COLUMN_NUM, COLUMN_INT, COLUMN_BOOLEAN, COLUMN_STRING,
         // Expression level nodes
         UNARY_POSTFIX, UNARY_PREFIX, BINARY_COMPARISON, BINARY_LOGICAL, BINARY_ARITHMETIC, CAST, FUNC, BETWEEN, CASE,
-        IN, COLLATE, LIKE_ESCAPE,
+        IN, COLLATE, LIKE_ESCAPE, UNTYPE_FUNC,
         // Function level nodes
         ACOS, ASIN, ATAN, COS, SIN, TAN, COT, ATAN2, ABS, CEIL, CEILING, FLOOR, LOG, LOG10, LOG2, LN, PI, SQRT, POWER,
         CBRT, ROUND, SIGN, DEGREES, RADIANS, MOD, XOR, // math functions
@@ -37,12 +38,13 @@ public class GeneralErrorHandler implements ErrorHandler {
         // Comparison Operator nodes
         EQUALS, GREATER, GREATER_EQUALS, SMALLER, SMALLER_EQUALS, NOT_EQUALS,
         // Arithmetic Operator nodes
-        OPADD, OPSUB, OPMULT, OPDIV, OPMOD, OPCONCAT,;
+        OPADD, OPSUB, OPMULT, OPDIV, OPMOD, OPCONCAT, OPAND, OPOR,;
     }
 
     public GeneralErrorHandler() {
         this.generatorTable = new ArrayList<>();
         this.generatorScore = new HashMap<>();
+        initGeneratorOptions();
     }
 
     public ArrayList<HashMap<GeneratorNode, Integer>> getGeneratorTable() {
@@ -68,6 +70,17 @@ public class GeneralErrorHandler implements ErrorHandler {
                 generatorOptions.put(entry.getKey(), false);
             }
         }
+
+        // Special handling for the untype_expr option
+        if (generatorOptions.get(GeneratorNode.UNTYPE_EXPR)) {
+            // TODO make it super parameter
+            generatorOptions.put(GeneratorNode.UNTYPE_EXPR, average.get(GeneratorNode.UNTYPE_EXPR) > 0.5);
+        }
+    }
+
+    public void initGeneratorOptions() {
+        // First try typed expression, if some of the untyped ok then untyped
+        setOptionIfNonExist(GeneratorNode.UNTYPE_EXPR, false);
     }
 
     public void addScore(GeneratorNode generatorName) {
@@ -95,20 +108,6 @@ public class GeneralErrorHandler implements ErrorHandler {
         setExecutionStatus(status);
         generatorTable.add(generatorScore);
         generatorScore = new HashMap<>();
-    }
-
-    public void summaryTable() {
-        HashMap<GeneratorNode, Integer> summary = new HashMap<>();
-        for (HashMap<GeneratorNode, Integer> generator : generatorTable) {
-            for (Map.Entry<GeneratorNode, Integer> entry : generator.entrySet()) {
-                if (summary.containsKey(entry.getKey())) {
-                    summary.put(entry.getKey(), summary.get(entry.getKey()) + entry.getValue());
-                } else {
-                    summary.put(entry.getKey(), entry.getValue());
-                }
-            }
-        }
-        System.out.println(summary);
     }
 
     HashMap<GeneratorNode, Double> getAverageScore() {
@@ -170,6 +169,12 @@ public class GeneralErrorHandler implements ErrorHandler {
         generatorOptions.put(option, value);
     }
 
+    public void setOptionIfNonExist(GeneratorNode option, boolean value) {
+        if (!generatorOptions.containsKey(option)) {
+            setOption(option, value);
+        }
+    }
+
     public boolean getOption(GeneratorNode option) {
         if (generatorOptions.containsKey(option)) {
             return generatorOptions.get(option);
@@ -178,4 +183,20 @@ public class GeneralErrorHandler implements ErrorHandler {
         }
     }
 
+    public void setCompositeOption(String option, boolean value) {
+        generatorCompositeOptions.put(option, value);
+    }
+
+    public boolean getCompositeOption(String option) {
+        if (generatorCompositeOptions.containsKey(option)) {
+            return generatorCompositeOptions.get(option);
+        } else {
+            return true;
+        }
+    }
+
+    public boolean getCompositeOption(String option1, String option2) {
+        String option = option1 + option2;
+        return getCompositeOption(option);
+    }
 }

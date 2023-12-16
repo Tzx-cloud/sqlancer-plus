@@ -458,4 +458,16 @@ public class CnosDBExpressionGenerator implements ExpressionGenerator<CnosDBExpr
         FUNCTION, CAST
     }
 
+    @Override
+    public List<CnosDBExpression> generateOrderBys() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateOrderBys'");
+    }
+
+    @Override
+    public CnosDBExpression generateExpression() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateExpression'");
+    }
+
 }

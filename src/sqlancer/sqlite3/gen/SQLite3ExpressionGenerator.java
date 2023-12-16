@@ -702,4 +702,16 @@ public class SQLite3ExpressionGenerator implements ExpressionGenerator<SQLite3Ex
         return expr;
     }
 
+    @Override
+    public SQLite3Expression generateHavingClause() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateHavingClause'");
+    }
+
+    @Override
+    public List<SQLite3Expression> generateExpressions(int nr) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateExpressions'");
+    }
+
 }

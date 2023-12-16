@@ -514,4 +514,16 @@ public class MaterializeExpressionGenerator implements ExpressionGenerator<Mater
         return new MaterializePostfixOperation(expr, PostfixOperator.IS_NULL);
     }
 
+    @Override
+    public List<MaterializeExpression> generateOrderBys() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateOrderBys'");
+    }
+
+    @Override
+    public MaterializeExpression generateExpression() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateExpression'");
+    }
+
 }

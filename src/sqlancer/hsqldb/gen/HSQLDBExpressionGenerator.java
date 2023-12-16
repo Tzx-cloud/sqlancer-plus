@@ -195,4 +195,16 @@ public final class HSQLDBExpressionGenerator extends
         }
         return expressions;
     }
+
+    @Override
+    public Node<HSQLDBExpression> generateExpression() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateExpression'");
+    }
+
+    @Override
+    public Node<HSQLDBExpression> generateHavingClause() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateHavingClause'");
+    }
 }

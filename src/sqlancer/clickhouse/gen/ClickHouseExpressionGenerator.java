@@ -345,4 +345,16 @@ public class ClickHouseExpressionGenerator
     public ClickHouseExpression isNull(ClickHouseExpression expr) {
         return new ClickHouseUnaryPostfixOperation(expr, ClickHouseUnaryPostfixOperator.IS_NULL, false);
     }
+
+    @Override
+    public ClickHouseExpression generateExpression() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateExpression'");
+    }
+
+    @Override
+    public ClickHouseExpression generateHavingClause() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateHavingClause'");
+    }
 }

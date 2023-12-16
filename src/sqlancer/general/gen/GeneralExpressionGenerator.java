@@ -26,8 +26,15 @@ import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.GeneralSchema.GeneralDataType;
+import sqlancer.general.ast.GeneralDBFunction;
+import sqlancer.general.ast.GeneralBinaryArithmeticOperator;
+import sqlancer.general.ast.GeneralBinaryComparisonOperator;
+import sqlancer.general.ast.GeneralBinaryLogicalOperator;
+import sqlancer.general.ast.GeneralCast;
 import sqlancer.general.ast.GeneralConstant;
 import sqlancer.general.ast.GeneralExpression;
+import sqlancer.general.ast.GeneralUnaryPostfixOperator;
+import sqlancer.general.ast.GeneralUnaryPrefixOperator;
 
 public final class GeneralExpressionGenerator
         extends UntypedExpressionGenerator<Node<GeneralExpression>, GeneralColumn> {
@@ -49,11 +56,11 @@ public final class GeneralExpressionGenerator
         if (depth >= globalState.getOptions().getMaxExpressionDepth() || Randomly.getBoolean()) {
             return generateLeafNode();
         }
-        if (allowAggregates && Randomly.getBoolean()) {
-            GeneralAggregateFunction aggregate = GeneralAggregateFunction.getRandom();
-            allowAggregates = false;
-            return new NewFunctionNode<>(generateExpressions(aggregate.getNrArgs(), depth + 1), aggregate);
-        }
+        // if (allowAggregates && Randomly.getBoolean()) {
+        // GeneralAggregateFunction aggregate = GeneralAggregateFunction.getRandom();
+        // allowAggregates = false;
+        // return new NewFunctionNode<>(generateExpressions(aggregate.getNrArgs(), depth + 1), aggregate);
+        // }
         List<Expression> possibleOptions = new ArrayList<>(Arrays.asList(Expression.values()));
         if (!globalState.getDbmsSpecificOptions().testCollate | !handler.getOption(GeneratorNode.COLLATE)) {
             possibleOptions.remove(Expression.COLLATE);
@@ -102,39 +109,20 @@ public final class GeneralExpressionGenerator
             return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     GeneralUnaryPostfixOperator.getRandom());
         case BINARY_COMPARISON:
-            Operator op;
-            do {
-                op = GeneralBinaryComparisonOperator.getRandom();
-            } while (!handler.getOption(GeneratorNode.valueOf(op.toString()))
-                    | Randomly.getBooleanWithSmallProbability());
-            handler.addScore(GeneratorNode.valueOf(op.toString()));
             return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                    generateExpression(depth + 1), op);
+                    generateExpression(depth + 1), GeneralBinaryComparisonOperator.getRandomByOptions(handler));
         case BINARY_LOGICAL:
-            op = GeneralBinaryLogicalOperator.getRandom();
             return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                    generateExpression(depth + 1), op);
+                    generateExpression(depth + 1), GeneralBinaryLogicalOperator.getRandomByOptions(handler));
         case BINARY_ARITHMETIC:
-            do {
-                op = GeneralBinaryArithmeticOperator.getRandom();
-            } while (!handler.getOption(GeneratorNode.valueOf("OP" + op.toString()))
-                    | Randomly.getBooleanWithSmallProbability());
-            handler.addScore(GeneratorNode.valueOf("OP" + op.toString()));
             return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                    generateExpression(depth + 1), op);
+                    generateExpression(depth + 1), GeneralBinaryArithmeticOperator.getRandomByOptions(handler));
         case CAST:
-            return new GeneralCastOperation(generateExpression(depth + 1),
-                    GeneralCompositeDataType.getRandomWithoutNull());
+            return new GeneralCast(generateExpression(depth + 1), GeneralCompositeDataType.getRandomWithoutNull());
         case FUNC:
-            DBFunction func;
-            // Check if the function is supported by the DBMS
-            do {
-                func = DBFunction.getRandom();
-                // TODO Handle IllegalArgumentException
-            } while (!handler.getOption(GeneratorNode.valueOf(func.toString()))
-                    | Randomly.getBooleanWithSmallProbability());
-            handler.addScore(GeneratorNode.valueOf(func.toString()));
-            return new NewFunctionNode<GeneralExpression, DBFunction>(generateExpressions(func.getNrArgs()), func);
+            GeneralDBFunction func = GeneralDBFunction.getRandomByOptions(handler);
+            return new NewFunctionNode<GeneralExpression, GeneralDBFunction>(generateExpressions(func.getNrArgs()),
+                    func);
         case BETWEEN:
             return new NewBetweenOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     generateExpression(depth + 1), generateExpression(depth + 1), Randomly.getBoolean());
@@ -182,16 +170,16 @@ public final class GeneralExpressionGenerator
         // throw new IgnoreMeException();
         // }
         // return GeneralConstant.createTimestampConstant(globalState.getRandomly().getInteger());
-        // case VARCHAR:
-        // if (!globalState.getDbmsSpecificOptions().testStringConstants) {
-        // throw new IgnoreMeException();
-        // }
-        // return GeneralConstant.createStringConstant(globalState.getRandomly().getString());
-        // case BOOLEAN:
-        // if (!globalState.getDbmsSpecificOptions().testBooleanConstants) {
-        // throw new IgnoreMeException();
-        // }
-        // return GeneralConstant.createBooleanConstant(Randomly.getBoolean());
+        case STRING:
+            // if (!globalState.getDbmsSpecificOptions().testStringConstants) {
+            // throw new IgnoreMeException();
+            // }
+            return GeneralConstant.createStringConstant(globalState.getRandomly().getString());
+        case BOOLEAN:
+            if (!globalState.getDbmsSpecificOptions().testBooleanConstants) {
+                throw new IgnoreMeException();
+            }
+            return GeneralConstant.createBooleanConstant(Randomly.getBoolean());
         // case FLOAT:
         // if (!globalState.getDbmsSpecificOptions().testFloatConstants) {
         // throw new IgnoreMeException();
@@ -215,20 +203,6 @@ public final class GeneralExpressionGenerator
         return newExpr;
     };
 
-    public static class GeneralCastOperation extends NewUnaryPostfixOperatorNode<GeneralExpression> {
-
-        public GeneralCastOperation(Node<GeneralExpression> expr, GeneralCompositeDataType type) {
-            super(expr, new Operator() {
-
-                @Override
-                public String getTextRepresentation() {
-                    return "::" + type.toString();
-                }
-            });
-        }
-
-    }
-
     public enum GeneralAggregateFunction {
         MAX(1), MIN(1), AVG(1), COUNT(1), STRING_AGG(1), FIRST(1), SUM(1), STDDEV_SAMP(1), STDDEV_POP(1), VAR_POP(1),
         VAR_SAMP(1), COVAR_POP(1), COVAR_SAMP(1);
@@ -245,111 +219,6 @@ public final class GeneralExpressionGenerator
 
         public int getNrArgs() {
             return nrArgs;
-        }
-
-    }
-
-    public enum DBFunction {
-        // trigonometric functions
-        ACOS(1), //
-        ASIN(1), //
-        ATAN(1), //
-        COS(1), //
-        SIN(1), //
-        TAN(1), //
-        COT(1), //
-        ATAN2(1), //
-        // math functions
-        ABS(1), //
-        CEIL(1), //
-        CEILING(1), //
-        FLOOR(1), //
-        LOG(1), //
-        LOG10(1), LOG2(1), //
-        LN(1), //
-        PI(0), //
-        SQRT(1), //
-        POWER(1), //
-        CBRT(1), //
-        ROUND(2), //
-        SIGN(1), //
-        DEGREES(1), //
-        RADIANS(1), //
-        MOD(2), //
-        XOR(2), //
-        // string functions
-        LENGTH(1), //
-        LOWER(1), //
-        UPPER(1), //
-        SUBSTRING(3), //
-        REVERSE(1), //
-        CONCAT(1, true), //
-        CONCAT_WS(1, true), CONTAINS(2), //
-        PREFIX(2), //
-        SUFFIX(2), //
-        INSTR(2), //
-        PRINTF(1, true), //
-
-        // date functions
-        DATE_PART(2), AGE(2),
-
-        COALESCE(3), NULLIF(2),
-
-        // LPAD(3),
-        // RPAD(3),
-        LTRIM(1), RTRIM(1),
-        // LEFT(2), https://github.com/cwida/general/issues/633
-        // REPEAT(2),
-        REPLACE(3), UNICODE(1),
-
-        BIT_COUNT(1), BIT_LENGTH(1), LAST_DAY(1), MONTHNAME(1), DAYNAME(1), YEARWEEK(1), DAYOFMONTH(1), WEEKDAY(1),
-        WEEKOFYEAR(1),
-
-        IFNULL(2), IF(3);
-
-        private int nrArgs;
-        private boolean isVariadic;
-
-        DBFunction(int nrArgs) {
-            this(nrArgs, false);
-        }
-
-        DBFunction(int nrArgs, boolean isVariadic) {
-            this.nrArgs = nrArgs;
-            this.isVariadic = isVariadic;
-        }
-
-        public static DBFunction getRandom() {
-            return Randomly.fromOptions(values());
-        }
-
-        public int getNrArgs() {
-            if (isVariadic) {
-                return Randomly.smallNumber() + nrArgs;
-            } else {
-                return nrArgs;
-            }
-        }
-
-    }
-
-    public enum GeneralUnaryPostfixOperator implements Operator {
-
-        IS_NULL("IS NULL"), IS_NOT_NULL("IS NOT NULL");
-
-        private String textRepr;
-
-        GeneralUnaryPostfixOperator(String textRepr) {
-            this.textRepr = textRepr;
-        }
-
-        @Override
-        public String getTextRepresentation() {
-            return textRepr;
-        }
-
-        public static GeneralUnaryPostfixOperator getRandom() {
-            return Randomly.fromOptions(values());
         }
 
     }
@@ -373,96 +242,16 @@ public final class GeneralExpressionGenerator
 
     }
 
-    public enum GeneralUnaryPrefixOperator implements Operator {
+    // public NewFunctionNode<GeneralExpression, GeneralAggregateFunction> generateArgsForAggregate(
+    // GeneralAggregateFunction aggregateFunction) {
+    // return new NewFunctionNode<GeneralExpression, GeneralAggregateFunction>(
+    // generateExpressions(aggregateFunction.getNrArgs()), aggregateFunction);
+    // }
 
-        NOT("NOT"), PLUS("+"), MINUS("-");
-
-        private String textRepr;
-
-        GeneralUnaryPrefixOperator(String textRepr) {
-            this.textRepr = textRepr;
-        }
-
-        @Override
-        public String getTextRepresentation() {
-            return textRepr;
-        }
-
-        public static GeneralUnaryPrefixOperator getRandom() {
-            return Randomly.fromOptions(values());
-        }
-
-    }
-
-    public enum GeneralBinaryLogicalOperator implements Operator {
-
-        AND, OR;
-
-        @Override
-        public String getTextRepresentation() {
-            return toString();
-        }
-
-        public static Operator getRandom() {
-            return Randomly.fromOptions(values());
-        }
-
-    }
-
-    public enum GeneralBinaryArithmeticOperator implements Operator {
-        CONCAT("||"), ADD("+"), SUB("-"), MULT("*"), DIV("/"), MOD("%");// AND("&"), OR("|");
-        // CONCAT("||"), ADD("+"), SUB("-"), MULT("*"), DIV("/"), MOD("%"), AND("&"), OR("|"), LSHIFT("<<"),
-        // RSHIFT(">>");
-
-        private String textRepr;
-
-        GeneralBinaryArithmeticOperator(String textRepr) {
-            this.textRepr = textRepr;
-        }
-
-        public static Operator getRandom() {
-            return Randomly.fromOptions(values());
-        }
-
-        @Override
-        public String getTextRepresentation() {
-            return textRepr;
-        }
-
-    }
-
-    public enum GeneralBinaryComparisonOperator implements Operator {
-        EQUALS("="), GREATER(">"), GREATER_EQUALS(">="), SMALLER("<"), SMALLER_EQUALS("<="), NOT_EQUALS("!=");
-        // LIKE("LIKE"), NOT_LIKE("NOT LIKE"), SIMILAR_TO("SIMILAR TO"), NOT_SIMILAR_TO("NOT SIMILAR TO");
-        // REGEX_POSIX("~"), REGEX_POSIT_NOT("!~");
-
-        private String textRepr;
-
-        GeneralBinaryComparisonOperator(String textRepr) {
-            this.textRepr = textRepr;
-        }
-
-        public static Operator getRandom() {
-            return Randomly.fromOptions(values());
-        }
-
-        @Override
-        public String getTextRepresentation() {
-            return textRepr;
-        }
-
-    }
-
-    public NewFunctionNode<GeneralExpression, GeneralAggregateFunction> generateArgsForAggregate(
-            GeneralAggregateFunction aggregateFunction) {
-        return new NewFunctionNode<GeneralExpression, GeneralAggregateFunction>(
-                generateExpressions(aggregateFunction.getNrArgs()), aggregateFunction);
-    }
-
-    public Node<GeneralExpression> generateAggregate() {
-        GeneralAggregateFunction aggrFunc = GeneralAggregateFunction.getRandom();
-        return generateArgsForAggregate(aggrFunc);
-    }
+    // public Node<GeneralExpression> generateAggregate() {
+    // GeneralAggregateFunction aggrFunc = GeneralAggregateFunction.getRandom();
+    // return generateArgsForAggregate(aggrFunc);
+    // }
 
     @Override
     public Node<GeneralExpression> negatePredicate(Node<GeneralExpression> predicate) {

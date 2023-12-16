@@ -331,4 +331,10 @@ public class DatabendNewExpressionGenerator
         return expression;
     }
 
+    @Override
+    public DatabendExpression generateExpression() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateExpression'");
+    }
+
 }

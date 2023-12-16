@@ -14,6 +14,7 @@ import sqlancer.common.ast.newast.ColumnReferenceNode;
 import sqlancer.common.ast.newast.NewPostfixTextNode;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.ast.newast.TableReferenceNode;
+import sqlancer.common.gen.ExpressionGenerator;
 import sqlancer.common.oracle.NoRECBase;
 import sqlancer.common.oracle.TestOracle;
 import sqlancer.common.query.SQLQueryAdapter;
@@ -27,11 +28,13 @@ import sqlancer.general.GeneralSchema.GeneralDataType;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralSchema.GeneralTables;
 import sqlancer.general.GeneralToStringVisitor;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralJoin;
 import sqlancer.general.ast.GeneralSelect;
 import sqlancer.general.gen.GeneralExpressionGenerator;
-import sqlancer.general.gen.GeneralExpressionGenerator.GeneralCastOperation;
+import sqlancer.general.gen.GeneralTypedExpressionGenerator;
+import sqlancer.general.ast.GeneralCast;
 
 public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements TestOracle<GeneralGlobalState> {
 
@@ -47,7 +50,13 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
     public void check() throws SQLException {
         GeneralTables randomTables = s.getRandomTableNonEmptyTables();
         List<GeneralColumn> columns = randomTables.getColumns();
-        GeneralExpressionGenerator gen = new GeneralExpressionGenerator(state).setColumns(columns);
+        ExpressionGenerator<Node<GeneralExpression>> gen;
+        if (state.getHandler().getOption(GeneratorNode.UNTYPE_EXPR) && Randomly.getBooleanWithSmallProbability()) {
+            gen = new GeneralExpressionGenerator(state).setColumns(columns);
+            state.getHandler().addScore(GeneratorNode.UNTYPE_EXPR);
+        } else {
+            gen = new GeneralTypedExpressionGenerator(state).setColumns(columns);
+        }
         Node<GeneralExpression> randomWhereCondition = gen.generateExpression();
         List<GeneralTable> tables = randomTables.getTables();
         List<TableReferenceNode<GeneralExpression, GeneralTable>> tableList = tables.stream()
@@ -71,7 +80,7 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
         // select.setGroupByClause(groupBys);
         // GeneralExpression isTrue = GeneralPostfixOperation.create(randomWhereCondition,
         // PostfixOperator.IS_TRUE);
-        Node<GeneralExpression> asText = new NewPostfixTextNode<>(new GeneralCastOperation(
+        Node<GeneralExpression> asText = new NewPostfixTextNode<>(new GeneralCast(
                 new NewPostfixTextNode<GeneralExpression>(randomWhereCondition,
                         " IS NOT NULL AND " + GeneralToStringVisitor.asString(randomWhereCondition)),
                 new GeneralCompositeDataType(GeneralDataType.INT, 8)), "as count");

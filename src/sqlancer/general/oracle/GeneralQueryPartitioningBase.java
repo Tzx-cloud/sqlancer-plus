@@ -15,6 +15,7 @@ import sqlancer.common.oracle.TestOracle;
 import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralSchema.GeneralTables;
@@ -22,6 +23,7 @@ import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralJoin;
 import sqlancer.general.ast.GeneralSelect;
 import sqlancer.general.gen.GeneralExpressionGenerator;
+import sqlancer.general.gen.GeneralTypedExpressionGenerator;
 
 public class GeneralQueryPartitioningBase
         extends TernaryLogicPartitioningOracleBase<Node<GeneralExpression>, GeneralGlobalState>
@@ -29,7 +31,7 @@ public class GeneralQueryPartitioningBase
 
     GeneralSchema s;
     GeneralTables targetTables;
-    GeneralExpressionGenerator gen;
+    ExpressionGenerator<Node<GeneralExpression>> gen;
     GeneralSelect select;
 
     public GeneralQueryPartitioningBase(GeneralGlobalState state) {
@@ -41,7 +43,14 @@ public class GeneralQueryPartitioningBase
     public void check() throws SQLException {
         s = state.getSchema();
         targetTables = s.getRandomTableNonEmptyTables();
-        gen = new GeneralExpressionGenerator(state).setColumns(targetTables.getColumns());
+        if (state.getHandler().getOption(GeneratorNode.UNTYPE_EXPR) || Randomly.getBooleanWithSmallProbability()) {
+            gen = new GeneralExpressionGenerator(state).setColumns(targetTables.getColumns());
+            state.getHandler().addScore(GeneratorNode.UNTYPE_EXPR);
+        } else {
+            gen = new GeneralTypedExpressionGenerator(state).setColumns(targetTables.getColumns());
+        }
+        // gen = new
+        // GeneralExpressionGenerator(state).setColumns(targetTables.getColumns());
         initializeTernaryPredicateVariants();
         select = new GeneralSelect();
         select.setFetchColumns(generateFetchColumns());

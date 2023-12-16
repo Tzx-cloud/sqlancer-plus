@@ -795,4 +795,10 @@ public final class PrestoTypedExpressionGenerator extends
         BINARY_LOGICAL, BINARY_COMPARISON, BINARY_ARITHMETIC
     }
 
+    @Override
+    public Node<PrestoExpression> generateExpression() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateExpression'");
+    }
+
 }

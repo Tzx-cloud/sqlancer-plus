@@ -424,4 +424,10 @@ public class DorisNewExpressionGenerator extends TypedExpressionGenerator<DorisE
     public void setAllowAggregateFunctions(boolean allowAggregateFunctions) {
         this.allowAggregateFunctions = allowAggregateFunctions;
     }
+
+    @Override
+    public DorisExpression generateExpression() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateExpression'");
+    }
 }

@@ -2,6 +2,7 @@ package sqlancer.general;
 
 import sqlancer.common.ast.newast.NewToStringVisitor;
 import sqlancer.common.ast.newast.Node;
+import sqlancer.general.ast.GeneralColumnReference;
 import sqlancer.general.ast.GeneralConstant;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralJoin;
@@ -17,6 +18,8 @@ public class GeneralToStringVisitor extends NewToStringVisitor<GeneralExpression
             visit((GeneralSelect) expr);
         } else if (expr instanceof GeneralJoin) {
             visit((GeneralJoin) expr);
+        } else if (expr instanceof GeneralColumnReference) {
+            visit((GeneralColumnReference) expr);
         } else {
             throw new AssertionError(expr.getClass());
         }
@@ -79,6 +82,14 @@ public class GeneralToStringVisitor extends NewToStringVisitor<GeneralExpression
         if (select.getOffsetClause() != null) {
             sb.append(" OFFSET ");
             visit(select.getOffsetClause());
+        }
+    }
+
+    private void visit(GeneralColumnReference column) {
+        if (column.getColumn().getTable() == null) {
+            sb.append(column.getColumn().getName());
+        } else {
+            sb.append(column.getColumn().getFullQualifiedName());
         }
     }
 

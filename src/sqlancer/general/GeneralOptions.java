@@ -269,7 +269,8 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
         IMMUDB {
             @Override
             public String getJDBCString(GeneralGlobalState globalState) {
-                return String.format("jdbc:postgresql://localhost:10017/defaultdb?sslmode=allow&preferQueryMode=simple&user=immudb&password=immudb");
+                return String.format(
+                        "jdbc:postgresql://localhost:10017/defaultdb?sslmode=allow&preferQueryMode=simple&user=immudb&password=immudb");
             }
         },
         QUESTDB {
@@ -277,8 +278,7 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:postgresql://localhost:10018/?user=admin&password=quest");
             }
-        },
-        ;
+        },;
 
         private boolean isNewSchema = true;
 

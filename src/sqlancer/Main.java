@@ -501,7 +501,8 @@ public final class Main {
                         throw new AssertionError(e);
                     }
 
-                    throw new AssertionError("Found a potential bug, please check reducer log for detail.\n" + reproducer.getErrorMessage());
+                    throw new AssertionError("Found a potential bug, please check reducer log for detail.\n"
+                            + reproducer.getErrorMessage());
                 }
             }
         }

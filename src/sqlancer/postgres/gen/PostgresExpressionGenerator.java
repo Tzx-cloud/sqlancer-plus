@@ -601,4 +601,16 @@ public class PostgresExpressionGenerator implements ExpressionGenerator<Postgres
         return new PostgresPostfixOperation(expr, PostfixOperator.IS_NULL);
     }
 
+    @Override
+    public List<PostgresExpression> generateOrderBys() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateOrderBys'");
+    }
+
+    @Override
+    public PostgresExpression generateExpression() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateExpression'");
+    }
+
 }
