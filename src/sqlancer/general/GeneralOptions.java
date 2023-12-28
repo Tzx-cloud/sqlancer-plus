@@ -168,10 +168,12 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
 
             @Override
             public void syncData(GeneralGlobalState globalState) throws SQLException {
-                for (GeneralTable table : globalState.getSchema().getDatabaseTables()) {
+                for (GeneralTable table : globalState.getSchema().getDatabaseTablesWithoutViews()) {
                     try (Statement s = globalState.getConnection().createStatement()) {
                         s.execute(String.format("REFRESH TABLE %s", table.getName()));
                         globalState.getState().logStatement(String.format("REFRESH TABLE %s", table.getName()));
+                    } catch (SQLException e) {
+                        // ignore
                     }
                 }
             }
@@ -263,6 +265,10 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
                         s.execute(String.format("DROP TABLE %s_t%d", databaseName, i));
                     } catch (SQLException e1) {
                     }
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP VIEW %s_v%d", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
                 }
                 try (Statement s = conn.createStatement()) {
                     s.execute("set debug.storage = 'P';");
@@ -318,6 +324,10 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
                 for (int i = 0; i < 100; i++) {
                     try (Statement s = conn.createStatement()) {
                         s.execute(String.format("DROP TABLE %s_t%d", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP VIEW %s_v%d", databaseName, i));
                     } catch (SQLException e1) {
                     }
                 }

@@ -15,11 +15,6 @@ import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 
 public class GeneralTableGenerator {
-    private GeneralTable table;
-
-    public GeneralTable getTable() {
-        return table;
-    }
 
     public SQLQueryAdapter getQuery(GeneralGlobalState globalState) {
         ExpectedErrors errors = new ExpectedErrors();
@@ -89,8 +84,9 @@ public class GeneralTableGenerator {
         }
         sb.append(")");
         errors.addRegex(Pattern.compile(".*", Pattern.DOTALL));
-        this.table = new GeneralTable(tableName, columnsToAdd, false);
-        this.table.getColumns().forEach(c -> c.setTable(table));
+        GeneralTable newTable = new GeneralTable(tableName, columnsToAdd, false);
+        newTable.getColumns().forEach(c -> c.setTable(newTable));
+        globalState.setUpdateTable(newTable);
         return new SQLQueryAdapter(sb.toString(), errors, true, false);
     }
 

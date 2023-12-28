@@ -1,5 +1,6 @@
 package sqlancer.general.gen;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -7,6 +8,7 @@ import sqlancer.Randomly;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.SQLQueryAdapter;
+import sqlancer.common.schema.TableIndex;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
@@ -31,9 +33,9 @@ public final class GeneralIndexGenerator {
         }
         sb.append("INDEX ");
         GeneralTable table = globalState.getSchema().getRandomTable(t -> !t.isView());
-        String indexName = table.getName() + Randomly.fromOptions("i0", "i1", "i2", "i3", "i4");
+        // String indexName = table.getName() + Randomly.fromOptions("i0", "i1", "i2", "i3", "i4");
         // TODO: make it schema aware
-        // String indexName = table.getName() + (table.getIndexes().isEmpty() ? "i0" : "i" + table.getIndexes().size());
+        String indexName = table.getName() + (table.getIndexes().isEmpty() ? "i0" : "i" + table.getIndexes().size());
         sb.append(indexName);
         sb.append(" ON ");
         sb.append(table.getName());
@@ -62,7 +64,15 @@ public final class GeneralIndexGenerator {
         }
         errors.add("Syntax");
         errors.addRegex(Pattern.compile(".*", Pattern.DOTALL));
-        return new SQLQueryAdapter(sb.toString(), errors, true, false);
+        // Update the indexes of the table
+        List<TableIndex> indexes = new ArrayList<>(table.getIndexes());
+        TableIndex index = TableIndex.create(indexName);
+        // append the index
+        indexes.add(index);
+
+        SQLQueryAdapter q = new SQLQueryAdapter(sb.toString(), errors, true, false);
+        globalState.setUpdateTable(new GeneralTable(table.getName(), table.getColumns(), indexes, false));
+        return q;
     }
 
 }

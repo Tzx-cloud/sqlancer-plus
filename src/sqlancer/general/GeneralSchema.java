@@ -262,6 +262,10 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             super(tableName, columns, Collections.emptyList(), isView);
         }
 
+        public GeneralTable(String tableName, List<GeneralColumn> columns, List<TableIndex> indexes, boolean isView) {
+            super(tableName, columns, indexes, isView);
+        }
+
     }
 
     public static GeneralSchema fromConnection(SQLConnection con, String databaseName) throws SQLException {
@@ -346,5 +350,14 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                 return tableName;
             }
         } while (true);
+    }
+
+    public void printTables() {
+        for (GeneralTable t : getDatabaseTables()) {
+            System.out.println(t.getName() + " -------");
+            for (GeneralColumn c : t.getColumns()) {
+                System.out.println(c.getName() + " " + c.getType());
+            }
+        }
     }
 }

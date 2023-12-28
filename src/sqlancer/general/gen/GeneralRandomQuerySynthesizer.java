@@ -8,6 +8,7 @@ import sqlancer.Randomly;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.ast.newast.TableReferenceNode;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
+import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralSchema.GeneralTables;
 import sqlancer.general.ast.GeneralConstant;
@@ -20,24 +21,25 @@ public final class GeneralRandomQuerySynthesizer {
     private GeneralRandomQuerySynthesizer() {
     }
 
-    public static GeneralSelect generateSelect(GeneralGlobalState globalState, int nrColumns) {
+    public static GeneralSelect generateSelect(GeneralGlobalState globalState, List<GeneralColumn> columns) {
         GeneralTables targetTables = globalState.getSchema().getRandomTableNonEmptyTables();
-        GeneralExpressionGenerator gen = new GeneralExpressionGenerator(globalState)
+        // TODO currently it only support Typed expressions
+        GeneralTypedExpressionGenerator gen = new GeneralTypedExpressionGenerator(globalState)
                 .setColumns(targetTables.getColumns());
         GeneralSelect select = new GeneralSelect();
         // TODO: distinct
         // select.setDistinct(Randomly.getBoolean());
         // boolean allowAggregates = Randomly.getBooleanWithSmallProbability();
-        List<Node<GeneralExpression>> columns = new ArrayList<>();
-        for (int i = 0; i < nrColumns; i++) {
+        List<Node<GeneralExpression>> colExpressions = new ArrayList<>();
+        for (GeneralColumn c : columns) {
             // if (allowAggregates && Randomly.getBoolean()) {
-            Node<GeneralExpression> expression = gen.generateExpression();
-            columns.add(expression);
+            Node<GeneralExpression> expression = gen.generateExpression(c.getType());
+            colExpressions.add(expression);
             // } else {
-            // columns.add(gen());
+            // colExpressions.add(gen());
             // }
         }
-        select.setFetchColumns(columns);
+        select.setFetchColumns(colExpressions);
         List<GeneralTable> tables = targetTables.getTables();
         List<TableReferenceNode<GeneralExpression, GeneralTable>> tableList = tables.stream()
                 .map(t -> new TableReferenceNode<GeneralExpression, GeneralTable>(t)).collect(Collectors.toList());

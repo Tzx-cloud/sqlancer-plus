@@ -1,11 +1,19 @@
 package sqlancer.general.gen;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import sqlancer.Randomly;
 import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
+import sqlancer.general.GeneralSchema.GeneralColumn;
+import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
+import sqlancer.general.GeneralSchema.GeneralTable;
+import sqlancer.general.ast.GeneralSelect;
 import sqlancer.general.GeneralToStringVisitor;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 
 public final class GeneralViewGenerator {
 
@@ -16,7 +24,12 @@ public final class GeneralViewGenerator {
         int nrColumns = Randomly.smallNumber() + 1;
         StringBuilder sb = new StringBuilder("CREATE ");
         sb.append("VIEW ");
-        sb.append(globalState.getSchema().getFreeViewName());
+        String viewName = globalState.getSchema().getFreeViewName();
+        viewName = globalState.getHandler().getOption(GeneratorNode.CREATE_DATABASE) ? viewName
+                : globalState.getDatabaseName() + "_" + viewName;
+        sb.append(viewName);
+        List<GeneralColumn> columns = new ArrayList<>();
+
         sb.append("(");
         for (int i = 0; i < nrColumns; i++) {
             if (i != 0) {
@@ -24,10 +37,14 @@ public final class GeneralViewGenerator {
             }
             sb.append("c");
             sb.append(i);
+            columns.add(new GeneralColumn("c" + i, GeneralCompositeDataType.getRandomWithoutNull(), false, false));
         }
         sb.append(") AS ");
-        sb.append(
-                GeneralToStringVisitor.asString(GeneralRandomQuerySynthesizer.generateSelect(globalState, nrColumns)));
+        GeneralSelect select = GeneralRandomQuerySynthesizer.generateSelect(globalState, columns);
+        sb.append(GeneralToStringVisitor.asString(select));
+        GeneralTable newTable = new GeneralTable(viewName, columns, true);
+        newTable.getColumns().forEach(c -> c.setTable(newTable));
+        globalState.setUpdateTable(newTable);
         ExpectedErrors errors = new ExpectedErrors();
         GeneralErrors.addExpressionErrors(errors);
         GeneralErrors.addGroupByErrors(errors);
