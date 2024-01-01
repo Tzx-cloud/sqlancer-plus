@@ -239,7 +239,7 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
         SQLITE {
             @Override
             public String getJDBCString(GeneralGlobalState globalState) {
-                return String.format("jdbc:sqlite:file::memory:?cache=shared");
+                return String.format("jdbc:sqlite:file:%s?mode=memory&cache=private", globalState.getDatabaseName());
             }
 
             @Override
