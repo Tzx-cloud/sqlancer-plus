@@ -295,7 +295,14 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:postgresql://localhost:10018/?user=admin&password=quest");
             }
-        },;
+        },
+        PERCONA {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:mysql://localhost:10022/?user=root&password=root");
+            }
+        }
+        ;
 
         private boolean isNewSchema = true;
 

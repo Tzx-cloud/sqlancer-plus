@@ -22,6 +22,7 @@ SUPPORT_DBMS = [
     "duckdb",
     "sqlite",
     "risingwave",
+    "percona"
 ]
 
 

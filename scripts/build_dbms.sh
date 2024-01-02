@@ -111,3 +111,7 @@ if [ "$dbms" == "sqlite" ]; then
     cd ../../
     mvn install:install-file -Dfile=target/sqlite-jdbc.jar -DgroupId=org.xerial -DartifactId=sqlite-jdbc -Dversion=3.40.0.0 -Dpackaging=jar
 fi
+
+if [ "$dbms" == "percona" ]; then
+    docker pull percona/percona-server:latest
+fi

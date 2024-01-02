@@ -120,3 +120,9 @@ if [ "$dbms" == "mysql" ]; then
     docker rm mysql-test
     docker run --name mysql-test -e MYSQL_ROOT_PASSWORD=root -p 20036:3306 mysql:latest
 fi
+
+if [ "$dbms" == "percona" ]; then
+    docker stop percona-test
+    docker rm percona-test
+    docker run -d --name percona-test -p 10022:3306 -e MYSQL_ROOT_PASSWORD=root percona/percona-server:latest --character-set-server=utf8 --collation-server=utf8_general_ci
+fi
