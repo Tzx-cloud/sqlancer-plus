@@ -301,7 +301,19 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:mysql://localhost:10022/?user=root&password=root");
             }
-        }
+        },
+        VIRTUOSO {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:virtuoso://localhost:10020/UID=dba/PWD=dba");
+            }
+        },
+        MONETDB {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:monetdb://localhost:10021/monetdb?user=monetdb&password=monetdb");
+            }
+        },
         ;
 
         private boolean isNewSchema = true;

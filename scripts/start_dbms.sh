@@ -126,3 +126,15 @@ if [ "$dbms" == "percona" ]; then
     docker rm percona-test
     docker run -d --name percona-test -p 10022:3306 -e MYSQL_ROOT_PASSWORD=root percona/percona-server:latest --character-set-server=utf8 --collation-server=utf8_general_ci
 fi
+
+if [ "$dbms" == "virtuoso" ]; then
+    docker stop virtuoso-test
+    docker rm virtuoso-test
+    docker run --name virtuoso-test -p 10020:1111 -e DBA_PASSWORD=dba pkleef/virtuoso-opensource-7
+fi
+
+if [ "$dbms" == "monetdb" ]; then
+    docker stop monetdb-test
+    docker rm monetdb-test
+    docker run --name monetdb-test -p 10021:50000 -e MDB_DB_ADMIN_PASS=monetdb monetdb/monetdb:latest
+fi

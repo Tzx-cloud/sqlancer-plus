@@ -307,6 +307,11 @@
       <version>8.0.30</version>
     </dependency>
     <dependency>
+      <groupId>com.openlinksw</groupId>
+      <artifactId>virtjdbc4_3</artifactId>
+      <version>3.122</version>
+    </dependency>
+    <dependency>
       <groupId>org.mariadb.jdbc</groupId>
       <artifactId>mariadb-java-client</artifactId>
       <version>3.1.0</version>
@@ -351,6 +356,11 @@
       <groupId>org.mongodb</groupId>
       <artifactId>mongodb-driver-sync</artifactId>
       <version>4.1.1</version>
+    </dependency>
+    <dependency>
+      <groupId>monetdb</groupId>
+      <artifactId>monetdb-jdbc</artifactId>
+      <version>3.3</version>
     </dependency>
     <dependency>
       <groupId>com.arangodb</groupId>
