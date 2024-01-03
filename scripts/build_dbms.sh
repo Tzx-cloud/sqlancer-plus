@@ -117,11 +117,5 @@ if [ "$dbms" == "percona" ]; then
 fi
 
 if [ "$dbms" == "monetdb" ]; then
-    cd $current_dir/resources
-    wget https://clojars.org/repo/monetdb/monetdb-jdbc/3.3/monetdb-jdbc-3.3.jar
-    mv monetdb-jdbc-3.3.jar $current_dir/target/monetdb-jdbc.jar
-    cd ..
-    mvn install:install-file -Dfile=target/monetdb-jdbc.jar -DgroupId=monetdb -DartifactId=monetdb-jdbc -Dversion=3.3 -Dpackaging=jar
-    mvn package -DskipTests
     docker pull monetdb/monetdb-r:latest
 fi
