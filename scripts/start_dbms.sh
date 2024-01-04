@@ -97,7 +97,7 @@ fi
 if [ "$dbms" == "umbra" ]; then
     cd $current_dir/resources/umbra
     mkdir -p databases
-    bin/sql --createdb databases/test $current_dir/scripts/Docker/umbra/init.sql
+    bin/sql --createdb databases/test $current_dir/scripts/configs/umbra/init.sql
     bin/server databases/test --port=10015 
 fi
 
