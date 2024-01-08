@@ -78,6 +78,12 @@ public class GeneralErrorHandler implements ErrorHandler {
 
         // if not zero then the option is true
         for (Map.Entry<GeneratorNode, Double> entry : average.entrySet()) {
+            if (generatorOptions.containsKey(entry.getKey())) {
+                if (generatorOptions.get(entry.getKey())) {
+                    // If true, then continue, don't make available function unavailable
+                    continue;
+                } 
+            } 
             if (entry.getValue() > 0) {
                 generatorOptions.put(entry.getKey(), true);
             } else {
