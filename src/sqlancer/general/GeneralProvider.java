@@ -180,6 +180,9 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 handler.updateGeneratorOptions();
                 handler.printStatistics();
                 handler.saveStatistics(this);
+                // print the last item of handler.
+                System.out.println(getDatabaseName());
+                System.out.println(handler.getLastGeneratorScore());
             }
         }
 

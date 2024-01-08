@@ -2,6 +2,7 @@ package sqlancer.general;
 
 import sqlancer.common.ast.newast.NewToStringVisitor;
 import sqlancer.common.ast.newast.Node;
+import sqlancer.general.ast.GeneralCast;
 import sqlancer.general.ast.GeneralColumnReference;
 import sqlancer.general.ast.GeneralConstant;
 import sqlancer.general.ast.GeneralExpression;
@@ -20,6 +21,8 @@ public class GeneralToStringVisitor extends NewToStringVisitor<GeneralExpression
             visit((GeneralJoin) expr);
         } else if (expr instanceof GeneralColumnReference) {
             visit((GeneralColumnReference) expr);
+        } else if (expr instanceof GeneralCast) {
+            visit((GeneralCast) expr);
         } else {
             throw new AssertionError(expr.getClass());
         }
@@ -90,6 +93,20 @@ public class GeneralToStringVisitor extends NewToStringVisitor<GeneralExpression
             sb.append(column.getColumn().getName());
         } else {
             sb.append(column.getColumn().getFullQualifiedName());
+        }
+    }
+
+    private void visit(GeneralCast cast) {
+        if (cast.isFunc()) {
+            sb.append("CAST(");
+            visit(cast.getExpr());
+            sb.append(" AS ");
+            sb.append(cast.getType());
+            sb.append(")");
+        } else {
+            visit(cast.getExpr());
+            sb.append("::");
+            sb.append(cast.getType());
         }
     }
 

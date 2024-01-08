@@ -76,7 +76,11 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             case STRING:
                 // case DATE:
                 // case TIMESTAMP:
-                size = 0;
+                if (Randomly.getBoolean()) {
+                    size = 500; // As MySQL Generator here is 500
+                } else {
+                    size = 0;
+                }
                 break;
             default:
                 throw new AssertionError(type);
@@ -103,7 +107,11 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             // throw new AssertionError(size);
             // }
             case STRING:
+            if (size == 0) {
                 return "VARCHAR";
+            } else {
+                return "VARCHAR(" + size + ")";
+            }
             // case FLOAT:
             // switch (size) {
             // case 8:

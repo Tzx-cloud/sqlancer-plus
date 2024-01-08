@@ -4,6 +4,8 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 import sqlancer.ErrorHandler;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
@@ -12,6 +14,7 @@ public class GeneralErrorHandler implements ErrorHandler {
 
     private ArrayList<HashMap<GeneratorNode, Integer>> generatorTable;
     private HashMap<GeneratorNode, Integer> generatorScore;
+    private int curDepth = 1; // Control the expression depth, initial small for duduplication
     private static HashMap<GeneratorNode, Boolean> generatorOptions = new HashMap<>();
     private static HashMap<String, Boolean> generatorCompositeOptions = new HashMap<>();
 
@@ -23,10 +26,11 @@ public class GeneralErrorHandler implements ErrorHandler {
         CREATE_TABLE, CREATE_INDEX, INSERT, SELECT, UPDATE, DELETE, CREATE_VIEW, EXPLAIN, ANALYZE, VACUUM,
         CREATE_DATABASE,
         // Clause level nodes
-        UNIQUE_INDEX, PRIMARY_KEY, COLUMN_NUM, COLUMN_INT, COLUMN_BOOLEAN, COLUMN_STRING,
+        UNIQUE_INDEX, PRIMARY_KEY, COLUMN_NUM, COLUMN_INT, COLUMN_BOOLEAN, COLUMN_STRING, JOIN, INNER_JOIN, LEFT_JOIN, RIGHT_JOIN, NATURAL_JOIN, LEFT_NATURAL_JOIN, RIGHT_NATURAL_JOIN, FULL_NATURAL_JOIN,
         // Expression level nodes
         UNARY_POSTFIX, UNARY_PREFIX, BINARY_COMPARISON, BINARY_LOGICAL, BINARY_ARITHMETIC, CAST, FUNC, BETWEEN, CASE,
         IN, COLLATE, LIKE_ESCAPE, UNTYPE_FUNC,
+        CAST_FUNC, CAST_COLON, IS_NULL, IS_NOT_NULL,
         // Function level nodes
         ACOS, ASIN, ATAN, COS, SIN, TAN, COT, ATAN2, ABS, CEIL, CEILING, FLOOR, LOG, LOG10, LOG2, LN, PI, SQRT, POWER,
         CBRT, ROUND, SIGN, DEGREES, RADIANS, MOD, XOR, // math functions
@@ -44,7 +48,9 @@ public class GeneralErrorHandler implements ErrorHandler {
     public GeneralErrorHandler() {
         this.generatorTable = new ArrayList<>();
         this.generatorScore = new HashMap<>();
-        initGeneratorOptions();
+        if (generatorOptions.isEmpty()){
+            initGeneratorOptions();
+        }
     }
 
     public ArrayList<HashMap<GeneratorNode, Integer>> getGeneratorTable() {
@@ -57,6 +63,14 @@ public class GeneralErrorHandler implements ErrorHandler {
 
     public HashMap<GeneratorNode, Boolean> getGeneratorOptions() {
         return GeneralErrorHandler.generatorOptions;
+    }
+
+    public int getCurDepth() {
+        return this.curDepth;
+    }
+
+    public void incrementCurDepth() {
+        this.curDepth++;
     }
 
     public void updateGeneratorOptions() {
@@ -81,6 +95,25 @@ public class GeneralErrorHandler implements ErrorHandler {
     public void initGeneratorOptions() {
         // First try typed expression, if some of the untyped ok then untyped
         setOptionIfNonExist(GeneratorNode.UNTYPE_EXPR, false);
+
+        // Read file disabled_options.txt line by line and set the option to false
+        // if the option is not in the file then it is true
+        String fileName = "logs/disabled_options.txt";
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String option = line;
+                try {
+                    GeneratorNode generatorNode = GeneratorNode.valueOf(option);
+                    setOptionIfNonExist(generatorNode, false);
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Option " + option + " not found");
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error reading file: " + fileName);
+            System.out.println(e.getMessage());
+        }
     }
 
     public void addScore(GeneratorNode generatorName) {
@@ -102,6 +135,10 @@ public class GeneralErrorHandler implements ErrorHandler {
     public void appendScoreToTable() {
         generatorTable.add(generatorScore);
         generatorScore = new HashMap<>();
+    }
+
+    public HashMap<GeneratorNode, Integer> getLastGeneratorScore() {
+        return generatorTable.get(generatorTable.size() - 1);
     }
 
     public void appendScoreToTable(boolean status) {

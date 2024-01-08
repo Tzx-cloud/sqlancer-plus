@@ -118,7 +118,7 @@ fi
 if [ "$dbms" == "mysql" ]; then
     docker stop mysql-test
     docker rm mysql-test
-    docker run --name mysql-test -e MYSQL_ROOT_PASSWORD=root -p 20036:3306 mysql:latest
+    docker run --name mysql-test -e MYSQL_ROOT_PASSWORD=root -p 23306:3306 mysql:latest
 fi
 
 if [ "$dbms" == "percona" ]; then

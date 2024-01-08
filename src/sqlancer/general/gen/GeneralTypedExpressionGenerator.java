@@ -33,6 +33,7 @@ import sqlancer.general.ast.GeneralDBFunction;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralUnaryPostfixOperator;
 import sqlancer.general.ast.GeneralUnaryPrefixOperator;
+import sqlancer.general.ast.GeneralCast.GeneralCastOperator;
 
 public class GeneralTypedExpressionGenerator
         extends TypedExpressionGenerator<Node<GeneralExpression>, GeneralColumn, GeneralCompositeDataType> {
@@ -109,7 +110,7 @@ public class GeneralTypedExpressionGenerator
             }
             if (Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.CAST)) {
                 handler.addScore(GeneratorNode.CAST);
-                return new GeneralCast(generateExpression(getRandomType(), depth + 1), type);
+                return new GeneralCast(generateExpression(getRandomType(), depth + 1), type, GeneralCastOperator.getRandomByOptions(handler));
             }
             if (Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.CASE)) {
                 handler.addScore(GeneratorNode.CASE);
@@ -171,7 +172,18 @@ public class GeneralTypedExpressionGenerator
 
     private enum BooleanExpression {
         // NOT, COMPARISON, AND_OR_CHAIN, REGEX, IS_NULL, IS_NAN, IN, BETWEEN, MULTI_VALUED_COMPARISON
-        NOT, COMPARISON, AND_OR_CHAIN, IS_NULL, IN, BETWEEN
+        UNARY_PREFIX, BINARY_COMPARISON, BINARY_LOGICAL, UNARY_POSTFIX, IN, BETWEEN;
+
+        public static BooleanExpression getRandomByOptions(GeneralErrorHandler handler) {
+            BooleanExpression expr;
+            GeneratorNode node;
+            do {
+                expr = Randomly.fromOptions(values());
+                node = GeneratorNode.valueOf(expr.toString());
+            } while (!handler.getOption(node) || !Randomly.getBooleanWithSmallProbability());
+            handler.addScore(node);
+            return expr;
+        }
     }
 
     private enum StringExpression {
@@ -192,23 +204,24 @@ public class GeneralTypedExpressionGenerator
     }
 
     private Node<GeneralExpression> generateBooleanExpression(int depth) {
-        BooleanExpression exprType = Randomly.fromOptions(BooleanExpression.values());
+        GeneralErrorHandler handler = globalState.getHandler();
+        BooleanExpression exprType = BooleanExpression.getRandomByOptions(handler);
         Node<GeneralExpression> expr;
         switch (exprType) {
-        case NOT:
+        case UNARY_PREFIX:
             return new NewUnaryPrefixOperatorNode<GeneralExpression>(
                     generateExpression(GeneralDataType.BOOLEAN.get(), depth + 1), GeneralUnaryPrefixOperator.NOT);
-        case COMPARISON:
+        case BINARY_COMPARISON:
             return getBinaryComparison(depth);
-        case AND_OR_CHAIN:
+        case BINARY_LOGICAL:
             return getAndOrChain(depth);
         // case REGEX:
         // return new CockroachDBRegexOperation(generateExpression(GeneralDataType.STRING.get(), depth + 1),
         // generateExpression(GeneralDataType.STRING.get(), depth + 1),
         // CockroachDBRegexOperator.getRandom());
-        case IS_NULL:
+        case UNARY_POSTFIX:
             return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(getRandomType(), depth + 1),
-                    Randomly.fromOptions(GeneralUnaryPostfixOperator.IS_NULL, GeneralUnaryPostfixOperator.IS_NOT_NULL));
+                    GeneralUnaryPostfixOperator.getRandomByOptions(handler));
         // case IS_NAN:
         // return new CockroachDBUnaryPostfixOperation(generateExpression(GeneralDataType.FLOAT.get(), depth + 1),
         // Randomly.fromOptions(CockroachDBUnaryPostfixOperator.IS_NAN,

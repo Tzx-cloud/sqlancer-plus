@@ -24,7 +24,7 @@ public enum GeneralBinaryLogicalOperator implements Operator {
         do {
             op = Randomly.fromOptions(values());
             node = GeneratorNode.valueOf("OP" + op.toString());
-        } while (!handler.getOption(node) || Randomly.getBooleanWithSmallProbability());
+        } while (!handler.getOption(node) || !Randomly.getBooleanWithSmallProbability());
         handler.addScore(node);
         return op;
     }

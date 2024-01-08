@@ -1,6 +1,8 @@
 package sqlancer.general.ast;
 
 import sqlancer.common.ast.BinaryOperatorNode.Operator;
+import sqlancer.general.GeneralErrorHandler;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.Randomly;
 
 public enum GeneralUnaryPostfixOperator implements Operator {
@@ -18,8 +20,19 @@ public enum GeneralUnaryPostfixOperator implements Operator {
         return textRepr;
     }
 
-    public static GeneralUnaryPostfixOperator getRandom() {
+    public static Operator getRandom() {
         return Randomly.fromOptions(values());
+    }
+
+    public static Operator getRandomByOptions(GeneralErrorHandler handler) {
+        Operator op;
+        GeneratorNode node;
+        do {
+            op = Randomly.fromOptions(values());
+            node = GeneratorNode.valueOf(op.toString());
+        } while (!handler.getOption(node) || !Randomly.getBooleanWithSmallProbability());
+        handler.addScore(node);
+        return op;
     }
 
 }

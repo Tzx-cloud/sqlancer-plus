@@ -32,6 +32,7 @@ import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralJoin;
 import sqlancer.general.ast.GeneralSelect;
+import sqlancer.general.ast.GeneralCast.GeneralCastOperator;
 import sqlancer.general.gen.GeneralExpressionGenerator;
 import sqlancer.general.gen.GeneralTypedExpressionGenerator;
 import sqlancer.general.ast.GeneralCast;
@@ -83,7 +84,7 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
         Node<GeneralExpression> asText = new NewPostfixTextNode<>(new GeneralCast(
                 new NewPostfixTextNode<GeneralExpression>(randomWhereCondition,
                         " IS NOT NULL AND " + GeneralToStringVisitor.asString(randomWhereCondition)),
-                new GeneralCompositeDataType(GeneralDataType.INT, 8)), "as count");
+                new GeneralCompositeDataType(GeneralDataType.INT, 8), GeneralCastOperator.getRandomByOptions(state.getHandler())), "as count");
         select.setFetchColumns(Arrays.asList(asText));
         select.setFromList(tableList);
         // select.setSelectType(SelectType.ALL);

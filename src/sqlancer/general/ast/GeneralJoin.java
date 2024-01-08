@@ -6,6 +6,8 @@ import java.util.List;
 import sqlancer.Randomly;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.ast.newast.TableReferenceNode;
+import sqlancer.general.GeneralErrorHandler;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
@@ -25,6 +27,18 @@ public class GeneralJoin implements Node<GeneralExpression> {
         public static JoinType getRandom() {
             return Randomly.fromOptions(values());
         }
+
+        public static JoinType getRandomByOptions(GeneralErrorHandler handler) {
+            // TODO refactor this function and also DBFunction one
+            JoinType joinType;
+            GeneratorNode node;
+            do {
+                joinType = getRandom();
+                node = GeneratorNode.valueOf(joinType.name() + "_JOIN");
+            } while (!handler.getOption(node) || !Randomly.getBooleanWithSmallProbability());
+            handler.addScore(node);
+            return joinType;
+        }
     }
 
     public enum OuterType {
@@ -32,6 +46,18 @@ public class GeneralJoin implements Node<GeneralExpression> {
 
         public static OuterType getRandom() {
             return Randomly.fromOptions(values());
+        }
+
+        public static OuterType getRandomByOptions(GeneralErrorHandler handler) {
+            // TODO refactor this function and also DBFunction one
+            OuterType outerType;
+            GeneratorNode node;
+            do {
+                outerType = getRandom();
+                node = GeneratorNode.valueOf(outerType.name() + "_NATURAL_JOIN");
+            } while (!handler.getOption(node) || !Randomly.getBooleanWithSmallProbability());
+            handler.addScore(node);
+            return outerType;
         }
     }
 
@@ -71,18 +97,20 @@ public class GeneralJoin implements Node<GeneralExpression> {
     public static List<Node<GeneralExpression>> getJoins(
             List<TableReferenceNode<GeneralExpression, GeneralTable>> tableList, GeneralGlobalState globalState) {
         List<Node<GeneralExpression>> joinExpressions = new ArrayList<>();
-        while (tableList.size() >= 2 && Randomly.getBooleanWithRatherLowProbability()) {
+        GeneralErrorHandler handler = globalState.getHandler();
+        while (tableList.size() >= 2 && Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.JOIN)) {
             TableReferenceNode<GeneralExpression, GeneralTable> leftTable = tableList.remove(0);
             TableReferenceNode<GeneralExpression, GeneralTable> rightTable = tableList.remove(0);
             List<GeneralColumn> columns = new ArrayList<>(leftTable.getTable().getColumns());
             columns.addAll(rightTable.getTable().getColumns());
             GeneralExpressionGenerator joinGen = new GeneralExpressionGenerator(globalState).setColumns(columns);
-            switch (JoinType.getRandom()) {
+            JoinType joinType = JoinType.getRandomByOptions(handler);
+            switch (joinType) {
             case INNER:
                 joinExpressions.add(GeneralJoin.createInnerJoin(leftTable, rightTable, joinGen.generateExpression()));
                 break;
             case NATURAL:
-                joinExpressions.add(GeneralJoin.createNaturalJoin(leftTable, rightTable, OuterType.getRandom()));
+                joinExpressions.add(GeneralJoin.createNaturalJoin(leftTable, rightTable, OuterType.getRandomByOptions(handler)));
                 break;
             case LEFT:
                 joinExpressions

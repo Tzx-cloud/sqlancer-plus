@@ -35,6 +35,7 @@ import sqlancer.general.ast.GeneralConstant;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralUnaryPostfixOperator;
 import sqlancer.general.ast.GeneralUnaryPrefixOperator;
+import sqlancer.general.ast.GeneralCast.GeneralCastOperator;
 
 public final class GeneralExpressionGenerator
         extends UntypedExpressionGenerator<Node<GeneralExpression>, GeneralColumn> {
@@ -118,7 +119,7 @@ public final class GeneralExpressionGenerator
             return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     generateExpression(depth + 1), GeneralBinaryArithmeticOperator.getRandomByOptions(handler));
         case CAST:
-            return new GeneralCast(generateExpression(depth + 1), GeneralCompositeDataType.getRandomWithoutNull());
+            return new GeneralCast(generateExpression(depth + 1), GeneralCompositeDataType.getRandomWithoutNull(), GeneralCastOperator.getRandomByOptions(handler));
         case FUNC:
             GeneralDBFunction func = GeneralDBFunction.getRandomByOptions(handler);
             return new NewFunctionNode<GeneralExpression, GeneralDBFunction>(generateExpressions(func.getNrArgs()),
