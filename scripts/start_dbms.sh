@@ -136,5 +136,5 @@ fi
 if [ "$dbms" == "monetdb" ]; then
     docker stop monetdb-test
     docker rm monetdb-test
-    docker run --name monetdb-test -p 10021:50000 -e MDB_DB_ADMIN_PASS=monetdb monetdb/monetdb:latest
+    docker run --name monetdb-test -p 10021:50000 -e MDB_DB_ADMIN_PASS=monetdb monetdb-source-build
 fi

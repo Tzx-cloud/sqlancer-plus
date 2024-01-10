@@ -313,6 +313,23 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:monetdb://localhost:10021/monetdb?user=monetdb&password=monetdb");
             }
+            @Override
+            public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
+                    throws SQLException {
+                Connection conn = DriverManager.getConnection(getJDBCString(globalState));
+                setIsNewSchema(false);
+                for (int i = 0; i < 100; i++) {
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP TABLE %s_t%d CASCADE", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP VIEW %s_v%d CASCADE", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
+                }
+                return conn;
+            }
         },
         ;
 
