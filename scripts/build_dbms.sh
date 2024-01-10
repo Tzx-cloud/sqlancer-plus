@@ -117,5 +117,5 @@ if [ "$dbms" == "percona" ]; then
 fi
 
 if [ "$dbms" == "monetdb" ]; then
-    docker pull monetdb/monetdb-r:latest
+    docker build -t monetdb-source-build scripts/Docker/monetdb
 fi
