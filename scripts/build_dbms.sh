@@ -19,7 +19,7 @@ fi
 
 # Build crate
 if [ "$dbms" == "crate" ]; then
-    docker build -t crate-source-build scripts/Docker/crate
+    docker build -t crate-source-build scripts/Docker/crate --no-cache
 fi
 
 # Build dolt
@@ -33,7 +33,7 @@ fi
 
 # Build firebird
 if [ "$dbms" == "firebird" ]; then
-    docker build -t firebird-source-build scripts/Docker/firebird
+    docker build -t firebird-source-build scripts/Docker/firebird --no-cache
 fi
 
 # Pull risingwave
@@ -117,5 +117,5 @@ if [ "$dbms" == "percona" ]; then
 fi
 
 if [ "$dbms" == "monetdb" ]; then
-    docker build -t monetdb-source-build scripts/Docker/monetdb
+    docker build -t monetdb-source-build scripts/Docker/monetdb --no-cache
 fi
