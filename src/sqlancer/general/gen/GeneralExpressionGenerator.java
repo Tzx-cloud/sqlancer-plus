@@ -54,7 +54,7 @@ public final class GeneralExpressionGenerator
     @Override
     protected Node<GeneralExpression> generateExpression(int depth) {
         GeneralErrorHandler handler = globalState.getHandler();
-        if (depth >= globalState.getOptions().getMaxExpressionDepth() || Randomly.getBoolean()) {
+        if (depth >= globalState.getOptions().getMaxExpressionDepth() || depth >= globalState.getHandler().getCurDepth(globalState.getDatabaseName()) || Randomly.getBoolean()) {
             return generateLeafNode();
         }
         // if (allowAggregates && Randomly.getBoolean()) {
@@ -122,7 +122,7 @@ public final class GeneralExpressionGenerator
             return new GeneralCast(generateExpression(depth + 1), GeneralCompositeDataType.getRandomWithoutNull(), GeneralCastOperator.getRandomByOptions(handler));
         case FUNC:
             GeneralDBFunction func = GeneralDBFunction.getRandomByOptions(handler);
-            return new NewFunctionNode<GeneralExpression, GeneralDBFunction>(generateExpressions(func.getNrArgs()),
+            return new NewFunctionNode<GeneralExpression, GeneralDBFunction>(generateExpressions(func.getNrArgs(), depth + 1),
                     func);
         case BETWEEN:
             return new NewBetweenOperatorNode<GeneralExpression>(generateExpression(depth + 1),

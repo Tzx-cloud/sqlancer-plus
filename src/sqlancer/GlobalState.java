@@ -148,7 +148,11 @@ public abstract class GlobalState<O extends DBMSSpecificOptions<?>, S extends Ab
         }
     }
 
-    public void updateOptions() {
+    public void updateHandler(boolean status) {
+    }
+
+    public boolean checkIfDuplicate() {
+        return false;
     }
 
     protected abstract S readSchema() throws Exception;

@@ -175,15 +175,28 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         }
 
         @Override
-        public void updateOptions() {
+        public void updateHandler(boolean status) {
+            String databaseName = getDatabaseName();
             if (getDbmsSpecificOptions().enableErrorHandling) {
-                handler.updateGeneratorOptions();
+                if (!status) {
+                    // print the last item of handler.
+                    System.out.println(databaseName);
+                    System.out.println(handler.getLastGeneratorScore());
+                    handler.appendHistory(databaseName);
+                } else {
+                    handler.updateGeneratorOptions();
+                }
                 handler.printStatistics();
                 handler.saveStatistics(this);
-                // print the last item of handler.
-                System.out.println(getDatabaseName());
-                System.out.println(handler.getLastGeneratorScore());
+                if (handler.getCurDepth(databaseName) < getOptions().getMaxExpressionDepth()) {
+                    handler.incrementCurDepth(databaseName);
+                }
+                System.out.println(databaseName + "Current depth: " + handler.getCurDepth(databaseName));
             }
+        }
+        @Override
+        public boolean checkIfDuplicate() {
+            return handler.checkIfDuplicate();
         }
 
         // @Override

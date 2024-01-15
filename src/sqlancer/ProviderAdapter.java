@@ -62,7 +62,11 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
                         globalState.getManager().incrementSelectQueryCount();
                     } catch (IgnoreMeException ignored) {
                     } catch (AssertionError e) {
-                        globalState.updateOptions();
+                        if (globalState.checkIfDuplicate()) {
+                            localState.executedWithoutError();
+                            continue;
+                        }
+                        globalState.updateHandler(false);
                         Reproducer<G> reproducer = oracle.getLastReproducer();
                         if (reproducer != null) {
                             return reproducer;
@@ -75,7 +79,7 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
         } finally {
             globalState.getConnection().close();
         }
-        globalState.updateOptions();
+        globalState.updateHandler(true);
         return null;
     }
 

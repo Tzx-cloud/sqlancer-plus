@@ -89,11 +89,12 @@ public class GeneralTypedExpressionGenerator
         // return getAggregate(type);
         // }
         GeneralErrorHandler handler = globalState.getHandler();
-        if (depth >= globalState.getOptions().getMaxExpressionDepth() || Randomly.getBoolean()) {
+        if (depth >= globalState.getOptions().getMaxExpressionDepth() || depth >= globalState.getHandler().getCurDepth(globalState.getDatabaseName()) || Randomly.getBoolean()) {
             return generateLeafNode(type);
         } else {
             if (Randomly.getBooleanWithRatherLowProbability()) {
-                if (Randomly.getBoolean() || !handler.getOption(GeneratorNode.UNTYPE_FUNC)) {
+                handler.addScore(GeneratorNode.FUNC);
+                if (Randomly.getBoolean() || !handler.getOption(GeneratorNode.UNTYPE_EXPR)) {
                     // TODO current implementation does not support automatically type inference
                     List<GeneralDBFunction> applicableFunctions = getFunctionsCompatibleWith(type);
                     if (!applicableFunctions.isEmpty()) {
@@ -103,7 +104,7 @@ public class GeneralTypedExpressionGenerator
                     }
                 } else {
                     GeneralDBFunction function = GeneralDBFunction.getRandomByOptions(handler);
-                    handler.addScore(GeneratorNode.UNTYPE_FUNC);
+                    // handler.addScore(GeneratorNode.UNTYPE_EXPR);
                     return new NewFunctionNode<GeneralExpression, GeneralDBFunction>(
                             generateExpressions(type, function.getNrArgs(), depth + 1), function);
                 }

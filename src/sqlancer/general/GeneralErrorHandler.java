@@ -3,18 +3,26 @@ package sqlancer.general;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 
 import sqlancer.ErrorHandler;
+import sqlancer.IgnoreMeException;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 
 public class GeneralErrorHandler implements ErrorHandler {
 
     private ArrayList<HashMap<GeneratorNode, Integer>> generatorTable;
     private HashMap<GeneratorNode, Integer> generatorScore;
-    private int curDepth = 1; // Control the expression depth, initial small for duduplication
+    // expression depth for each DATABASE --> it is thread unique parameter
+    // TODO concurrent
+    // volatile
+    private static HashMap<String, Integer> curDepth = new HashMap<>();
+    private static HashMap<String, HashMap<GeneratorNode, Integer>> assertionGeneratorHistory = new HashMap<>();
     private static HashMap<GeneratorNode, Boolean> generatorOptions = new HashMap<>();
     private static HashMap<String, Boolean> generatorCompositeOptions = new HashMap<>();
 
@@ -65,12 +73,22 @@ public class GeneralErrorHandler implements ErrorHandler {
         return GeneralErrorHandler.generatorOptions;
     }
 
-    public int getCurDepth() {
-        return this.curDepth;
+    public int getCurDepth(String databaseName) {
+        if (curDepth.containsKey(databaseName)) {
+            return curDepth.get(databaseName);
+        } else {
+            // We currently don't explicitly initiate the depth of the database
+            return 1;
+        }
     }
 
-    public void incrementCurDepth() {
-        this.curDepth++;
+    public void incrementCurDepth(String databaseName) {
+        if (curDepth.containsKey(databaseName)) {
+            curDepth.put(databaseName, curDepth.get(databaseName) + 1);
+        } else {
+            // we initiate the depth of the database here.
+            curDepth.put(databaseName, 2);
+        }
     }
 
     public void updateGeneratorOptions() {
@@ -153,6 +171,10 @@ public class GeneralErrorHandler implements ErrorHandler {
         generatorScore = new HashMap<>();
     }
 
+    public void appendHistory(String databaseName) {
+        assertionGeneratorHistory.put(databaseName, getLastGeneratorScore());
+    }
+
     HashMap<GeneratorNode, Double> getAverageScore() {
         HashMap<GeneratorNode, Double> average = new HashMap<>();
         HashMap<GeneratorNode, Integer> count = new HashMap<>();
@@ -193,10 +215,58 @@ public class GeneralErrorHandler implements ErrorHandler {
         HashMap<GeneratorNode, Double> average = getAverageScore();
         System.out.println("Total queries: " + generatorTable.size());
         System.out.println("Average: " + average);
+
+        // Print the history failed generator options
+        System.out.println("Assertion Generator History: " + assertionGeneratorHistory);
+    }
+
+    public boolean checkIfDuplicate() {
+        // iterate assertionGeneratorHistory values
+        boolean duplicate = false;
+
+        boolean isError = getLastGeneratorScore().get(GeneratorNode.EXECUTION_STATUS) == 0;
+        Set<GeneratorNode> nodes = new HashSet<>(getLastGeneratorScore().keySet());
+        ArrayList<HashMap<GeneratorNode, Integer>> history = new ArrayList<>(assertionGeneratorHistory.values());
+
+        // remove meta nodes 
+        nodes.remove(GeneratorNode.EXECUTION_STATUS);
+        nodes.remove(GeneratorNode.UNTYPE_EXPR);
+        System.out.println("Nodes: " + nodes);
+        System.out.println("History: " + history);
+
+        for (HashMap<GeneratorNode, Integer> generator : history) {
+            if (isError != (generator.get(GeneratorNode.EXECUTION_STATUS) == 0)) {
+                continue;
+            }
+            // change the generator to set
+            Set<GeneratorNode> generatorNodes = new HashSet<>(generator.keySet());
+            generatorNodes.remove(GeneratorNode.EXECUTION_STATUS);
+            generatorNodes.remove(GeneratorNode.UNTYPE_EXPR);
+            if (generatorNodes.size() == 0) {
+                if (nodes.size() == 0) {
+                    duplicate = true;
+                    System.out.println("Duplicate found");
+                    break;
+                } else {
+                    continue;
+                }
+            }
+            if (nodes.containsAll(generatorNodes)) {
+                duplicate = true;
+                System.out.println("Duplicate found");
+                if (isError) {
+                    System.out.println("Skip the rest of the current test");
+                    throw new IgnoreMeException();
+                }
+                break;
+            }
+        }
+
+        return duplicate;
     }
 
     public void saveStatistics(GeneralGlobalState globalState) {
-        // TODO Auto-generated method stub
+        // TODO It is a quite ugly function
         try (FileWriter file = new FileWriter(
                 "logs/" + globalState.getDbmsSpecificOptions().getDatabaseEngineFactory().toString() + "Options.txt")) {
             for (Map.Entry<GeneratorNode, Boolean> entry : generatorOptions.entrySet()) {
@@ -205,6 +275,24 @@ public class GeneralErrorHandler implements ErrorHandler {
         } catch (Exception e) {
             // TODO: handle exception
             e.printStackTrace();
+        }
+
+        // write each generator score to a file
+        // file: logs/general/generator/database*.txt
+        File historyFileDir = new File("logs/general/generator");
+        if (!historyFileDir.exists()) {
+            historyFileDir.mkdirs();
+        }
+        for (Map.Entry<String, HashMap<GeneratorNode, Integer>> entry : assertionGeneratorHistory.entrySet()) {
+            String databaseName = entry.getKey();
+            HashMap<GeneratorNode, Integer> generatorScore = entry.getValue();
+            try (FileWriter file = new FileWriter("logs/general/generator/" + databaseName + "Options.txt")) {
+                for (Map.Entry<GeneratorNode, Integer> generator : generatorScore.entrySet()) {
+                    file.write(generator.getKey() + " : " + generator.getValue() + "\n");
+                }
+            } catch (Exception e) {
+
+            }
         }
     }
 
