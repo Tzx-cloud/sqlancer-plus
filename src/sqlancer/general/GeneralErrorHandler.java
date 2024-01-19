@@ -22,8 +22,8 @@ public class GeneralErrorHandler implements ErrorHandler {
     // TODO concurrent
     // volatile
     private static HashMap<String, Integer> curDepth = new HashMap<>();
-    private static HashMap<String, HashMap<GeneratorNode, Integer>> assertionGeneratorHistory = new HashMap<>();
-    private static HashMap<GeneratorNode, Boolean> generatorOptions = new HashMap<>();
+    private static volatile HashMap<String, HashMap<GeneratorNode, Integer>> assertionGeneratorHistory = new HashMap<>();
+    private static volatile HashMap<GeneratorNode, Boolean> generatorOptions = new HashMap<>();
     private static HashMap<String, Boolean> generatorCompositeOptions = new HashMap<>();
 
     public enum GeneratorNode {
@@ -91,7 +91,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         }
     }
 
-    public void updateGeneratorOptions() {
+    public synchronized void updateGeneratorOptions() {
         HashMap<GeneratorNode, Double> average = getAverageScore();
 
         // if not zero then the option is true
@@ -307,8 +307,9 @@ public class GeneralErrorHandler implements ErrorHandler {
     }
 
     public boolean getOption(GeneratorNode option) {
-        if (generatorOptions.containsKey(option)) {
-            return generatorOptions.get(option);
+        Boolean value = generatorOptions.get(option);
+        if (value != null) {
+            return value;
         } else {
             return true;
         }
