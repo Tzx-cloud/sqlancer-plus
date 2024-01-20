@@ -119,3 +119,9 @@ fi
 if [ "$dbms" == "monetdb" ]; then
     docker build -t monetdb-source-build scripts/Docker/monetdb --no-cache
 fi
+
+if [ "$dbms" == "virtuoso" ]; then
+    cd $current_dir/resources/vos-reference-docker
+    ./build.sh
+    cd ../../
+fi

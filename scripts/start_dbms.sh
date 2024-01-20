@@ -130,7 +130,7 @@ fi
 if [ "$dbms" == "virtuoso" ]; then
     docker stop virtuoso-test
     docker rm virtuoso-test
-    docker run --name virtuoso-test -p 10020:1111 -e DBA_PASSWORD=dba pkleef/virtuoso-opensource-7
+    docker run --name virtuoso-test -p 10020:1111 -e DBA_PASSWORD=dba vos-reference:latest
 fi
 
 if [ "$dbms" == "monetdb" ]; then
