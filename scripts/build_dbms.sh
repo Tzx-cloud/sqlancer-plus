@@ -61,7 +61,7 @@ if [ "$dbms" == "cockroachdb" ]; then
 fi
 
 # Pull postgres
-if [ "$dbms" == "postgres" ]; then
+if [ "$dbms" == "postgresql" ]; then
     docker pull postgres:latest
 fi
 
@@ -109,7 +109,9 @@ if [ "$dbms" == "sqlite" ]; then
     JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/ make all
     mv target/sqlite-jdbc*.jar $current_dir/target/sqlite-jdbc.jar
     cd ../../
+    mvn clean
     mvn install:install-file -Dfile=target/sqlite-jdbc.jar -DgroupId=org.xerial -DartifactId=sqlite-jdbc -Dversion=3.40.0.0 -Dpackaging=jar
+    mvn package -DskipTests
 fi
 
 if [ "$dbms" == "percona" ]; then
