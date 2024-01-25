@@ -138,3 +138,8 @@ if [ "$dbms" == "monetdb" ]; then
     docker rm monetdb-test
     docker run --name monetdb-test -p 10021:50000 -e MDB_DB_ADMIN_PASS=monetdb monetdb-source-build
 fi
+
+if [ "$dbms" == "h2" ]; then
+    rm -rf $current_dir/databases/h2
+    mkdir -p $current_dir/databases/h2
+fi

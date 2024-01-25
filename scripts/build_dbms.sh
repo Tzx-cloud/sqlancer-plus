@@ -127,3 +127,15 @@ if [ "$dbms" == "virtuoso" ]; then
     ./build.sh
     cd ../../
 fi
+
+if [ "$dbms" == "h2" ]; then
+    cd $current_dir/resources/
+    rm -rf h2database
+    git clone --depth 1 https://github.com/h2database/h2database.git
+    cd h2database/h2
+    mvn -DskipTests -Dmaven.compiler.source=11 -Dmaven.compiler.target=11 clean package
+    cp target/h2*.jar $current_dir/target/h2.jar
+    cd ../../../
+    mvn install:install-file -Dfile=target/h2.jar -DgroupId=com.h2database -DartifactId=h2 -Dversion=2.1.214 -Dpackaging=jar
+    mvn package -DskipTests
+fi
