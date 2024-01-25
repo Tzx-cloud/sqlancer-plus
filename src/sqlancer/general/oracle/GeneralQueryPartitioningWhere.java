@@ -75,7 +75,8 @@ public class GeneralQueryPartitioningWhere extends GeneralQueryPartitioningBase 
                 throw new AssertionError(e.getMessage()
                         + "\n You probably triggered an error in the DBMS by the previous query, as the query is a simple select that could not easily have issue. Check the *-cur.log");
             }
-            // Noticed that, we would still add some extra information to the generator table. Since the UNION ALL query would not be actually executed but fail due to the previous JOIN query.
+            // Noticed that, we would still add some extra information to the generator table. Since the UNION ALL query
+            // would not be actually executed but fail due to the previous JOIN query.
             // I think it is fine. We could do dependency analysis later.
             state.getHandler().appendScoreToTable(false);
             throw e;

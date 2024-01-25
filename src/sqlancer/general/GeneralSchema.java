@@ -107,20 +107,20 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             // throw new AssertionError(size);
             // }
             case STRING:
-            if (size == 0) {
-                return "VARCHAR";
-            } else {
-                return "VARCHAR(" + size + ")";
-            }
-            // case FLOAT:
-            // switch (size) {
-            // case 8:
-            // return Randomly.fromOptions("DOUBLE");
-            // case 4:
-            // return Randomly.fromOptions("REAL", "FLOAT4");
-            // default:
-            // throw new AssertionError(size);
-            // }
+                if (size == 0) {
+                    return "VARCHAR";
+                } else {
+                    return "VARCHAR(" + size + ")";
+                }
+                // case FLOAT:
+                // switch (size) {
+                // case 8:
+                // return Randomly.fromOptions("DOUBLE");
+                // case 4:
+                // return Randomly.fromOptions("REAL", "FLOAT4");
+                // default:
+                // throw new AssertionError(size);
+                // }
             case BOOLEAN:
                 return Randomly.fromOptions("BOOLEAN", "BOOL");
             // case TIMESTAMP:

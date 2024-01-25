@@ -34,11 +34,11 @@ public class GeneralErrorHandler implements ErrorHandler {
         CREATE_TABLE, CREATE_INDEX, INSERT, SELECT, UPDATE, DELETE, CREATE_VIEW, EXPLAIN, ANALYZE, VACUUM,
         CREATE_DATABASE,
         // Clause level nodes
-        UNIQUE_INDEX, PRIMARY_KEY, COLUMN_NUM, COLUMN_INT, COLUMN_BOOLEAN, COLUMN_STRING, JOIN, INNER_JOIN, LEFT_JOIN, RIGHT_JOIN, NATURAL_JOIN, LEFT_NATURAL_JOIN, RIGHT_NATURAL_JOIN, FULL_NATURAL_JOIN,
+        UNIQUE_INDEX, PRIMARY_KEY, COLUMN_NUM, COLUMN_INT, COLUMN_BOOLEAN, COLUMN_STRING, JOIN, INNER_JOIN, LEFT_JOIN,
+        RIGHT_JOIN, NATURAL_JOIN, LEFT_NATURAL_JOIN, RIGHT_NATURAL_JOIN, FULL_NATURAL_JOIN,
         // Expression level nodes
         UNARY_POSTFIX, UNARY_PREFIX, BINARY_COMPARISON, BINARY_LOGICAL, BINARY_ARITHMETIC, CAST, FUNC, BETWEEN, CASE,
-        IN, COLLATE, LIKE_ESCAPE, UNTYPE_FUNC,
-        CAST_FUNC, CAST_COLON, IS_NULL, IS_NOT_NULL,
+        IN, COLLATE, LIKE_ESCAPE, UNTYPE_FUNC, CAST_FUNC, CAST_COLON, IS_NULL, IS_NOT_NULL,
         // Function level nodes
         ACOS, ASIN, ATAN, COS, SIN, TAN, COT, ATAN2, ABS, CEIL, CEILING, FLOOR, LOG, LOG10, LOG2, LN, PI, SQRT, POWER,
         CBRT, ROUND, SIGN, DEGREES, RADIANS, MOD, XOR, // math functions
@@ -56,7 +56,7 @@ public class GeneralErrorHandler implements ErrorHandler {
     public GeneralErrorHandler() {
         this.generatorTable = new ArrayList<>();
         this.generatorScore = new HashMap<>();
-        if (generatorOptions.isEmpty()){
+        if (generatorOptions.isEmpty()) {
             initGeneratorOptions();
         }
     }
@@ -100,8 +100,8 @@ public class GeneralErrorHandler implements ErrorHandler {
                 if (generatorOptions.get(entry.getKey())) {
                     // If true, then continue, don't make available function unavailable
                     continue;
-                } 
-            } 
+                }
+            }
             if (entry.getValue() > 0) {
                 generatorOptions.put(entry.getKey(), true);
             } else {
@@ -228,7 +228,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         Set<GeneratorNode> nodes = new HashSet<>(getLastGeneratorScore().keySet());
         ArrayList<HashMap<GeneratorNode, Integer>> history = new ArrayList<>(assertionGeneratorHistory.values());
 
-        // remove meta nodes 
+        // remove meta nodes
         nodes.remove(GeneratorNode.EXECUTION_STATUS);
         nodes.remove(GeneratorNode.UNTYPE_EXPR);
         System.out.println("Nodes: " + nodes);

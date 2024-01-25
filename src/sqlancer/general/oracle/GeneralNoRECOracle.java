@@ -84,7 +84,8 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
         Node<GeneralExpression> asText = new NewPostfixTextNode<>(new GeneralCast(
                 new NewPostfixTextNode<GeneralExpression>(randomWhereCondition,
                         " IS NOT NULL AND " + GeneralToStringVisitor.asString(randomWhereCondition)),
-                new GeneralCompositeDataType(GeneralDataType.INT, 8), GeneralCastOperator.getRandomByOptions(state.getHandler())), "as count");
+                new GeneralCompositeDataType(GeneralDataType.INT, 8),
+                GeneralCastOperator.getRandomByOptions(state.getHandler())), "as count");
         select.setFetchColumns(Arrays.asList(asText));
         select.setFromList(tableList);
         // select.setSelectType(SelectType.ALL);

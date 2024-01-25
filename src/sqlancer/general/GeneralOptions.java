@@ -313,6 +313,7 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:monetdb://localhost:10021/monetdb?user=monetdb&password=monetdb");
             }
+
             @Override
             public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
                     throws SQLException {
@@ -331,7 +332,22 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
                 return conn;
             }
         },
-        ;
+        H2 {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:h2:./databases/h2/%s;DB_CLOSE_ON_EXIT=FALSE", globalState.getDatabaseName());
+            }
+
+            @Override
+            public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
+                    throws SQLException {
+                Connection conn = DriverManager.getConnection(getJDBCString(globalState));
+                conn.createStatement().execute("DROP ALL OBJECTS DELETE FILES");
+                conn.close();
+                conn = DriverManager.getConnection(getJDBCString(globalState));
+                return conn;
+            }
+        },;
 
         private boolean isNewSchema = true;
 

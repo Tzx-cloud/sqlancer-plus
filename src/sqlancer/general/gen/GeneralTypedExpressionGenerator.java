@@ -89,7 +89,9 @@ public class GeneralTypedExpressionGenerator
         // return getAggregate(type);
         // }
         GeneralErrorHandler handler = globalState.getHandler();
-        if (depth >= globalState.getOptions().getMaxExpressionDepth() || depth >= globalState.getHandler().getCurDepth(globalState.getDatabaseName()) || Randomly.getBoolean()) {
+        if (depth >= globalState.getOptions().getMaxExpressionDepth()
+                || depth >= globalState.getHandler().getCurDepth(globalState.getDatabaseName())
+                || Randomly.getBoolean()) {
             return generateLeafNode(type);
         } else {
             if (Randomly.getBooleanWithRatherLowProbability()) {
@@ -111,7 +113,8 @@ public class GeneralTypedExpressionGenerator
             }
             if (Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.CAST)) {
                 handler.addScore(GeneratorNode.CAST);
-                return new GeneralCast(generateExpression(getRandomType(), depth + 1), type, GeneralCastOperator.getRandomByOptions(handler));
+                return new GeneralCast(generateExpression(getRandomType(), depth + 1), type,
+                        GeneralCastOperator.getRandomByOptions(handler));
             }
             if (Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.CASE)) {
                 handler.addScore(GeneratorNode.CASE);

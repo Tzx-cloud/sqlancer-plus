@@ -98,7 +98,8 @@ public class GeneralJoin implements Node<GeneralExpression> {
             List<TableReferenceNode<GeneralExpression, GeneralTable>> tableList, GeneralGlobalState globalState) {
         List<Node<GeneralExpression>> joinExpressions = new ArrayList<>();
         GeneralErrorHandler handler = globalState.getHandler();
-        while (tableList.size() >= 2 && Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.JOIN)) {
+        while (tableList.size() >= 2 && Randomly.getBooleanWithRatherLowProbability()
+                && handler.getOption(GeneratorNode.JOIN)) {
             TableReferenceNode<GeneralExpression, GeneralTable> leftTable = tableList.remove(0);
             TableReferenceNode<GeneralExpression, GeneralTable> rightTable = tableList.remove(0);
             List<GeneralColumn> columns = new ArrayList<>(leftTable.getTable().getColumns());
@@ -110,7 +111,8 @@ public class GeneralJoin implements Node<GeneralExpression> {
                 joinExpressions.add(GeneralJoin.createInnerJoin(leftTable, rightTable, joinGen.generateExpression()));
                 break;
             case NATURAL:
-                joinExpressions.add(GeneralJoin.createNaturalJoin(leftTable, rightTable, OuterType.getRandomByOptions(handler)));
+                joinExpressions.add(
+                        GeneralJoin.createNaturalJoin(leftTable, rightTable, OuterType.getRandomByOptions(handler)));
                 break;
             case LEFT:
                 joinExpressions

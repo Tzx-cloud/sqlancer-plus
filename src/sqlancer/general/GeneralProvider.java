@@ -194,6 +194,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 System.out.println(databaseName + "Current depth: " + handler.getCurDepth(databaseName));
             }
         }
+
         @Override
         public boolean checkIfDuplicate() {
             return handler.checkIfDuplicate();
