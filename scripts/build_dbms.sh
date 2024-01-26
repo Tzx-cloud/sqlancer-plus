@@ -104,12 +104,12 @@ fi
 
 # Install sqlite
 if [ "$dbms" == "sqlite" ]; then
+    mvn clean
     cd $current_dir/resources/sqlite-jdbc
     make clean
     JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/ make all
     mv target/sqlite-jdbc*.jar $current_dir/target/sqlite-jdbc.jar
     cd ../../
-    mvn clean
     mvn install:install-file -Dfile=target/sqlite-jdbc.jar -DgroupId=org.xerial -DartifactId=sqlite-jdbc -Dversion=3.40.0.0 -Dpackaging=jar
     mvn package -DskipTests
 fi
