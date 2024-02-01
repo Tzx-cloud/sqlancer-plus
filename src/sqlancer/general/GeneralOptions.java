@@ -203,6 +203,40 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:postgresql://localhost:10008/dev?user=root");
             }
+            
+            @Override
+            public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
+                    throws SQLException {
+                Connection conn = DriverManager.getConnection(getJDBCString(globalState));
+                setIsNewSchema(false);
+                for (int i = 0; i < 100; i++) {
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP TABLE %s_t%d", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
+                    globalState.getState().logStatement(String.format("DROP TABLE %s_t%d", databaseName, i));
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP VIEW %s_v%d", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
+                    globalState.getState().logStatement(String.format("DROP VIEW %s_v%d", databaseName, i));
+                }
+                try (Statement s = conn.createStatement()) {
+                    s.execute("set query_mode to local;");
+                    globalState.getState().logStatement("set query_mode to local;");
+                }
+                return conn;
+            }
+
+            @Override
+            public void syncData(GeneralGlobalState globalState) throws SQLException {
+                try (Statement s = globalState.getConnection().createStatement()) {
+                    s.execute(String.format("FLUSH;"));
+                    globalState.getState().logStatement(String.format("FLUSH;"));
+                } catch (SQLException e) {
+                    // ignore
+                }
+            }
         },
         DUCKDB {
             @Override
