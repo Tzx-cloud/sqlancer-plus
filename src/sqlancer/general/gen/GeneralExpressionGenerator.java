@@ -26,13 +26,13 @@ import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.GeneralSchema.GeneralDataType;
-import sqlancer.general.ast.GeneralDBFunction;
 import sqlancer.general.ast.GeneralBinaryArithmeticOperator;
 import sqlancer.general.ast.GeneralBinaryComparisonOperator;
 import sqlancer.general.ast.GeneralBinaryLogicalOperator;
 import sqlancer.general.ast.GeneralCast;
 import sqlancer.general.ast.GeneralConstant;
 import sqlancer.general.ast.GeneralExpression;
+import sqlancer.general.ast.GeneralFunction;
 import sqlancer.general.ast.GeneralUnaryPostfixOperator;
 import sqlancer.general.ast.GeneralUnaryPrefixOperator;
 import sqlancer.general.ast.GeneralCast.GeneralCastOperator;
@@ -124,9 +124,10 @@ public final class GeneralExpressionGenerator
             return new GeneralCast(generateExpression(depth + 1), GeneralCompositeDataType.getRandomWithoutNull(),
                     GeneralCastOperator.getRandomByOptions(handler));
         case FUNC:
-            GeneralDBFunction func = GeneralDBFunction.getRandomByOptions(handler);
-            return new NewFunctionNode<GeneralExpression, GeneralDBFunction>(
-                    generateExpressions(func.getNrArgs(), depth + 1), func);
+            // GeneralDBFunction func = GeneralDBFunction.getRandomByOptions(handler);
+            GeneralFunction func = GeneralFunction.getRandomByOptions(handler);
+            return new NewFunctionNode<GeneralExpression, GeneralFunction>(generateExpressions(func.getNrArgs(), depth + 1),
+                    func);
         case BETWEEN:
             return new NewBetweenOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     generateExpression(depth + 1), generateExpression(depth + 1), Randomly.getBoolean());

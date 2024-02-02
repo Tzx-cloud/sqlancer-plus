@@ -152,6 +152,7 @@ public class SQLQueryAdapter extends Query<SQLConnection> {
             s.close();
             Main.nrUnsuccessfulActions.addAndGet(1);
             checkException(e);
+            globalState.getLogger().writeCurrent("-- " + e.getMessage());
         }
         return null;
     }

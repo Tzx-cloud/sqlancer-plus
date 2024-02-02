@@ -3,7 +3,6 @@ package sqlancer.general.gen;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import sqlancer.Randomly;
 import sqlancer.common.ast.newast.NewBetweenOperatorNode;
@@ -29,8 +28,8 @@ import sqlancer.general.ast.GeneralBinaryLogicalOperator;
 import sqlancer.general.ast.GeneralCast;
 import sqlancer.general.ast.GeneralColumnReference;
 import sqlancer.general.ast.GeneralConstant;
-import sqlancer.general.ast.GeneralDBFunction;
 import sqlancer.general.ast.GeneralExpression;
+import sqlancer.general.ast.GeneralFunction;
 import sqlancer.general.ast.GeneralUnaryPostfixOperator;
 import sqlancer.general.ast.GeneralUnaryPrefixOperator;
 import sqlancer.general.ast.GeneralCast.GeneralCastOperator;
@@ -77,10 +76,14 @@ public class GeneralTypedExpressionGenerator
         return orderingTerms;
     }
 
-    public List<GeneralDBFunction> getFunctionsCompatibleWith(GeneralCompositeDataType returnType) {
-        return Stream.of(GeneralDBFunction.values())
-                .filter(f -> globalState.getHandler().getCompositeOption(f.toString(), returnType.toString()))
-                .collect(Collectors.toList());
+    // public List<GeneralDBFunction> getFunctionsCompatibleWith(GeneralCompositeDataType returnType) {
+    //     return Stream.of(GeneralDBFunction.values())
+    //             .filter(f -> globalState.getHandler().getCompositeOption(f.toString(), returnType.toString()))
+    //             .collect(Collectors.toList());
+    // }
+
+    public List<GeneralFunction> getFunctionsCompatibleWith(GeneralCompositeDataType returnType) {
+        return GeneralFunction.getRandomCompatibleFunctions(globalState.getHandler(), returnType);
     }
 
     @Override
@@ -98,17 +101,17 @@ public class GeneralTypedExpressionGenerator
                 handler.addScore(GeneratorNode.FUNC);
                 if (Randomly.getBoolean() || !handler.getOption(GeneratorNode.UNTYPE_EXPR)) {
                     // TODO current implementation does not support automatically type inference
-                    List<GeneralDBFunction> applicableFunctions = getFunctionsCompatibleWith(type);
+                    List<GeneralFunction> applicableFunctions = getFunctionsCompatibleWith(type);
                     if (!applicableFunctions.isEmpty()) {
-                        GeneralDBFunction function = Randomly.fromList(applicableFunctions);
-                        return new NewFunctionNode<GeneralExpression, GeneralDBFunction>(
+                        GeneralFunction function = Randomly.fromList(applicableFunctions);
+                        return new NewFunctionNode<GeneralExpression, GeneralFunction>(
                                 generateExpressions(type, function.getNrArgs(), depth + 1), function);
                     }
                 } else {
-                    GeneralDBFunction function = GeneralDBFunction.getRandomByOptions(handler);
+                    GeneralFunction function = GeneralFunction.getRandomByOptions(handler);
                     // handler.addScore(GeneratorNode.UNTYPE_EXPR);
-                    return new NewFunctionNode<GeneralExpression, GeneralDBFunction>(
-                            generateExpressions(type, function.getNrArgs(), depth + 1), function);
+                    return new NewFunctionNode<GeneralExpression, GeneralFunction>(
+                            generateExpressions(GeneralCompositeDataType.getRandomWithoutNull(), function.getNrArgs(), depth + 1), function);
                 }
             }
             if (Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.CAST)) {

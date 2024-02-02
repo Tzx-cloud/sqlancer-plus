@@ -92,6 +92,10 @@ public enum GeneralDBFunction {
         return op;
     }
 
+    public int getVarArgs() {
+        return isVariadic ? -nrArgs : nrArgs;
+    }
+
     public int getNrArgs() {
         if (isVariadic) {
             return Randomly.smallNumber() + nrArgs;
