@@ -49,7 +49,7 @@ public class GeneralTypedExpressionGenerator
 
     @Override
     public Node<GeneralExpression> generateExpression(GeneralCompositeDataType dataType) {
-        return generateExpression(dataType, 0);
+        return generateExpression(dataType, -1); // To make sure the start not so cold
     }
 
     // public Node<GeneralExpression> generateAggregate() {
@@ -92,7 +92,7 @@ public class GeneralTypedExpressionGenerator
         // return getAggregate(type);
         // }
         GeneralErrorHandler handler = globalState.getHandler();
-        if (depth >= globalState.getOptions().getMaxExpressionDepth()
+        if (depth >= globalState.getOptions().getMaxExpressionDepth() - 1
                 || depth >= globalState.getHandler().getCurDepth(globalState.getDatabaseName())
                 || Randomly.getBoolean()) {
             return generateLeafNode(type);
@@ -104,6 +104,7 @@ public class GeneralTypedExpressionGenerator
                     List<GeneralFunction> applicableFunctions = getFunctionsCompatibleWith(type);
                     if (!applicableFunctions.isEmpty()) {
                         GeneralFunction function = Randomly.fromList(applicableFunctions);
+                        handler.addScore("FUNCTION_" + function.toString());
                         return new NewFunctionNode<GeneralExpression, GeneralFunction>(
                                 generateExpressions(type, function.getNrArgs(), depth + 1), function);
                     }
