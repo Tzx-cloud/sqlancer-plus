@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import sqlancer.IgnoreMeException;
+import sqlancer.Main;
 import sqlancer.Randomly;
+import sqlancer.Reproducer;
 import sqlancer.SQLConnection;
 import sqlancer.common.ast.newast.ColumnReferenceNode;
 import sqlancer.common.ast.newast.NewPostfixTextNode;
@@ -23,8 +25,6 @@ import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema;
 import sqlancer.general.GeneralSchema.GeneralColumn;
-import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
-import sqlancer.general.GeneralSchema.GeneralDataType;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralSchema.GeneralTables;
 import sqlancer.general.GeneralToStringVisitor;
@@ -32,14 +32,14 @@ import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralJoin;
 import sqlancer.general.ast.GeneralSelect;
-import sqlancer.general.ast.GeneralCast.GeneralCastOperator;
 import sqlancer.general.gen.GeneralExpressionGenerator;
 import sqlancer.general.gen.GeneralTypedExpressionGenerator;
-import sqlancer.general.ast.GeneralCast;
 
 public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements TestOracle<GeneralGlobalState> {
 
     private final GeneralSchema s;
+    private Reproducer<GeneralGlobalState> reproducer;
+    private GeneralSelect optimizedSelect;
 
     public GeneralNoRECOracle(GeneralGlobalState globalState) {
         super(globalState);
@@ -47,8 +47,73 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
         GeneralErrors.addExpressionErrors(errors);
     }
 
+    private class GeneralNoRECReproducer implements Reproducer<GeneralGlobalState> {
+        final String secondQueryString;
+        final String firstQueryString;
+        private String errorMessage;
+
+        GeneralNoRECReproducer(String secondQueryString, String firstQueryString, String errorMessage) {
+            this.secondQueryString = secondQueryString;
+            this.firstQueryString = firstQueryString;
+            this.errorMessage = errorMessage;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+
+        @Override
+        public boolean bugStillTriggers(GeneralGlobalState globalState) {
+            try {
+                int secondCount = 0;
+                SQLQueryAdapter q = new SQLQueryAdapter(secondQueryString, errors);
+                SQLancerResultSet srs;
+                try {
+                    srs = q.executeAndGet(globalState);
+                } catch (Exception e) {
+                    throw new AssertionError(e);
+                }
+                if (srs == null) {
+                    secondCount = -1;
+                } else {
+                    while (srs.next()) {
+                        secondCount += srs.getBoolean(1) ? 1 : 0;
+                    }
+                    srs.close();
+                }
+
+                // first count
+                int firstCount = 0;
+                try (Statement stat = globalState.getConnection().createStatement()) {
+                    try (ResultSet rs = stat.executeQuery(firstQueryString)) {
+                        while (rs.next()) {
+                            firstCount++;
+                        }
+                    }
+                } catch (SQLException e) {
+                    throw new IgnoreMeException();
+                }
+
+                if (firstCount == -1 || secondCount == -1) {
+                    throw new IgnoreMeException();
+                }
+                if (firstCount != secondCount) {
+                    throw new AssertionError(
+                            firstQueryString + "; -- " + firstCount + "\n" + secondQueryString + " -- "
+                                    + secondCount);
+                }
+            } catch (AssertionError triggeredError) {
+                this.errorMessage = triggeredError.getMessage();
+                return true;
+            } catch (SQLException ignored) {
+            }
+            return false;
+        }
+    }
+
     @Override
     public void check() throws SQLException {
+        reproducer = null;
         GeneralTables randomTables = s.getRandomTableNonEmptyTables();
         List<GeneralColumn> columns = randomTables.getColumns();
         ExpressionGenerator<Node<GeneralExpression>> gen;
@@ -63,36 +128,40 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
         List<TableReferenceNode<GeneralExpression, GeneralTable>> tableList = tables.stream()
                 .map(t -> new TableReferenceNode<GeneralExpression, GeneralTable>(t)).collect(Collectors.toList());
         List<Node<GeneralExpression>> joins = GeneralJoin.getJoins(tableList, state);
+
         int secondCount = getSecondQuery(tableList.stream().collect(Collectors.toList()), randomWhereCondition, joins);
         int firstCount = getFirstQueryCount(con, tableList.stream().collect(Collectors.toList()), columns,
                 randomWhereCondition, joins);
         if (firstCount == -1 || secondCount == -1) {
+            state.getHandler().appendScoreToTable(false);
             throw new IgnoreMeException();
         }
         if (firstCount != secondCount) {
-            throw new AssertionError(
-                    optimizedQueryString + "; -- " + firstCount + "\n" + unoptimizedQueryString + " -- " + secondCount);
+            state.getHandler().appendScoreToTable(true);
+            String errorMessage = optimizedQueryString + "; -- " + firstCount + "\n" + unoptimizedQueryString + " -- "
+                    + secondCount;
+            reproducer = new GeneralNoRECReproducer(unoptimizedQueryString, optimizedQueryString,
+                    errorMessage);
+            throw new AssertionError(errorMessage);
         }
+        state.getHandler().appendScoreToTable(true);
     }
 
     private int getSecondQuery(List<Node<GeneralExpression>> tableList, Node<GeneralExpression> randomWhereCondition,
             List<Node<GeneralExpression>> joins) throws SQLException {
         GeneralSelect select = new GeneralSelect();
         // select.setGroupByClause(groupBys);
-        // GeneralExpression isTrue = GeneralPostfixOperation.create(randomWhereCondition,
+        // GeneralExpression isTrue =
+        // GeneralPostfixOperation.create(randomWhereCondition,
         // PostfixOperator.IS_TRUE);
-        Node<GeneralExpression> asText = new NewPostfixTextNode<>(new GeneralCast(
-                new NewPostfixTextNode<GeneralExpression>(randomWhereCondition,
-                        " IS NOT NULL AND " + GeneralToStringVisitor.asString(randomWhereCondition)),
-                new GeneralCompositeDataType(GeneralDataType.INT, 8),
-                GeneralCastOperator.getRandomByOptions(state.getHandler())), "as count");
+        Node<GeneralExpression> asText = new NewPostfixTextNode<GeneralExpression>(randomWhereCondition," IS TRUE ");
         select.setFetchColumns(Arrays.asList(asText));
         select.setFromList(tableList);
         // select.setSelectType(SelectType.ALL);
         select.setJoinList(joins);
         int secondCount = 0;
-        unoptimizedQueryString = "SELECT SUM(count) FROM (" + GeneralToStringVisitor.asString(select) + ") as res";
-        errors.add("canceling statement due to statement timeout");
+        unoptimizedQueryString = GeneralToStringVisitor.asString(select);
+        // errors.add("canceling statement due to statement timeout");
         SQLQueryAdapter q = new SQLQueryAdapter(unoptimizedQueryString, errors);
         SQLancerResultSet rs;
         try {
@@ -103,8 +172,16 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
         if (rs == null) {
             return -1;
         }
-        if (rs.next()) {
-            secondCount += rs.getLong(1);
+        try {
+            while (rs.next()) {
+                secondCount += rs.getBoolean(1) ? 1 : 0;
+            }
+        } catch (Exception e) {
+            rs.close();
+            Main.nrUnsuccessfulActions.addAndGet(1);
+            state.getHandler().appendScoreToTable(false);
+            state.getLogger().writeCurrent("-- " + e.getMessage());
+            throw new IgnoreMeException();
         }
         rs.close();
         return secondCount;
@@ -113,24 +190,25 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
     private int getFirstQueryCount(SQLConnection con, List<Node<GeneralExpression>> tableList,
             List<GeneralColumn> columns, Node<GeneralExpression> randomWhereCondition,
             List<Node<GeneralExpression>> joins) throws SQLException {
-        GeneralSelect select = new GeneralSelect();
+        optimizedSelect = new GeneralSelect();
         // select.setGroupByClause(groupBys);
         // GeneralAggregate aggr = new GeneralAggregate(
         List<Node<GeneralExpression>> allColumns = columns.stream()
                 .map((c) -> new ColumnReferenceNode<GeneralExpression, GeneralColumn>(c)).collect(Collectors.toList());
         // GeneralAggregateFunction.COUNT);
         // select.setFetchColumns(Arrays.asList(aggr));
-        select.setFetchColumns(allColumns);
-        select.setFromList(tableList);
-        select.setWhereClause(randomWhereCondition);
-        if (Randomly.getBooleanWithSmallProbability()) {
-            select.setOrderByExpressions(new GeneralExpressionGenerator(state).setColumns(columns).generateOrderBys());
-        }
+        optimizedSelect.setFetchColumns(allColumns);
+        optimizedSelect.setFromList(tableList);
+        optimizedSelect.setWhereClause(randomWhereCondition);
+        // if (Randomly.getBooleanWithSmallProbability()) {
+        // select.setOrderByExpressions(new
+        // GeneralExpressionGenerator(state).setColumns(columns).generateOrderBys());
+        // }
         // select.setSelectType(SelectType.ALL);
-        select.setJoinList(joins);
+        optimizedSelect.setJoinList(joins);
+        optimizedQueryString = GeneralToStringVisitor.asString(optimizedSelect);
         int firstCount = 0;
         try (Statement stat = con.createStatement()) {
-            optimizedQueryString = GeneralToStringVisitor.asString(select);
             if (options.logEachSelect()) {
                 logger.writeCurrent(optimizedQueryString);
             }
@@ -140,9 +218,16 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
                 }
             }
         } catch (SQLException e) {
+            state.getHandler().appendScoreToTable(false);
+            state.getLogger().writeCurrent(e.getMessage());
             throw new IgnoreMeException();
         }
         return firstCount;
+    }
+
+    @Override
+    public Reproducer<GeneralGlobalState> getLastReproducer() {
+        return reproducer;
     }
 
 }

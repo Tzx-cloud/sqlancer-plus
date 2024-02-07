@@ -104,7 +104,9 @@ public class GeneralToStringVisitor extends NewToStringVisitor<GeneralExpression
             sb.append(cast.getType());
             sb.append(")");
         } else {
+            sb.append('(');
             visit(cast.getExpr());
+            sb.append(')');
             sb.append("::");
             sb.append(cast.getType());
         }

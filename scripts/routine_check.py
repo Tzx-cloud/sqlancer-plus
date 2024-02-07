@@ -8,7 +8,7 @@ import re
 CURRENT_DATE = time.strftime("r%m%d", time.localtime())
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 
-FUZZER = "java -jar target/sqlancer-2.0.0.jar --num-threads 4 --num-tries 4 --canonicalize-sql-strings false  --num-statement-kind-retries 10 --use-reducer --reduce-ast general --oracle WHERE --database-engine {}"
+FUZZER = "java -jar target/sqlancer-2.0.0.jar --num-threads 4 --num-tries 4 --canonicalize-sql-strings false  --num-statement-kind-retries 10 --use-reducer --reduce-ast general --oracle {} --database-engine {}"
 
 SUPPORT_DBMS = [
     "mysql",
@@ -43,12 +43,12 @@ def start_server(dbms: str, tag: str = "latest"):
     return proc
 
 
-def start_fuzz(dbms: str, timeout: int = 60):
+def start_fuzz(dbms: str, oracle:str, timeout: int = 60):
     # mkdir -p logs/routine
     os.makedirs(f"{CURRENT_DIR}/../logs/routine", exist_ok=True)
     # Start the fuzzing program
     with open(f"{CURRENT_DIR}/../logs/routine/{dbms}.log", "w") as f:
-        cmd = FUZZER.format(dbms).split()
+        cmd = FUZZER.format(oracle, dbms).split()
         proc = subprocess.Popen(cmd, stdout=f, stderr=f)
     try:
         proc.wait(timeout=timeout)
@@ -75,6 +75,7 @@ if __name__ == "__main__":
     parser.add_argument("--dbms", type=str, default="all")
     parser.add_argument("--cache", action="store_true", default=False)
     parser.add_argument("--timeout", type=int, default=600)
+    parser.add_argument("--oracle", type=str, default="WHERE")
     args = parser.parse_args()
     if args.dbms != "all":
         SUPPORT_DBMS = [args.dbms]
@@ -88,7 +89,7 @@ if __name__ == "__main__":
         print("Starting", dbms)
         proc = start_server(dbms)
         print("Testing", dbms)
-        code = start_fuzz(dbms, args.timeout)
+        code = start_fuzz(dbms, args.oracle, args.timeout)
         print("Do some cleaning")
         os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
         os.system(f"docker stop {dbms}-test")
