@@ -124,7 +124,7 @@ fi
 
 if [ "$dbms" == "virtuoso" ]; then
     cd $current_dir/resources/vos-reference-docker
-    ./build.sh
+    NO_CACHE="--no-cache" ./build.sh
     cd ../../
 fi
 
