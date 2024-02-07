@@ -167,6 +167,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 success = super.executeStatement(q, fills);
             } catch (Exception e) {
                 handler.appendScoreToTable(false);
+                getLogger().writeCurrent(" -- " + e.getMessage());
                 throw e;
             }
             // I guess we want to make sure if the syntax is correct
