@@ -16,22 +16,131 @@ import sqlancer.general.GeneralProvider.GeneralGlobalState;
 
 public class GeneralErrorHandler implements ErrorHandler {
 
-    private ArrayList<HashMap<GeneratorNode, Integer>> generatorTable;
-    private HashMap<GeneratorNode, Integer> generatorScore;
+    private GeneratorInfoTable generatorTable;
+    private GeneratorInfo generatorInfo;
     // private GeneratorScore<GeneratorNode> generatorScore;
-    private ArrayList<HashMap<String, Integer>> compositeGeneratorTable;
-    private HashMap<String, Integer> compositeGeneratorScore;
+    // private ArrayList<GeneratorInfo<String>> compositeGeneratorTable;
+    // private GeneratorInfo<String> compositeGeneratorScore;
     // expression depth for each DATABASE --> it is thread unique parameter
     // TODO concurrent
+    private class GeneratorInfo {
+        private HashMap<GeneratorNode, Integer> generatorScore;
+        private HashMap<String, Integer> compositeGeneratorScore;
+        private boolean status;
+
+        public GeneratorInfo() {
+            this.generatorScore = new HashMap<>();
+            this.compositeGeneratorScore = new HashMap<>();
+            this.status = false;
+        }
+
+        public HashMap<GeneratorNode, Integer> getGeneratorScore() {
+            return generatorScore;
+        }
+
+        public HashMap<String, Integer> getCompositeGeneratorScore() {
+            return compositeGeneratorScore;
+        }
+
+        public boolean getStatus() {
+            return status;
+        }
+
+        public void setStatus(boolean status) {
+            this.status = status;
+        }
+
+        @Override
+        public String toString() {
+            return "GeneratorInfo [generatorScore=" + generatorScore + ", status=" + status + "]";
+        }
+    }
+    
+    private class GeneratorInfoTable{
+        private ArrayList<GeneratorInfo> generatorTable;
+        private HashMap<GeneratorNode, Double> generatorAverage;
+        private HashMap<String, Double> compositeAverage;
+
+
+        public GeneratorInfoTable() {
+            this.generatorTable = new ArrayList<>();
+        }
+
+        public ArrayList<GeneratorInfo> getGeneratorTable() {
+            return generatorTable;
+        }
+
+        public void add(GeneratorInfo generatorInfo) {
+            generatorTable.add(generatorInfo);
+        }
+
+        public GeneratorInfo getLastGeneratorScore() {
+            return generatorTable.get(generatorTable.size() - 1);
+        }
+
+        public HashMap<GeneratorNode, Double> calcAverageGeneratorScore() {
+            generatorAverage = new HashMap<>();
+            HashMap<GeneratorNode, Integer> count = new HashMap<>();
+            for (GeneratorInfo info : generatorTable) {
+                HashMap<GeneratorNode, Integer> generator = info.getGeneratorScore();
+                int executionStatus = info.getStatus() ? 1 : 0;
+
+                // sum up all the successful generator options
+                for (Map.Entry<GeneratorNode, Integer> entry : generator.entrySet()) {
+                    GeneratorNode key = entry.getKey();
+                    int value = entry.getValue();
+                    if (generatorAverage.containsKey(key)) {
+                        generatorAverage.put(key, generatorAverage.get(key) + value * executionStatus);
+                        count.put(key, count.get(key) + 1);
+                    } else {
+                        generatorAverage.put(key, (double) (value * executionStatus));
+                        count.put(key, 1);
+                    }
+                }
+            }
+            for (Map.Entry<GeneratorNode, Double> entry : generatorAverage.entrySet()) {
+                generatorAverage.put(entry.getKey(), entry.getValue() / count.get(entry.getKey()));
+            }
+            return generatorAverage;
+        }
+
+        public HashMap<String, Double> calcAverageCompositeScore() {
+            compositeAverage = new HashMap<>();
+            HashMap<String, Integer> count = new HashMap<>();
+            for (GeneratorInfo info : generatorTable) {
+                HashMap<String, Integer> generator = info.getCompositeGeneratorScore();
+                int executionStatus = info.getStatus() ? 1 : 0;
+
+                // sum up all the successful generator options
+                for (Map.Entry<String, Integer> entry : generator.entrySet()) {
+                    String key = entry.getKey();
+                    int value = entry.getValue();
+                    if (compositeAverage.containsKey(key)) {
+                        compositeAverage.put(key, compositeAverage.get(key) + value * executionStatus);
+                        count.put(key, count.get(key) + 1);
+                    } else {
+                        compositeAverage.put(key, (double) (value * executionStatus));
+                        count.put(key, 1);
+                    }
+                }
+            }
+            for (Map.Entry<String, Double> entry : compositeAverage.entrySet()) {
+                compositeAverage.put(entry.getKey(), entry.getValue() / count.get(entry.getKey()));
+            }
+            return compositeAverage;
+        }
+
+    }
+
     // volatile
     private static HashMap<String, Integer> curDepth = new HashMap<>();
-    private static volatile HashMap<String, HashMap<GeneratorNode, Integer>> assertionGeneratorHistory = new HashMap<>();
+    private static volatile HashMap<String, GeneratorInfo> assertionGeneratorHistory = new HashMap<>();
     private static volatile HashMap<GeneratorNode, Boolean> generatorOptions = new HashMap<>();
     private static volatile HashMap<String, Boolean> compositeGeneratorOptions = new HashMap<>();
 
     public enum GeneratorNode {
         // Meta nodes
-        EXECUTION_STATUS, UNTYPE_EXPR,
+        UNTYPE_EXPR,
 
         // Statement-level nodes
         CREATE_TABLE, CREATE_INDEX, INSERT, SELECT, UPDATE, DELETE, CREATE_VIEW, EXPLAIN, ANALYZE, VACUUM,
@@ -57,21 +166,11 @@ public class GeneralErrorHandler implements ErrorHandler {
     }
 
     public GeneralErrorHandler() {
-        this.generatorTable = new ArrayList<>();
-        this.compositeGeneratorTable = new ArrayList<>();
-        this.generatorScore = new HashMap<>();
-        this.compositeGeneratorScore = new HashMap<>();
+        this.generatorTable = new GeneratorInfoTable();
+        this.generatorInfo = new GeneratorInfo();
         if (generatorOptions.isEmpty()){
             initGeneratorOptions();
         }
-    }
-
-    public ArrayList<HashMap<GeneratorNode, Integer>> getGeneratorTable() {
-        return this.generatorTable;
-    }
-
-    public HashMap<GeneratorNode, Integer> getGeneratorScore() {
-        return this.generatorScore;
     }
 
     public HashMap<GeneratorNode, Boolean> getGeneratorOptions() {
@@ -96,38 +195,30 @@ public class GeneralErrorHandler implements ErrorHandler {
         }
     }
 
-    public synchronized void updateGeneratorOptions() {
-        HashMap<GeneratorNode, Double> average = getAverageScore(generatorTable);
-
-        // if not zero then the option is true
-        for (Map.Entry<GeneratorNode, Double> entry : average.entrySet()) {
-            if (generatorOptions.containsKey(entry.getKey())) {
-                if (generatorOptions.get(entry.getKey())) {
+    private synchronized <N> void updateByLeastOnce(HashMap<N, Double> score, HashMap<N, Boolean> options) {
+        for (Map.Entry<N, Double> entry : score.entrySet()) {
+            if (options.containsKey(entry.getKey())) {
+                if (options.get(entry.getKey())) {
                     // If true, then continue, don't make available function unavailable
                     continue;
                 }
             }
             if (entry.getValue() > 0) {
-                generatorOptions.put(entry.getKey(), true);
+                options.put(entry.getKey(), true);
             } else {
-                generatorOptions.put(entry.getKey(), false);
+                options.put(entry.getKey(), false);
             }
         }
 
-        HashMap<String, Double> compositeAverage = getAverageScore(compositeGeneratorTable);
-        for (Map.Entry<String, Double> entry : compositeAverage.entrySet()) {
-            if (compositeGeneratorOptions.containsKey(entry.getKey())) {
-                if (compositeGeneratorOptions.get(entry.getKey())) {
-                    // If true, then continue, don't make available function unavailable
-                    continue;
-                } 
-            } 
-            if (entry.getValue() > 0) {
-                compositeGeneratorOptions.put(entry.getKey(), true);
-            } else {
-                compositeGeneratorOptions.put(entry.getKey(), false);
-            }
-        }
+    }
+
+    public void updateGeneratorOptions() {
+        HashMap<GeneratorNode, Double> average = generatorTable.calcAverageGeneratorScore();
+        HashMap<String, Double> compositeAverage = generatorTable.calcAverageCompositeScore();
+
+        // if not zero then the option is true
+        updateByLeastOnce(average, generatorOptions);
+        updateByLeastOnce(compositeAverage, compositeGeneratorOptions);
 
         // Special handling for the untype_expr option
         if (generatorOptions.get(GeneratorNode.UNTYPE_EXPR)) {
@@ -161,93 +252,51 @@ public class GeneralErrorHandler implements ErrorHandler {
     }
 
     public void addScore(GeneratorNode generatorName) {
-        if (generatorScore.containsKey(generatorName)) {
-            generatorScore.put(generatorName, generatorScore.get(generatorName) + 1);
+        HashMap<GeneratorNode, Integer> score = generatorInfo.getGeneratorScore();
+        if (score.containsKey(generatorName)) {
+            score.put(generatorName, score.get(generatorName) + 1);
         } else {
-            generatorScore.put(generatorName, 1);
+            score.put(generatorName, 1);
         }
     }
 
     public void addScore(String generatorName) {
-        if (compositeGeneratorScore.containsKey(generatorName)) {
-            compositeGeneratorScore.put(generatorName, compositeGeneratorScore.get(generatorName) + 1);
+        HashMap<String, Integer> score = generatorInfo.getCompositeGeneratorScore();
+        if (score.containsKey(generatorName)) {
+            score.put(generatorName, score.get(generatorName) + 1);
         } else {
-            compositeGeneratorScore.put(generatorName, 1);
+            score.put(generatorName, 1);
         }
     }
 
     public void setScore(GeneratorNode generatorName, Integer score) {
-        generatorScore.put(generatorName, score);
+        generatorInfo.getGeneratorScore().put(generatorName, score);
     }
 
     public void setScore(String generatorName, Integer score) {
-        compositeGeneratorScore.put(generatorName, score);
+        generatorInfo.getCompositeGeneratorScore().put(generatorName, score);
     }
 
     public void setExecutionStatus(boolean status) {
-        generatorScore.put(GeneratorNode.EXECUTION_STATUS, status ? 1 : 0);
-        compositeGeneratorScore.put(GeneratorNode.EXECUTION_STATUS.toString(), status ? 1 : 0);
+        generatorInfo.setStatus(status);
     }
 
-    public void appendScoreToTable() {
-        generatorTable.add(generatorScore);
-        generatorScore = new HashMap<>();
-    }
-
-    public HashMap<GeneratorNode, Integer> getLastGeneratorScore() {
-        return generatorTable.get(generatorTable.size() - 1);
+    public GeneratorInfo getLastGeneratorScore() {
+        return generatorTable.getLastGeneratorScore();
     }
 
     public void appendScoreToTable(boolean status) {
         setExecutionStatus(status);
-        generatorTable.add(generatorScore);
-        compositeGeneratorTable.add(compositeGeneratorScore);
-        generatorScore = new HashMap<>();
-        compositeGeneratorScore = new HashMap<>();
+        generatorTable.add(generatorInfo);
+        generatorInfo = new GeneratorInfo();
     }
 
     public void appendHistory(String databaseName) {
         assertionGeneratorHistory.put(databaseName, getLastGeneratorScore());
     }
 
-    private <N> int getExecutionStatus(HashMap<N, Integer> generator) {
-        if (generator.containsKey(GeneratorNode.EXECUTION_STATUS)) {
-            return generator.get(GeneratorNode.EXECUTION_STATUS);
-        } else if (generator.containsKey("EXECUTION_STATUS")) {
-            return generator.get("EXECUTION_STATUS");
-        } else {
-            throw new AssertionError("No execution status found");
-        }
-    }
-
-
-    private <N> HashMap<N, Double> getAverageScore(ArrayList<HashMap<N, Integer>> table) {
-        HashMap<N, Double> average = new HashMap<>();
-        HashMap<N, Integer> count = new HashMap<>();
-        for (HashMap<N, Integer> generator : table) {
-            int executionStatus = getExecutionStatus(generator);
-
-            // sum up all the successful generator options
-            for (Map.Entry<N, Integer> entry : generator.entrySet()) {
-                N key = entry.getKey();
-                int value = entry.getValue();
-                if (average.containsKey(key)) {
-                    average.put(key, average.get(key) + value * executionStatus);
-                    count.put(key, count.get(key) + 1);
-                } else {
-                    average.put(key, (double) (value * executionStatus));
-                    count.put(key, 1);
-                }
-            }
-        }
-        for (Map.Entry<N, Double> entry : average.entrySet()) {
-            average.put(entry.getKey(), entry.getValue() / count.get(entry.getKey()));
-        }
-        return average;
-    }
-
     public void printStatistics() {
-        System.out.println("Generator Score: " + generatorScore);
+        System.out.println("Generator Score: " + generatorInfo);
         // System.out.println("Generator Table: " + generatorTable);
         System.out.println("Generator Options: " + generatorOptions);
         System.out.println("Composite Generator Options: " + compositeGeneratorOptions);
@@ -255,7 +304,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         // get the average value for each key for all the hashmap in the
         // successGeneratorTable
         // HashMap<GeneratorNode, Double> average = getAverageScore(generatorTable);
-        System.out.println("Total queries: " + generatorTable.size());
+        System.out.println("Total queries: " + generatorTable.getGeneratorTable().size());
         // System.out.println("Average: " + average);
 
         // HashMap<String, Double> compositeAverage = getAverageScore(compositeGeneratorTable);
@@ -269,23 +318,21 @@ public class GeneralErrorHandler implements ErrorHandler {
         // iterate assertionGeneratorHistory values
         boolean duplicate = false;
 
-        boolean isError = getLastGeneratorScore().get(GeneratorNode.EXECUTION_STATUS) == 0;
-        Set<GeneratorNode> nodes = new HashSet<>(getLastGeneratorScore().keySet());
-        ArrayList<HashMap<GeneratorNode, Integer>> history = new ArrayList<>(assertionGeneratorHistory.values());
+        boolean isError = !getLastGeneratorScore().getStatus();
+        Set<GeneratorNode> nodes = new HashSet<>(getLastGeneratorScore().getGeneratorScore().keySet());
+        ArrayList<GeneratorInfo> history = new ArrayList<>(assertionGeneratorHistory.values());
 
         // remove meta nodes
-        nodes.remove(GeneratorNode.EXECUTION_STATUS);
         nodes.remove(GeneratorNode.UNTYPE_EXPR);
         System.out.println("Nodes: " + nodes);
         System.out.println("History: " + history);
 
-        for (HashMap<GeneratorNode, Integer> generator : history) {
-            if (isError != (generator.get(GeneratorNode.EXECUTION_STATUS) == 0)) {
+        for (GeneratorInfo generator : history) {
+            if (isError != (!generator.getStatus())) {
                 continue;
             }
             // change the generator to set
-            Set<GeneratorNode> generatorNodes = new HashSet<>(generator.keySet());
-            generatorNodes.remove(GeneratorNode.EXECUTION_STATUS);
+            Set<GeneratorNode> generatorNodes = new HashSet<>(generator.getGeneratorScore().keySet());
             generatorNodes.remove(GeneratorNode.UNTYPE_EXPR);
             if (generatorNodes.size() == 0) {
                 if (nodes.size() == 0) {
@@ -328,9 +375,9 @@ public class GeneralErrorHandler implements ErrorHandler {
         if (!historyFileDir.exists()) {
             historyFileDir.mkdirs();
         }
-        for (Map.Entry<String, HashMap<GeneratorNode, Integer>> entry : assertionGeneratorHistory.entrySet()) {
+        for (Map.Entry<String, GeneratorInfo> entry : assertionGeneratorHistory.entrySet()) {
             String databaseName = entry.getKey();
-            HashMap<GeneratorNode, Integer> generatorScore = entry.getValue();
+            HashMap<GeneratorNode, Integer> generatorScore = entry.getValue().getGeneratorScore();
             try (FileWriter file = new FileWriter("logs/general/generator/" + databaseName + "Options.txt")) {
                 for (Map.Entry<GeneratorNode, Integer> generator : generatorScore.entrySet()) {
                     file.write(generator.getKey() + " : " + generator.getValue() + "\n");
