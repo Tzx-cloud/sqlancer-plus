@@ -80,7 +80,9 @@ public class GeneralErrorHandler implements ErrorHandler {
 
         public HashMap<GeneratorNode, Double> calcAverageGeneratorScore() {
             generatorAverage = new HashMap<>();
+            HashMap<GeneratorNode, Double> tmpAverage = new HashMap<>();
             HashMap<GeneratorNode, Integer> count = new HashMap<>();
+            int entryNum = generatorTable.size();
             for (GeneratorInfo info : generatorTable) {
                 HashMap<GeneratorNode, Integer> generator = info.getGeneratorScore();
                 int executionStatus = info.getStatus() ? 1 : 0;
@@ -89,23 +91,30 @@ public class GeneralErrorHandler implements ErrorHandler {
                 for (Map.Entry<GeneratorNode, Integer> entry : generator.entrySet()) {
                     GeneratorNode key = entry.getKey();
                     int value = entry.getValue();
-                    if (generatorAverage.containsKey(key)) {
-                        generatorAverage.put(key, generatorAverage.get(key) + value * executionStatus);
+                    if (tmpAverage.containsKey(key)) {
+                        tmpAverage.put(key, tmpAverage.get(key) + value * executionStatus);
                         count.put(key, count.get(key) + 1);
                     } else {
-                        generatorAverage.put(key, (double) (value * executionStatus));
+                        tmpAverage.put(key, (double) (value * executionStatus));
                         count.put(key, 1);
                     }
                 }
             }
-            for (Map.Entry<GeneratorNode, Double> entry : generatorAverage.entrySet()) {
-                generatorAverage.put(entry.getKey(), entry.getValue() / count.get(entry.getKey()));
+            for (Map.Entry<GeneratorNode, Double> entry : tmpAverage.entrySet()) {
+                int cnt = count.get(entry.getKey());
+                if (entry.getValue() == 0 && cnt < entryNum * 0.01) {
+                    // in case the option hasn't been tested enough
+                    continue;
+                } else {
+                    generatorAverage.put(entry.getKey(), entry.getValue() / cnt);
+                }
             }
             return generatorAverage;
         }
 
         public HashMap<String, Double> calcAverageCompositeScore() {
             compositeAverage = new HashMap<>();
+            HashMap<String, Double> tmpAverage = new HashMap<>();
             HashMap<String, Integer> count = new HashMap<>();
             for (GeneratorInfo info : generatorTable) {
                 HashMap<String, Integer> generator = info.getCompositeGeneratorScore();
@@ -115,16 +124,16 @@ public class GeneralErrorHandler implements ErrorHandler {
                 for (Map.Entry<String, Integer> entry : generator.entrySet()) {
                     String key = entry.getKey();
                     int value = entry.getValue();
-                    if (compositeAverage.containsKey(key)) {
-                        compositeAverage.put(key, compositeAverage.get(key) + value * executionStatus);
+                    if (tmpAverage.containsKey(key)) {
+                        tmpAverage.put(key, tmpAverage.get(key) + value * executionStatus);
                         count.put(key, count.get(key) + 1);
                     } else {
-                        compositeAverage.put(key, (double) (value * executionStatus));
+                        tmpAverage.put(key, (double) (value * executionStatus));
                         count.put(key, 1);
                     }
                 }
             }
-            for (Map.Entry<String, Double> entry : compositeAverage.entrySet()) {
+            for (Map.Entry<String, Double> entry : tmpAverage.entrySet()) {
                 compositeAverage.put(entry.getKey(), entry.getValue() / count.get(entry.getKey()));
             }
             return compositeAverage;
