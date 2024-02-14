@@ -90,7 +90,8 @@ public class GeneralFunction{
 
     public static List<GeneralFunction> getRandomCompatibleFunctions(GeneralErrorHandler handler, GeneralCompositeDataType returnType) {
         List<String> funcNames = functions.keySet().stream()
-                .filter(f -> handler.getCompositeOption(f, returnType.toString())).collect(Collectors.toList());
+                .filter(f -> handler.getCompositeOption("FUNCTION" + "_" + f))
+                .filter(f -> handler.getCompositeOption(f, returnType.getPrimitiveDataType().toString())).collect(Collectors.toList());
         
         return funcNames.stream().map(f -> new GeneralFunction(functions.get(f), f)).collect(Collectors.toList());
     }

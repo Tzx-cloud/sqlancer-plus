@@ -136,6 +136,8 @@ public class GeneralErrorHandler implements ErrorHandler {
             for (Map.Entry<String, Double> entry : tmpAverage.entrySet()) {
                 compositeAverage.put(entry.getKey(), entry.getValue() / count.get(entry.getKey()));
             }
+            // System.out.println("Composite Average: " + compositeAverage);
+            // System.out.println(String.format("Count[%d]: ", count.size()) + count);
             return compositeAverage;
         }
 
@@ -429,7 +431,7 @@ public class GeneralErrorHandler implements ErrorHandler {
     }
 
     public boolean getCompositeOption(String option1, String option2) {
-        String option = option1 + option2;
+        String option = option1 + "_" + option2;
         return getCompositeOption(option);
     }
 }
