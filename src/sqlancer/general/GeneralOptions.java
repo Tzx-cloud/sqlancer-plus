@@ -100,6 +100,9 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
     @Parameter(names = "--oracle")
     public List<GeneralOracleFactory> oracles = Arrays.asList(GeneralOracleFactory.QUERY_PARTITIONING);
 
+    @Parameter(names = "--enable-feedback", description = "Enable feedback for generator", arity = 1)
+    public boolean enableFeedback = true;
+
     public enum GeneralOracleFactory implements OracleFactory<GeneralGlobalState> {
         NOREC {
 

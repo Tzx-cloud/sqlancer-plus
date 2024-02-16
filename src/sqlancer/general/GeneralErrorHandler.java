@@ -83,9 +83,11 @@ public class GeneralErrorHandler implements ErrorHandler {
             HashMap<GeneratorNode, Double> tmpAverage = new HashMap<>();
             HashMap<GeneratorNode, Integer> count = new HashMap<>();
             int entryNum = generatorTable.size();
+            int success = 0;
             for (GeneratorInfo info : generatorTable) {
                 HashMap<GeneratorNode, Integer> generator = info.getGeneratorScore();
                 int executionStatus = info.getStatus() ? 1 : 0;
+                success += executionStatus;
 
                 // sum up all the successful generator options
                 for (Map.Entry<GeneratorNode, Integer> entry : generator.entrySet()) {
@@ -109,6 +111,8 @@ public class GeneralErrorHandler implements ErrorHandler {
                     generatorAverage.put(entry.getKey(), entry.getValue() / cnt);
                 }
             }
+            System.out.println("Successful rate: " + (double) success / entryNum);
+            System.out.println("Generator Average: " + generatorAverage);
             return generatorAverage;
         }
 
@@ -138,6 +142,14 @@ public class GeneralErrorHandler implements ErrorHandler {
             }
             // System.out.println("Composite Average: " + compositeAverage);
             // System.out.println(String.format("Count[%d]: ", count.size()) + count);
+            return compositeAverage;
+        }
+
+        public HashMap<GeneratorNode, Double> getGeneratorAverage() {
+            return generatorAverage;
+        }
+
+        public HashMap<String, Double> getCompositeAverage() {
             return compositeAverage;
         }
 
@@ -223,9 +235,14 @@ public class GeneralErrorHandler implements ErrorHandler {
 
     }
 
+    public void calcAverageScore() {
+        generatorTable.calcAverageGeneratorScore();
+        generatorTable.calcAverageCompositeScore();
+    }
+
     public void updateGeneratorOptions() {
-        HashMap<GeneratorNode, Double> average = generatorTable.calcAverageGeneratorScore();
-        HashMap<String, Double> compositeAverage = generatorTable.calcAverageCompositeScore();
+        HashMap<GeneratorNode, Double> average = generatorTable.getGeneratorAverage();
+        HashMap<String, Double> compositeAverage = generatorTable.getCompositeAverage();
 
         // if not zero then the option is true
         updateByLeastOnce(average, generatorOptions);

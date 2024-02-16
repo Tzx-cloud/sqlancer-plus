@@ -185,7 +185,10 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                     System.out.println(handler.getLastGeneratorScore());
                     handler.appendHistory(databaseName);
                 } else {
-                    handler.updateGeneratorOptions();
+                    handler.calcAverageScore();
+                    if (getDbmsSpecificOptions().enableFeedback){
+                        handler.updateGeneratorOptions();
+                    }
                 }
                 handler.printStatistics();
                 handler.saveStatistics(this);
