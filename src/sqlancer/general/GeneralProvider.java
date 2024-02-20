@@ -226,7 +226,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     protected void checkViewsAreValid(GeneralGlobalState globalState) {
         List<GeneralTable> views = globalState.getSchema().getViews();
         for (GeneralTable view : views) {
-            SQLQueryAdapter q = new SQLQueryAdapter("SELECT * FROM " + view.getName() + " LIMIT 1");
+            SQLQueryAdapter q = new SQLQueryAdapter("SELECT * FROM " + view.getName());
             try {
                 if (!q.execute(globalState)) {
                     dropView(globalState, view.getName());
