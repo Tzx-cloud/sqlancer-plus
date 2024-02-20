@@ -40,7 +40,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         INSERT(GeneralInsertGenerator::getQuery), //
         CREATE_INDEX(GeneralIndexGenerator::getQuery), //
         // VACUUM((g) -> new SQLQueryAdapter("VACUUM;")), //
-        // ANALYZE((g) -> new SQLQueryAdapter("ANALYZE;")); //
+        ANALYZE((g) -> new SQLQueryAdapter("ANALYZE;")), //
         // DELETE(GeneralDeleteGenerator::generate), //
         // UPDATE(GeneralUpdateGenerator::getQuery), //
         CREATE_VIEW(GeneralViewGenerator::generate); //
@@ -79,9 +79,9 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             // fall through
             return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
         // case VACUUM: // seems to be ignored
-        // case ANALYZE: // seems to be ignored
+        case ANALYZE: // seems to be ignored
         // case EXPLAIN:
-        // return r.getInteger(0, 2);
+        return r.getInteger(0, 2);
         // case DELETE:
         // return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumDeletes +
         // 1);
