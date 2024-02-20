@@ -6,12 +6,14 @@ import java.util.List;
 import sqlancer.Randomly;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.ast.newast.TableReferenceNode;
+import sqlancer.common.gen.ExpressionGenerator;
 import sqlancer.general.GeneralErrorHandler;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.gen.GeneralExpressionGenerator;
+import sqlancer.general.gen.GeneralTypedExpressionGenerator;
 
 public class GeneralJoin implements Node<GeneralExpression> {
 
@@ -104,7 +106,12 @@ public class GeneralJoin implements Node<GeneralExpression> {
             TableReferenceNode<GeneralExpression, GeneralTable> rightTable = tableList.remove(0);
             List<GeneralColumn> columns = new ArrayList<>(leftTable.getTable().getColumns());
             columns.addAll(rightTable.getTable().getColumns());
-            GeneralExpressionGenerator joinGen = new GeneralExpressionGenerator(globalState).setColumns(columns);
+            ExpressionGenerator<Node<GeneralExpression>> joinGen;
+            if(globalState.getHandler().getOption(GeneratorNode.UNTYPE_EXPR) || Randomly.getBooleanWithSmallProbability()) {
+                joinGen = new GeneralExpressionGenerator(globalState).setColumns(columns);
+            } else {
+                joinGen = new GeneralTypedExpressionGenerator(globalState).setColumns(columns);
+            }
             JoinType joinType = JoinType.getRandomByOptions(handler);
             switch (joinType) {
             case INNER:
