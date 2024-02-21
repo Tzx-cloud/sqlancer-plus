@@ -18,6 +18,7 @@ import sqlancer.SQLConnection;
 import sqlancer.SQLGlobalState;
 import sqlancer.SQLProviderAdapter;
 import sqlancer.StatementExecutor;
+import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.Query;
 import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.common.query.SQLQueryProvider;
@@ -40,7 +41,11 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         INSERT(GeneralInsertGenerator::getQuery), //
         CREATE_INDEX(GeneralIndexGenerator::getQuery), //
         // VACUUM((g) -> new SQLQueryAdapter("VACUUM;")), //
-        ANALYZE((g) -> new SQLQueryAdapter("ANALYZE;")), //
+        ANALYZE((g) -> {
+            ExpectedErrors errors = new ExpectedErrors();
+            GeneralErrors.addExpressionErrors(errors);
+            return new SQLQueryAdapter("ANALYZE;", errors);
+        }), //
         // DELETE(GeneralDeleteGenerator::generate), //
         // UPDATE(GeneralUpdateGenerator::getQuery), //
         CREATE_VIEW(GeneralViewGenerator::generate); //
