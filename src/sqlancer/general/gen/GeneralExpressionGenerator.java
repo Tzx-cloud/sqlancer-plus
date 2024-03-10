@@ -110,7 +110,7 @@ public final class GeneralExpressionGenerator
                     GeneralUnaryPrefixOperator.getRandom());
         case UNARY_POSTFIX:
             return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                    GeneralUnaryPostfixOperator.getRandom());
+                    GeneralUnaryPostfixOperator.getRandomByOptions(handler));
         case BINARY_COMPARISON:
             return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     generateExpression(depth + 1), GeneralBinaryComparisonOperator.getRandomByOptions(handler));
