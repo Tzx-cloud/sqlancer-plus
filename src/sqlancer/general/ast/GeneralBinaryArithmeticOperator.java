@@ -6,7 +6,7 @@ import sqlancer.general.GeneralErrorHandler;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 
 public enum GeneralBinaryArithmeticOperator implements Operator {
-    CONCAT("||"), ADD("+"), SUB("-"), MULT("*"), DIV("/"), MOD("%"); // AND("&"), OR("|");
+    CONCAT("||"), ADD("+"), SUB("-"), MULT("*"), DIV("/"), MOD("%"),  AND("&"), OR("|"), LSHIFT("<<"), RSHIFT(">>");
     // CONCAT("||"), ADD("+"), SUB("-"), MULT("*"), DIV("/"), MOD("%"), AND("&"), OR("|"), LSHIFT("<<"),
     // RSHIFT(">>");
 

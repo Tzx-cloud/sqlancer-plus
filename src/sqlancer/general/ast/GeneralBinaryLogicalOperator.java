@@ -23,7 +23,7 @@ public enum GeneralBinaryLogicalOperator implements Operator {
         GeneratorNode node;
         do {
             op = Randomly.fromOptions(values());
-            node = GeneratorNode.valueOf("OP" + op.toString());
+            node = GeneratorNode.valueOf("LOP" + op.toString());
         } while (!handler.getOption(node) || !Randomly.getBooleanWithSmallProbability());
         handler.addScore(node);
         return op;
