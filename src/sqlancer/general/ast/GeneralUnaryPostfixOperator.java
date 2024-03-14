@@ -7,7 +7,7 @@ import sqlancer.Randomly;
 
 public enum GeneralUnaryPostfixOperator implements Operator {
 
-    IS_NULL("IS NULL"), IS_NOT_NULL("IS NOT NULL");
+    IS_NULL("IS NULL"), IS_NOT_NULL("IS NOT NULL"), IS_NOT_UNKNOWN("IS NOT UNKNOWN"), IS_TRUE("IS TRUE"), IS_FALSE("IS FALSE");
 
     private String textRepr;
 

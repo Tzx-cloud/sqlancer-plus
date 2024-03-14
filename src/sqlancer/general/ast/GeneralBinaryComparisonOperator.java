@@ -6,8 +6,10 @@ import sqlancer.general.GeneralErrorHandler;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 
 public enum GeneralBinaryComparisonOperator implements Operator {
-    EQUALS("="), GREATER(">"), GREATER_EQUALS(">="), SMALLER("<"), SMALLER_EQUALS("<="), NOT_EQUALS("!=");
-    // LIKE("LIKE"), NOT_LIKE("NOT LIKE"), SIMILAR_TO("SIMILAR TO"),
+    EQUALS("="), GREATER(">"), GREATER_EQUALS(">="), SMALLER("<"), SMALLER_EQUALS("<="), NOT_EQUALS("!="),
+    NOT_EQUALS2("<>"), DISTINCT("IS DISTINCT FROM"), NOT_DISTINCT("IS NOT DISTINCT FROM"),
+    LIKE("LIKE"), NOT_LIKE("NOT LIKE");
+    // SIMILAR_TO("SIMILAR TO"),
     // NOT_SIMILAR_TO("NOT SIMILAR TO");
     // REGEX_POSIX("~"), REGEX_POSIT_NOT("!~");
 

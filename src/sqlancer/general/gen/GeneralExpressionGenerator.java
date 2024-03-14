@@ -15,7 +15,6 @@ import sqlancer.common.ast.newast.NewFunctionNode;
 import sqlancer.common.ast.newast.NewInOperatorNode;
 import sqlancer.common.ast.newast.NewOrderingTerm;
 import sqlancer.common.ast.newast.NewOrderingTerm.Ordering;
-import sqlancer.common.ast.newast.NewTernaryNode;
 import sqlancer.common.ast.newast.NewUnaryPostfixOperatorNode;
 import sqlancer.common.ast.newast.NewUnaryPrefixOperatorNode;
 import sqlancer.common.ast.newast.Node;
@@ -48,7 +47,7 @@ public final class GeneralExpressionGenerator
 
     private enum Expression {
         UNARY_POSTFIX, UNARY_PREFIX, BINARY_COMPARISON, BINARY_LOGICAL, BINARY_ARITHMETIC, CAST, FUNC, BETWEEN, CASE,
-        IN, COLLATE, LIKE_ESCAPE
+        IN
     }
 
     @Override
@@ -65,9 +64,6 @@ public final class GeneralExpressionGenerator
         // return new NewFunctionNode<>(generateExpressions(aggregate.getNrArgs(), depth + 1), aggregate);
         // }
         List<Expression> possibleOptions = new ArrayList<>(Arrays.asList(Expression.values()));
-        if (!globalState.getDbmsSpecificOptions().testCollate | !handler.getOption(GeneratorNode.COLLATE)) {
-            possibleOptions.remove(Expression.COLLATE);
-        }
         if (!globalState.getDbmsSpecificOptions().testFunctions | !handler.getOption(GeneratorNode.FUNC)) {
             possibleOptions.remove(Expression.FUNC);
         }
@@ -91,7 +87,6 @@ public final class GeneralExpressionGenerator
                 | !handler.getOption(GeneratorNode.BINARY_LOGICAL)) {
             possibleOptions.remove(Expression.BINARY_LOGICAL);
         }
-        possibleOptions.remove(Expression.LIKE_ESCAPE);
         if (!handler.getOption(GeneratorNode.UNARY_POSTFIX)) {
             possibleOptions.remove(Expression.UNARY_POSTFIX);
         }
@@ -102,9 +97,6 @@ public final class GeneralExpressionGenerator
         // TODO Handle IllegalArgumentException
         globalState.getHandler().addScore(GeneratorNode.valueOf(expr.toString()));
         switch (expr) {
-        case COLLATE:
-            return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                    GeneralCollate.getRandom());
         case UNARY_PREFIX:
             return new NewUnaryPrefixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     GeneralUnaryPrefixOperator.getRandom());
@@ -139,9 +131,6 @@ public final class GeneralExpressionGenerator
             return new NewCaseOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     generateExpressions(nr, depth + 1), generateExpressions(nr, depth + 1),
                     generateExpression(depth + 1));
-        case LIKE_ESCAPE:
-            return new NewTernaryNode<GeneralExpression>(generateExpression(depth + 1), generateExpression(depth + 1),
-                    generateExpression(depth + 1), "LIKE", "ESCAPE");
         default:
             throw new AssertionError();
         }

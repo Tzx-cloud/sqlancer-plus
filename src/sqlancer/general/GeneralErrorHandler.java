@@ -104,12 +104,8 @@ public class GeneralErrorHandler implements ErrorHandler {
             }
             for (Map.Entry<GeneratorNode, Double> entry : tmpAverage.entrySet()) {
                 int cnt = count.get(entry.getKey());
-                if (entry.getValue() == 0 && cnt < entryNum * 0.01) {
-                    // in case the option hasn't been tested enough
-                    continue;
-                } else {
-                    generatorAverage.put(entry.getKey(), entry.getValue() / cnt);
-                }
+                // TODO: in case the option hasn't been tested enough
+                generatorAverage.put(entry.getKey(), entry.getValue() / cnt);
             }
             System.out.println("Successful rate: " + (double) success / entryNum);
             System.out.println("Generator Average: " + generatorAverage);
@@ -173,17 +169,9 @@ public class GeneralErrorHandler implements ErrorHandler {
         RIGHT_JOIN, NATURAL_JOIN, LEFT_NATURAL_JOIN, RIGHT_NATURAL_JOIN, FULL_NATURAL_JOIN,
         // Expression level nodes
         UNARY_POSTFIX, UNARY_PREFIX, BINARY_COMPARISON, BINARY_LOGICAL, BINARY_ARITHMETIC, CAST, FUNC, BETWEEN, CASE,
-        IN, COLLATE, LIKE_ESCAPE, UNTYPE_FUNC, CAST_FUNC, CAST_COLON, IS_NULL, IS_NOT_NULL,
-        // Function level nodes
-        // ACOS, ASIN, ATAN, COS, SIN, TAN, COT, ATAN2, ABS, CEIL, CEILING, FLOOR, LOG, LOG10, LOG2, LN, PI, SQRT, POWER,
-        // CBRT, ROUND, SIGN, DEGREES, RADIANS, MOD, XOR, // math functions
-        // LENGTH, LOWER, UPPER, SUBSTRING, REVERSE, CONCAT, CONCAT_WS, CONTAINS, PREFIX, SUFFIX, INSTR, PRINTF,
-        // REGEXP_MATCHES, REGEXP_REPLACE, STRIP_ACCENTS, // string functions
-        // DATE_PART, AGE, // date functions
-        // COALESCE, NULLIF, LTRIM, RTRIM, REPLACE, UNICODE, BIT_COUNT, BIT_LENGTH, LAST_DAY, MONTHNAME, DAYNAME, YEARWEEK,
-        // DAYOFMONTH, WEEKDAY, WEEKOFYEAR, IFNULL, IF,
+        IN, COLLATE, LIKE_ESCAPE, UNTYPE_FUNC, CAST_FUNC, CAST_COLON, IS_NULL, IS_NOT_NULL, IS_TRUE, IS_FALSE, IS_NOT_UNKNOWN,
         // Comparison Operator nodes
-        EQUALS, GREATER, GREATER_EQUALS, SMALLER, SMALLER_EQUALS, NOT_EQUALS,
+        EQUALS, GREATER, GREATER_EQUALS, SMALLER, SMALLER_EQUALS, NOT_EQUALS, NOT_EQUALS2, LIKE, NOT_LIKE, DISTINCT, NOT_DISTINCT,
         // Arithmetic Operator nodes
         OPADD, OPSUB, OPMULT, OPDIV, OPMOD, OPCONCAT, OPAND, OPOR, OPLSHIFT, OPRSHIFT,
         // Logical Operator nodes

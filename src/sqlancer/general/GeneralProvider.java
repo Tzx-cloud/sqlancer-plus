@@ -4,6 +4,7 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
@@ -44,6 +45,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         ANALYZE((g) -> {
             ExpectedErrors errors = new ExpectedErrors();
             GeneralErrors.addExpressionErrors(errors);
+            g.handler.addScore(GeneratorNode.ANALYZE);
             return new SQLQueryAdapter("ANALYZE;", errors);
         }), //
         // DELETE(GeneralDeleteGenerator::generate), //
@@ -70,6 +72,12 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         public SQLQueryAdapter getQuery(GeneralGlobalState state) throws Exception {
             return sqlQueryProvider.getQuery(state);
         }
+
+        public static Action[] getAvailableActions(GeneralErrorHandler handler) {
+            // return all the actions that is true in the generator options
+            return Arrays.stream(values()).filter(a -> handler.getOption(GeneratorNode.valueOf(a.toString())))
+                    .toArray(Action[]::new);
+        }
     }
 
     private static int mapActions(GeneralGlobalState globalState, Action a) {
@@ -85,7 +93,6 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
         // case VACUUM: // seems to be ignored
         case ANALYZE: // seems to be ignored
-        // case EXPLAIN:
         return r.getInteger(0, 2);
         // case DELETE:
         // return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumDeletes +
@@ -275,7 +282,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         if (globalState.getSchema().getDatabaseTables().isEmpty()) {
             throw new AssertionError("Failed to create any table"); // TODO
         }
-        StatementExecutor<GeneralGlobalState, Action> se = new StatementExecutor<>(globalState, Action.values(),
+        StatementExecutor<GeneralGlobalState, Action> se = new StatementExecutor<>(globalState, Action.getAvailableActions(globalState.getHandler()),
                 GeneralProvider::mapActions, (q) -> {
                     if (globalState.getSchema().getDatabaseTables().isEmpty()) {
                         throw new IgnoreMeException();
