@@ -257,8 +257,12 @@ public class GeneralErrorHandler implements ErrorHandler {
             while ((line = br.readLine()) != null) {
                 String option = line;
                 try {
-                    GeneratorNode generatorNode = GeneratorNode.valueOf(option);
-                    setOptionIfNonExist(generatorNode, false);
+                    if (option.contains("-")) {
+                        setCompositeOptionIfNonExist(option, false);
+                    } else {
+                        GeneratorNode generatorNode = GeneratorNode.valueOf(option);
+                        setOptionIfNonExist(generatorNode, false);
+                    }
                 } catch (IllegalArgumentException e) {
                     System.out.println("Option " + option + " not found");
                 }
@@ -375,11 +379,14 @@ public class GeneralErrorHandler implements ErrorHandler {
         return duplicate;
     }
 
-    public void saveStatistics(GeneralGlobalState globalState) {
+    public synchronized void saveStatistics(GeneralGlobalState globalState) {
         // TODO It is a quite ugly function
         try (FileWriter file = new FileWriter(
                 "logs/" + globalState.getDbmsSpecificOptions().getDatabaseEngineFactory().toString() + "Options.txt")) {
             for (Map.Entry<GeneratorNode, Boolean> entry : generatorOptions.entrySet()) {
+                file.write(entry.getKey() + " : " + entry.getValue() + "\n");
+            }
+            for (Map.Entry<String, Boolean> entry : compositeGeneratorOptions.entrySet()) {
                 file.write(entry.getKey() + " : " + entry.getValue() + "\n");
             }
         } catch (Exception e) {
@@ -413,6 +420,12 @@ public class GeneralErrorHandler implements ErrorHandler {
     public void setOptionIfNonExist(GeneratorNode option, boolean value) {
         if (!generatorOptions.containsKey(option)) {
             setOption(option, value);
+        }
+    }
+
+    public void setCompositeOptionIfNonExist(String option, boolean value) {
+        if (!compositeGeneratorOptions.containsKey(option)) {
+            setCompositeOption(option, value);
         }
     }
 
