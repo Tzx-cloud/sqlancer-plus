@@ -81,7 +81,7 @@ public class GeneralFunction{
             // select a random string-integer pair from hashmap functions
             String funcName = Randomly.fromList(List.copyOf(functions.keySet()));
             int funcArgs = functions.get(funcName);
-            node = "FUNCTION" + "_" + funcName;
+            node = "FUNCTION" + "-" + funcName;
             op = new GeneralFunction(funcArgs, funcName);
         } while (!handler.getCompositeOption(node) || !Randomly.getBooleanWithSmallProbability());
         handler.addScore(node);
@@ -90,7 +90,7 @@ public class GeneralFunction{
 
     public static List<GeneralFunction> getRandomCompatibleFunctions(GeneralErrorHandler handler, GeneralCompositeDataType returnType) {
         List<String> funcNames = functions.keySet().stream()
-                .filter(f -> handler.getCompositeOption("FUNCTION" + "_" + f))
+                .filter(f -> handler.getCompositeOption("FUNCTION" + "-" + f))
                 .filter(f -> handler.getCompositeOption(f, returnType.getPrimitiveDataType().toString())).collect(Collectors.toList());
         
         return funcNames.stream().map(f -> new GeneralFunction(functions.get(f), f)).collect(Collectors.toList());

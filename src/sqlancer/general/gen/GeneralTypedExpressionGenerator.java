@@ -104,8 +104,8 @@ public class GeneralTypedExpressionGenerator
                     List<GeneralFunction> applicableFunctions = getFunctionsCompatibleWith(type);
                     if (!applicableFunctions.isEmpty()) {
                         GeneralFunction function = Randomly.fromList(applicableFunctions);
-                        handler.addScore("FUNCTION_" + function.toString());
-                        handler.addScore(function.toString() + "_" + type.getPrimitiveDataType().toString());
+                        handler.addScore("FUNCTION-" + function.toString());
+                        handler.addScore(function.toString() + "-" + type.getPrimitiveDataType().toString());
                         return new NewFunctionNode<GeneralExpression, GeneralFunction>(
                                 generateExpressions(type, function.getNrArgs(), depth + 1), function);
                     }

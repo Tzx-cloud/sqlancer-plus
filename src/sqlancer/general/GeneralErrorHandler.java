@@ -438,7 +438,7 @@ public class GeneralErrorHandler implements ErrorHandler {
     }
 
     public boolean getCompositeOption(String option1, String option2) {
-        String option = option1 + "_" + option2;
+        String option = option1 + "-" + option2;
         return getCompositeOption(option);
     }
 }
