@@ -99,7 +99,7 @@ public final class GeneralExpressionGenerator
         switch (expr) {
         case UNARY_PREFIX:
             return new NewUnaryPrefixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                    GeneralUnaryPrefixOperator.getRandom());
+                    GeneralUnaryPrefixOperator.getRandomByOptions(handler));
         case UNARY_POSTFIX:
             return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     GeneralUnaryPostfixOperator.getRandomByOptions(handler));

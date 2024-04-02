@@ -143,10 +143,18 @@ public class GeneralTypedExpressionGenerator
             case BOOLEAN:
                 return generateBooleanExpression(depth);
             case INT:
-                return new NewBinaryOperatorNode<GeneralExpression>(
-                        generateExpression(GeneralDataType.INT.get(), depth + 1),
-                        generateExpression(GeneralDataType.INT.get(), depth + 1),
-                        GeneralBinaryArithmeticOperator.getRandomByOptions(globalState.getHandler()));
+                double rand = Randomly.getPercentage();
+                double threshold = GeneralBinaryArithmeticOperator.values().length
+                        / (double) (GeneralBinaryArithmeticOperator.values().length
+                                + GeneralBinaryComparisonOperator.values().length);
+                if (rand < threshold) {
+                    return new NewBinaryOperatorNode<GeneralExpression>(
+                            generateExpression(GeneralDataType.INT.get(), depth + 1),
+                            generateExpression(GeneralDataType.INT.get(), depth + 1),
+                            GeneralBinaryArithmeticOperator.getRandomByOptions(globalState.getHandler()));
+                } else {
+                    return new NewUnaryPrefixOperatorNode<GeneralExpression>(generateExpression(GeneralDataType.INT.get(), depth + 1), GeneralUnaryPrefixOperator.getRandomByOptions(globalState.getHandler(), GeneralDataType.INT.get()));
+                }
             case STRING:
                 // case BYTES: // TODO split
                 Node<GeneralExpression> stringExpr = generateStringExpression(depth);
