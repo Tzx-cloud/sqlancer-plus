@@ -1,7 +1,6 @@
 package sqlancer.general.gen;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import sqlancer.IgnoreMeException;
@@ -46,8 +45,38 @@ public final class GeneralExpressionGenerator
     }
 
     private enum Expression {
-        UNARY_POSTFIX, UNARY_PREFIX, BINARY_COMPARISON, BINARY_LOGICAL, BINARY_ARITHMETIC, CAST, FUNC, BETWEEN, CASE,
-        IN
+        UNARY_POSTFIX(GeneralUnaryPostfixOperator.values().length), UNARY_PREFIX(GeneralUnaryPrefixOperator.values().length), BINARY_COMPARISON(GeneralBinaryComparisonOperator.values().length), BINARY_LOGICAL(GeneralBinaryLogicalOperator.values().length), BINARY_ARITHMETIC(GeneralBinaryArithmeticOperator.values().length), CAST(GeneralCastOperator.values().length), FUNC(GeneralFunction.getNrFunctionsNum() / 10), BETWEEN(1), CASE(1),
+        IN(1);
+
+        private int numOptions;
+
+        Expression(int numOptions) {
+            this.numOptions = numOptions;
+        }
+
+        private static double getTotal(){
+            double total = 0;
+            for (Expression e : Expression.values()){
+                total += e.numOptions;
+            }
+            return total;
+        }
+
+        public static Expression getRandomByProportion(GeneralErrorHandler handler) {
+            double rand = Randomly.getPercentage();
+            double total = getTotal();
+            double sum = 0;
+            for (Expression e : Expression.values()) {
+                sum += e.numOptions / total;
+                if (!handler.getOption(GeneratorNode.valueOf(e.toString()))){
+                    continue;
+                }
+                if (rand < sum){
+                    return e;
+                }
+            }
+            return Randomly.fromOptions(values());
+        }
     }
 
     @Override
@@ -55,45 +84,10 @@ public final class GeneralExpressionGenerator
         GeneralErrorHandler handler = globalState.getHandler();
         if (depth >= globalState.getOptions().getMaxExpressionDepth()
                 || depth >= globalState.getHandler().getCurDepth(globalState.getDatabaseName())
-                || Randomly.getBoolean()) {
+                || Randomly.getBooleanWithRatherLowProbability()) {
             return generateLeafNode();
         }
-        // if (allowAggregates && Randomly.getBoolean()) {
-        // GeneralAggregateFunction aggregate = GeneralAggregateFunction.getRandom();
-        // allowAggregates = false;
-        // return new NewFunctionNode<>(generateExpressions(aggregate.getNrArgs(), depth + 1), aggregate);
-        // }
-        List<Expression> possibleOptions = new ArrayList<>(Arrays.asList(Expression.values()));
-        if (!globalState.getDbmsSpecificOptions().testFunctions | !handler.getOption(GeneratorNode.FUNC)) {
-            possibleOptions.remove(Expression.FUNC);
-        }
-        if (!globalState.getDbmsSpecificOptions().testCasts | !handler.getOption(GeneratorNode.CAST)) {
-            possibleOptions.remove(Expression.CAST);
-        }
-        if (!globalState.getDbmsSpecificOptions().testBetween | !handler.getOption(GeneratorNode.BETWEEN)) {
-            possibleOptions.remove(Expression.BETWEEN);
-        }
-        if (!globalState.getDbmsSpecificOptions().testIn | !handler.getOption(GeneratorNode.IN)) {
-            possibleOptions.remove(Expression.IN);
-        }
-        if (!globalState.getDbmsSpecificOptions().testCase | !handler.getOption(GeneratorNode.CASE)) {
-            possibleOptions.remove(Expression.CASE);
-        }
-        if (!globalState.getDbmsSpecificOptions().testBinaryComparisons
-                | !handler.getOption(GeneratorNode.BINARY_COMPARISON)) {
-            possibleOptions.remove(Expression.BINARY_COMPARISON);
-        }
-        if (!globalState.getDbmsSpecificOptions().testBinaryLogicals
-                | !handler.getOption(GeneratorNode.BINARY_LOGICAL)) {
-            possibleOptions.remove(Expression.BINARY_LOGICAL);
-        }
-        if (!handler.getOption(GeneratorNode.UNARY_POSTFIX)) {
-            possibleOptions.remove(Expression.UNARY_POSTFIX);
-        }
-        if (!handler.getOption(GeneratorNode.UNARY_PREFIX)) {
-            possibleOptions.remove(Expression.UNARY_PREFIX);
-        }
-        Expression expr = Randomly.fromList(possibleOptions);
+        Expression expr = Expression.getRandomByProportion(handler);
         // TODO Handle IllegalArgumentException
         globalState.getHandler().addScore(GeneratorNode.valueOf(expr.toString()));
         switch (expr) {

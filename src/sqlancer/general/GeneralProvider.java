@@ -23,6 +23,7 @@ import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.Query;
 import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.common.query.SQLQueryProvider;
+import sqlancer.common.query.SQLancerResultSet;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.gen.GeneralIndexGenerator;
@@ -178,12 +179,12 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             try {
                 success = super.executeStatement(q, fills);
             } catch (Exception e) {
-                handler.appendScoreToTable(false);
+                handler.appendScoreToTable(false, false);
                 getLogger().writeCurrent(" -- " + e.getMessage());
                 throw e;
             }
             // I guess we want to make sure if the syntax is correct
-            handler.appendScoreToTable(success);
+            handler.appendScoreToTable(success, false);
             return success;
         }
 
@@ -191,6 +192,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         public void updateHandler(boolean status) {
             String databaseName = getDatabaseName();
             if (getDbmsSpecificOptions().enableErrorHandling) {
+                handler.incrementExecDatabaseNum();
                 if (!status) {
                     // print the last item of handler.
                     System.out.println(databaseName);
@@ -198,8 +200,11 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                     handler.appendHistory(databaseName);
                 } else {
                     handler.calcAverageScore();
-                    if (getDbmsSpecificOptions().enableFeedback){
+                    if (getDbmsSpecificOptions().enableFeedback) {
                         handler.updateGeneratorOptions();
+                    }
+                    if (getDbmsSpecificOptions().untypeExpr) {
+                        handler.setOption(GeneratorNode.UNTYPE_EXPR, true);
                     }
                 }
                 handler.printStatistics();
@@ -216,22 +221,6 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             return handler.checkIfDuplicate();
         }
 
-        // @Override
-        // public SQLancerResultSet executeStatementAndGet(Query<SQLConnection> q,
-        // String... fills) throws Exception {
-        // SQLancerResultSet result;
-        // try {
-        // result = super.executeStatementAndGet(q, fills);
-        // } catch (Exception e) {
-        // // if the query just fails
-        // handler.appendScoreToTable(false);
-        // throw e;
-        // }
-        // // We need to append later, because we need to know if the oracle check it
-        // correct
-        // handler.setExecutionStatus(result != null);
-        // return result;
-        // }
     }
 
     @Override
@@ -247,12 +236,47 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 dropView(globalState, view.getName());
             }
         }
+        String sb = "SELECT COUNT(*) FROM ";
+        List<GeneralTable> databaseTables = globalState.getSchema().getDatabaseTables();
+        // Select all the tables using cross join
+        for (int i = 0; i < databaseTables.size(); i++) {
+            sb += databaseTables.get(i).getName();
+            if (i != databaseTables.size() - 1) {
+                sb += ", ";
+            }
+        }
+        // check if query result is larger than 1000 rows
+        SQLQueryAdapter q2 = new SQLQueryAdapter(sb);
+        SQLancerResultSet resultSet;
+        try {
+            resultSet = q2.executeAndGet(globalState);
+            globalState.getLogger().writeCurrent(sb);
+            // check if the result is larger than 100K
+            while (resultSet.next()) {
+                // System.out.println("Join table size: " + resultSet.getLong(1));
+                if (resultSet.getLong(1) > 10000) {
+                    // drop all the views
+                    globalState.getLogger().writeCurrent("-- size:" + resultSet.getLong(1));
+                    System.out.println("Join table size exceeds 10000, dropping all views");
+                    for (GeneralTable view : views) {
+                        dropView(globalState, view.getName());
+                    }
+                }
+            } 
+        } catch (Throwable t) {
+            throw new AssertionError(t);
+        }
+
         globalState.getSchema().printTables();
     }
 
     private void dropView(GeneralGlobalState globalState, String viewName) {
         try {
+            globalState.getLogger().writeCurrent("DROP VIEW " + viewName);
             globalState.executeStatement(new SQLQueryAdapter("DROP VIEW " + viewName, true));
+        } catch (Throwable t2) {
+            globalState.getLogger().writeCurrent(" -- " + t2.getMessage());
+        } finally {
             List<GeneralTable> databaseTables = new ArrayList<>(globalState.getSchema().getDatabaseTables());
             for (int i = 0; i < databaseTables.size(); i++) {
                 if (databaseTables.get(i).getName().equals(viewName)) {
@@ -261,8 +285,6 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 }
             }
             globalState.setSchema(databaseTables);
-        } catch (Throwable t2) {
-            throw new IgnoreMeException();
         }
     }
 

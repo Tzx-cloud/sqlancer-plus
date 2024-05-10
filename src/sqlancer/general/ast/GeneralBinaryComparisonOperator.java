@@ -4,6 +4,7 @@ import sqlancer.Randomly;
 import sqlancer.common.ast.BinaryOperatorNode.Operator;
 import sqlancer.general.GeneralErrorHandler;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
+import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 
 public enum GeneralBinaryComparisonOperator implements Operator {
     EQUALS("="), GREATER(">"), GREATER_EQUALS(">="), SMALLER("<"), SMALLER_EQUALS("<="), NOT_EQUALS("!="),
@@ -33,6 +34,18 @@ public enum GeneralBinaryComparisonOperator implements Operator {
             node = GeneratorNode.valueOf(op.toString());
         } while (!handler.getOption(node) || !Randomly.getBooleanWithSmallProbability());
         handler.addScore(node);
+        return op;
+    }
+
+    public static Operator getRandomByOptions(GeneralErrorHandler handler, GeneralCompositeDataType type) {
+        Operator op;
+        GeneratorNode node;
+        do {
+            op = Randomly.fromOptions(values());
+            node = GeneratorNode.valueOf(op.toString());
+        } while (!handler.getOption(node) || !handler.getCompositeOption(node.toString(), type.getPrimitiveDataType().toString())|| !Randomly.getBooleanWithSmallProbability());
+        handler.addScore(node);
+        handler.addScore(node.toString() + "-" + type.getPrimitiveDataType().toString());
         return op;
     }
 

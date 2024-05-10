@@ -54,12 +54,14 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
             globalState.getManager().incrementCreateDatabase();
 
             TestOracle<G> oracle = getTestOracle(globalState);
+            globalState.setSuccessCaseNum(0);
             for (int i = 0; i < globalState.getOptions().getNrQueries(); i++) {
                 try (OracleRunReproductionState localState = globalState.getState().createLocalState()) {
                     assert localState != null;
                     try {
                         oracle.check();
                         globalState.getManager().incrementSelectQueryCount();
+                        globalState.incrementSuccessCaseNum();
                     } catch (IgnoreMeException ignored) {
                     } catch (AssertionError e) {
                         if (globalState.checkIfDuplicate()) {
@@ -80,6 +82,7 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
             globalState.getConnection().close();
         }
         globalState.updateHandler(true);
+        System.out.println("Success case number: " + globalState.getSuccessCaseNum());
         return null;
     }
 

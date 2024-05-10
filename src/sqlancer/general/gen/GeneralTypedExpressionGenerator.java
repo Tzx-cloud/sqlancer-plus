@@ -1,6 +1,7 @@
 package sqlancer.general.gen;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,6 +39,7 @@ public class GeneralTypedExpressionGenerator
         extends TypedExpressionGenerator<Node<GeneralExpression>, GeneralColumn, GeneralCompositeDataType> {
 
     private final GeneralGlobalState globalState;
+    private boolean nullFlag;
 
     public GeneralTypedExpressionGenerator(GeneralGlobalState globalState) {
         this.globalState = globalState;
@@ -65,6 +67,8 @@ public class GeneralTypedExpressionGenerator
 
     @Override
     public List<Node<GeneralExpression>> generateOrderBys() {
+        HashMap<String, Integer> tmpCompositeScore = new HashMap<>(globalState.getHandler().getGeneratorInfo().getCompositeGeneratorScore());
+        globalState.getLogger().writeCurrent("-- " + tmpCompositeScore);
         List<Node<GeneralExpression>> expr = super.generateOrderBys();
         List<Node<GeneralExpression>> orderingTerms = new ArrayList<>(expr.size());
         for (Node<GeneralExpression> curExpr : expr) {
@@ -73,6 +77,8 @@ public class GeneralTypedExpressionGenerator
             }
             orderingTerms.add(curExpr);
         }
+        globalState.getHandler().loadCompositeScore(tmpCompositeScore);
+        // globalState.getLogger().writeCurrent("-- " + globalState.getHandler().getGeneratorInfo().getCompositeGeneratorScore());
         return orderingTerms;
     }
 
@@ -86,6 +92,27 @@ public class GeneralTypedExpressionGenerator
         return GeneralFunction.getRandomCompatibleFunctions(globalState.getHandler(), returnType);
     }
 
+    private List<Node<GeneralExpression>> generateFunctionExpressions(GeneralFunction function, int depth, GeneralErrorHandler handler) {
+        List<Node<GeneralExpression>> args = new ArrayList<>();
+        for (int i = 0; i < function.getNrArgs(); i++) {
+            final int ind = i;
+            List<GeneralCompositeDataType> availTypes = GeneralCompositeDataType.getSupportedTypes().stream()
+                    .filter(t -> handler.getCompositeOption(function.toString(), ind + t.toString()))
+                    .collect(Collectors.toList());
+            GeneralCompositeDataType type = Randomly.fromList(availTypes);
+            nullFlag = false;
+            Node<GeneralExpression> newExpr = generateExpression(type, depth);
+            args.add(newExpr);
+            // check if newExpr is a 
+            if (!nullFlag) {
+                String key = function.toString() + "-" + ind + type.getPrimitiveDataType().toString();
+                handler.addScore(key);
+            }
+            nullFlag = false;
+        }
+        return args;
+    }
+
     @Override
     public Node<GeneralExpression> generateExpression(GeneralCompositeDataType type, int depth) {
         // if (allowAggregates && Randomly.getBoolean()) {
@@ -94,26 +121,19 @@ public class GeneralTypedExpressionGenerator
         GeneralErrorHandler handler = globalState.getHandler();
         if (depth >= globalState.getOptions().getMaxExpressionDepth()
                 || depth >= globalState.getHandler().getCurDepth(globalState.getDatabaseName())
-                || Randomly.getBoolean()) {
+                || Randomly.getBooleanWithRatherLowProbability()) {
             return generateLeafNode(type);
         } else {
-            if (Randomly.getBooleanWithRatherLowProbability()) {
+            if (Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.FUNC)) {
                 handler.addScore(GeneratorNode.FUNC);
-                if (Randomly.getBoolean() || !handler.getOption(GeneratorNode.UNTYPE_EXPR)) {
-                    // TODO current implementation does not support automatically type inference
-                    List<GeneralFunction> applicableFunctions = getFunctionsCompatibleWith(type);
-                    if (!applicableFunctions.isEmpty()) {
-                        GeneralFunction function = Randomly.fromList(applicableFunctions);
-                        handler.addScore("FUNCTION-" + function.toString());
-                        handler.addScore(function.toString() + "-" + type.getPrimitiveDataType().toString());
-                        return new NewFunctionNode<GeneralExpression, GeneralFunction>(
-                                generateExpressions(type, function.getNrArgs(), depth + 1), function);
-                    }
-                } else {
-                    GeneralFunction function = GeneralFunction.getRandomByOptions(handler);
-                    // handler.addScore(GeneratorNode.UNTYPE_EXPR);
+                // TODO current implementation does not support automatically type inference
+                List<GeneralFunction> applicableFunctions = getFunctionsCompatibleWith(type);
+                if (!applicableFunctions.isEmpty()) {
+                    GeneralFunction function = Randomly.fromList(applicableFunctions);
+                    handler.addScore("FUNCTION-" + function.toString());
+                    handler.addScore( type.getPrimitiveDataType().toString() + "-" + function.toString());
                     return new NewFunctionNode<GeneralExpression, GeneralFunction>(
-                            generateExpressions(GeneralCompositeDataType.getRandomWithoutNull(), function.getNrArgs(), depth + 1), function);
+                            generateFunctionExpressions(function, depth + 1, handler), function);
                 }
             }
             if (Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.CAST)) {
@@ -189,13 +209,29 @@ public class GeneralTypedExpressionGenerator
 
     private enum BooleanExpression {
         // NOT, COMPARISON, AND_OR_CHAIN, REGEX, IS_NULL, IS_NAN, IN, BETWEEN, MULTI_VALUED_COMPARISON
-        UNARY_PREFIX, BINARY_COMPARISON, BINARY_LOGICAL, UNARY_POSTFIX, IN, BETWEEN;
+        UNARY_PREFIX(GeneralUnaryPrefixOperator.values().length), BINARY_COMPARISON(GeneralBinaryComparisonOperator.values().length), BINARY_LOGICAL(GeneralBinaryLogicalOperator.values().length), UNARY_POSTFIX(GeneralUnaryPostfixOperator.values().length), IN(1), BETWEEN(1);
+
+        private final int proportion;
+
+        BooleanExpression(int proportion) {
+            this.proportion = proportion;
+        }
+
+        private static List<BooleanExpression> getOptionsByProportions() {
+            List<BooleanExpression> options = new ArrayList<>();
+            for (BooleanExpression expr : values()) {
+                for (int i = 0; i < expr.proportion; i++) {
+                    options.add(expr);
+                }
+            }
+            return options;
+        }
 
         public static BooleanExpression getRandomByOptions(GeneralErrorHandler handler) {
             BooleanExpression expr;
             GeneratorNode node;
             do {
-                expr = Randomly.fromOptions(values());
+                expr = Randomly.fromList(getOptionsByProportions());
                 node = GeneratorNode.valueOf(expr.toString());
             } while (!handler.getOption(node) || !Randomly.getBooleanWithSmallProbability());
             handler.addScore(node);
@@ -292,7 +328,7 @@ public class GeneralTypedExpressionGenerator
         Node<GeneralExpression> left = generateExpression(type, depth + 1);
         Node<GeneralExpression> right = generateExpression(type, depth + 1);
         return new NewBinaryOperatorNode<GeneralExpression>(left, right,
-                GeneralBinaryComparisonOperator.getRandomByOptions(globalState.getHandler()));
+                GeneralBinaryComparisonOperator.getRandomByOptions(globalState.getHandler(), type));
     }
 
     @Override
@@ -303,6 +339,7 @@ public class GeneralTypedExpressionGenerator
     @Override
     public Node<GeneralExpression> generateConstant(GeneralCompositeDataType type) {
         if (Randomly.getBooleanWithRatherLowProbability()) {
+            nullFlag = true;
             return GeneralConstant.createNullConstant();
         }
         switch (type.getPrimitiveDataType()) {

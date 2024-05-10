@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -13,25 +14,30 @@ import java.io.FileReader;
 import sqlancer.ErrorHandler;
 import sqlancer.IgnoreMeException;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
+import sqlancer.general.ast.GeneralBinaryArithmeticOperator;
+import sqlancer.general.ast.GeneralBinaryComparisonOperator;
+import sqlancer.general.ast.GeneralCast;
+import sqlancer.general.ast.GeneralFunction;
+import sqlancer.general.ast.GeneralUnaryPostfixOperator;
+import sqlancer.general.ast.GeneralUnaryPrefixOperator;
 
 public class GeneralErrorHandler implements ErrorHandler {
 
     private GeneratorInfoTable generatorTable;
     private GeneratorInfo generatorInfo;
-    // private GeneratorScore<GeneratorNode> generatorScore;
-    // private ArrayList<GeneratorInfo<String>> compositeGeneratorTable;
-    // private GeneratorInfo<String> compositeGeneratorScore;
     // expression depth for each DATABASE --> it is thread unique parameter
     // TODO concurrent
-    private class GeneratorInfo {
+    public class GeneratorInfo {
         private HashMap<GeneratorNode, Integer> generatorScore;
         private HashMap<String, Integer> compositeGeneratorScore;
         private boolean status;
+        private boolean isQuery;
 
         public GeneratorInfo() {
             this.generatorScore = new HashMap<>();
             this.compositeGeneratorScore = new HashMap<>();
             this.status = false;
+            this.isQuery = false;
         }
 
         public HashMap<GeneratorNode, Integer> getGeneratorScore() {
@@ -44,6 +50,14 @@ public class GeneralErrorHandler implements ErrorHandler {
 
         public boolean getStatus() {
             return status;
+        }
+
+        public boolean isQuery() {
+            return isQuery;
+        }
+
+        public void setQuery(boolean isQuery) {
+            this.isQuery = isQuery;
         }
 
         public void setStatus(boolean status) {
@@ -82,12 +96,20 @@ public class GeneralErrorHandler implements ErrorHandler {
             generatorAverage = new HashMap<>();
             HashMap<GeneratorNode, Double> tmpAverage = new HashMap<>();
             HashMap<GeneratorNode, Integer> count = new HashMap<>();
-            int entryNum = generatorTable.size();
-            int success = 0;
+            int stmtNum = 0;
+            int queryNum = 0;
+            int qsuccess = 0;
+            int ssuccess = 0;
             for (GeneratorInfo info : generatorTable) {
                 HashMap<GeneratorNode, Integer> generator = info.getGeneratorScore();
                 int executionStatus = info.getStatus() ? 1 : 0;
-                success += executionStatus;
+                if(info.isQuery()) {
+                    qsuccess += executionStatus;
+                    queryNum++;
+                } else {
+                    ssuccess += executionStatus;
+                    stmtNum++;
+                }
 
                 // sum up all the successful generator options
                 for (Map.Entry<GeneratorNode, Integer> entry : generator.entrySet()) {
@@ -107,8 +129,10 @@ public class GeneralErrorHandler implements ErrorHandler {
                 // TODO: in case the option hasn't been tested enough
                 generatorAverage.put(entry.getKey(), entry.getValue() / cnt);
             }
-            System.out.println("Successful rate: " + (double) success / entryNum);
+            System.out.println("Successful query rate: " + (double) qsuccess / queryNum);
+            System.out.println("Successful statement rate: " + (double) ssuccess / stmtNum);
             System.out.println("Generator Average: " + generatorAverage);
+            System.out.println("Count: " + count);
             return generatorAverage;
         }
 
@@ -153,9 +177,13 @@ public class GeneralErrorHandler implements ErrorHandler {
 
     // volatile
     private static HashMap<String, Integer> curDepth = new HashMap<>();
+    private static volatile int execDatabaseNum = 0;
     private static volatile HashMap<String, GeneratorInfo> assertionGeneratorHistory = new HashMap<>();
     private static volatile HashMap<GeneratorNode, Boolean> generatorOptions = new HashMap<>();
     private static volatile HashMap<String, Boolean> compositeGeneratorOptions = new HashMap<>();
+    // private static volatile HashMap<String, Double> compositeGeneratorOverallScore = new HashMap<>();
+
+    private double nodeNum = GeneratorNode.values().length;
 
     public enum GeneratorNode {
         // Meta nodes
@@ -181,12 +209,21 @@ public class GeneralErrorHandler implements ErrorHandler {
         LOPAND, LOPOR;
     }
 
+    public double getNodeNum() {
+        return nodeNum;
+    }
+
+    public void incrementExecDatabaseNum() {
+        execDatabaseNum++;
+    }
+
     public GeneralErrorHandler() {
         this.generatorTable = new GeneratorInfoTable();
         this.generatorInfo = new GeneratorInfo();
-        if (generatorOptions.isEmpty()){
+        if (generatorOptions.isEmpty()) {
             initGeneratorOptions();
         }
+        updateGeneratorNodeNum();
     }
 
     public HashMap<GeneratorNode, Boolean> getGeneratorOptions() {
@@ -194,6 +231,7 @@ public class GeneralErrorHandler implements ErrorHandler {
     }
 
     public int getCurDepth(String databaseName) {
+        databaseName = databaseName.split("_")[0]; // for experiment usage
         if (curDepth.containsKey(databaseName)) {
             return curDepth.get(databaseName);
         } else {
@@ -203,6 +241,7 @@ public class GeneralErrorHandler implements ErrorHandler {
     }
 
     public void incrementCurDepth(String databaseName) {
+        databaseName = databaseName.split("_")[0];
         if (curDepth.containsKey(databaseName)) {
             curDepth.put(databaseName, curDepth.get(databaseName) + 1);
         } else {
@@ -228,10 +267,22 @@ public class GeneralErrorHandler implements ErrorHandler {
 
     }
 
+    private synchronized <N> void updateByLeastOncePerRun(HashMap<N, Double> score, HashMap<N, Boolean> options) {
+        for (Map.Entry<N, Double> entry : score.entrySet()) {
+            if (entry.getValue() > 0.01) {
+                options.put(entry.getKey(), true);
+            } else {
+                options.put(entry.getKey(), false);
+            }
+        }
+
+    }
+
     public void calcAverageScore() {
         generatorTable.calcAverageGeneratorScore();
         generatorTable.calcAverageCompositeScore();
     }
+
 
     public void updateGeneratorOptions() {
         HashMap<GeneratorNode, Double> average = generatorTable.getGeneratorAverage();
@@ -239,7 +290,7 @@ public class GeneralErrorHandler implements ErrorHandler {
 
         // if not zero then the option is true
         updateByLeastOnce(average, generatorOptions);
-        updateByLeastOnce(compositeAverage, compositeGeneratorOptions);
+        updateByLeastOncePerRun(compositeAverage, compositeGeneratorOptions);
 
         // Special handling for the untype_expr option
         if (generatorOptions.get(GeneratorNode.UNTYPE_EXPR)) {
@@ -276,6 +327,27 @@ public class GeneralErrorHandler implements ErrorHandler {
         }
     }
 
+    private void updateGeneratorNodeNum() {
+        nodeNum = 0;
+        nodeNum += GeneralUnaryPrefixOperator.values().length;
+        nodeNum += GeneralUnaryPostfixOperator.values().length;
+        nodeNum += GeneralCast.GeneralCastOperator.values().length;
+        nodeNum += GeneralBinaryComparisonOperator.values().length;
+        nodeNum += GeneralBinaryArithmeticOperator.values().length;
+        nodeNum += GeneralFunction.getNrFunctionsNum();
+        nodeNum += GeneratorNode.values().length; // plus 1 padding
+        // System.out.println("NodeNum: " + nodeNum);
+    }
+
+
+    public GeneratorInfo getGeneratorInfo() {
+        return generatorInfo;
+    }
+
+    // public void loadGeneratorInfo(GeneratorInfo info) {
+    //     this.generatorInfo = info;
+    // }
+
     public void addScore(GeneratorNode generatorName) {
         HashMap<GeneratorNode, Integer> score = generatorInfo.getGeneratorScore();
         if (score.containsKey(generatorName)) {
@@ -302,6 +374,10 @@ public class GeneralErrorHandler implements ErrorHandler {
         generatorInfo.getCompositeGeneratorScore().put(generatorName, score);
     }
 
+    public void loadCompositeScore(HashMap<String, Integer> compositeScore) {
+        generatorInfo.compositeGeneratorScore = compositeScore;
+    }
+
     public void setExecutionStatus(boolean status) {
         generatorInfo.setStatus(status);
     }
@@ -310,8 +386,9 @@ public class GeneralErrorHandler implements ErrorHandler {
         return generatorTable.getLastGeneratorScore();
     }
 
-    public void appendScoreToTable(boolean status) {
+    public void appendScoreToTable(boolean status, boolean isQuery) {
         setExecutionStatus(status);
+        generatorInfo.setQuery(isQuery);
         generatorTable.add(generatorInfo);
         generatorInfo = new GeneratorInfo();
     }
@@ -321,6 +398,7 @@ public class GeneralErrorHandler implements ErrorHandler {
     }
 
     public void printStatistics() {
+        System.out.println("Executed Databases: " + execDatabaseNum);
         System.out.println("Generator Score: " + generatorInfo);
         // System.out.println("Generator Table: " + generatorTable);
         System.out.println("Generator Options: " + generatorOptions);

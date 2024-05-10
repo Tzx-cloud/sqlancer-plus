@@ -3,11 +3,12 @@ package sqlancer.general.ast;
 import sqlancer.common.ast.BinaryOperatorNode.Operator;
 import sqlancer.general.GeneralErrorHandler;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
+import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.Randomly;
 
 public enum GeneralUnaryPostfixOperator implements Operator {
 
-    IS_NULL("IS NULL"), IS_NOT_NULL("IS NOT NULL"), IS_NOT_UNKNOWN("IS NOT UNKNOWN"), IS_TRUE("IS TRUE"), IS_FALSE("IS FALSE");
+    IS_NULL("IS NULL"), IS_NOT_NULL("IS NOT NULL");
 
     private String textRepr;
 
@@ -32,6 +33,18 @@ public enum GeneralUnaryPostfixOperator implements Operator {
             node = GeneratorNode.valueOf(op.toString());
         } while (!handler.getOption(node) || !Randomly.getBooleanWithSmallProbability());
         handler.addScore(node);
+        return op;
+    }
+
+    public static Operator getRandomByOptions(GeneralErrorHandler handler, GeneralCompositeDataType type) {
+        Operator op;
+        GeneratorNode node;
+        do {
+            op = Randomly.fromOptions(values());
+            node = GeneratorNode.valueOf(op.toString());
+        } while (!handler.getOption(node) || !handler.getCompositeOption(node.toString(), type.getPrimitiveDataType().toString())|| !Randomly.getBooleanWithSmallProbability());
+        handler.addScore(node);
+        handler.addScore(node.toString() + "-" + type.getPrimitiveDataType().toString());
         return op;
     }
 

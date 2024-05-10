@@ -62,6 +62,17 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             return size;
         }
 
+        public static List<GeneralCompositeDataType> getSupportedTypes() {
+            List<GeneralCompositeDataType> types = new ArrayList<>();
+            for (GeneralDataType dt : GeneralDataType.values()) {
+                if (dt == GeneralDataType.NULL) {
+                    continue;
+                }
+                types.add(new GeneralCompositeDataType(dt, 0));
+            }
+            return types;
+        }
+
         public static GeneralCompositeDataType getRandomWithoutNull() {
             GeneralDataType type = GeneralDataType.getRandomWithoutNull();
             int size = -1;
@@ -203,66 +214,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         }
     }
 
-    // private static GeneralCompositeDataType getColumnType(String typeString) {
-    // GeneralDataType primitiveType;
-    // int size = -1;
-    // // if (typeString.startsWith("DECIMAL")) { // Ugly hack
-    // // return new GeneralCompositeDataType(GeneralDataType.FLOAT, 8);
-    // // }
-    // switch (typeString) {
-    // case "INTEGER":
-    // primitiveType = GeneralDataType.INT;
-    // size = 4;
-    // break;
-    // case "4":
-    // primitiveType = GeneralDataType.INT;
-    // size = 4;
-    // break;
-    // case "SMALLINT":
-    // primitiveType = GeneralDataType.INT;
-    // size = 2;
-    // break;
-    // case "BIGINT":
-    // case "HUGEINT": // TODO: 16-bit int
-    // primitiveType = GeneralDataType.INT;
-    // size = 8;
-    // break;
-    // case "TINYINT":
-    // primitiveType = GeneralDataType.INT;
-    // size = 1;
-    // break;
-    // // case "VARCHAR":
-    // // primitiveType = GeneralDataType.VARCHAR;
-    // // break;
-    // // case "FLOAT":
-    // // primitiveType = GeneralDataType.FLOAT;
-    // // size = 4;
-    // // break;
-    // // case "DOUBLE":
-    // // primitiveType = GeneralDataType.FLOAT;
-    // // size = 8;
-    // // break;
-    // // case "BOOLEAN":
-    // // primitiveType = GeneralDataType.BOOLEAN;
-    // // break;
-    // // case "DATE":
-    // // primitiveType = GeneralDataType.DATE;
-    // // break;
-    // // case "TIMESTAMP":
-    // // primitiveType = GeneralDataType.TIMESTAMP;
-    // // break;
-    // case "NULL":
-    // primitiveType = GeneralDataType.NULL;
-    // break;
-    // case "INTERVAL":
-    // throw new IgnoreMeException();
-    // // TODO: caused when a view contains a computation like ((TIMESTAMP '1970-01-05 11:26:57')-(TIMESTAMP
-    // // '1969-12-29 06:50:27'))
-    // default:
-    // throw new AssertionError(typeString);
-    // }
-    // return new GeneralCompositeDataType(primitiveType, size);
-    // }
+
 
     public static class GeneralTable extends AbstractRelationalTable<GeneralColumn, TableIndex, GeneralGlobalState> {
 
@@ -335,13 +287,6 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                 columns.add(c);
             }
         }
-        // }
-        // if (columns.stream().noneMatch(c -> c.isPrimaryKey())) {
-        // // https://github.com/cwida/General/issues/589
-        // // https://github.com/cwida/General/issues/588
-        // // TODO: implement an option to enable/disable rowids
-        // columns.add(new GeneralColumn("rowid", new GeneralCompositeDataType(GeneralDataType.INT, 4), false, false));
-        // }
         return columns;
     }
 

@@ -16,6 +16,7 @@ public abstract class GlobalState<O extends DBMSSpecificOptions<?>, S extends Ab
     private StateToReproduce state;
     private Main.QueryManager<C> manager;
     private String databaseName;
+    private int successCaseNum = 0;
 
     public void setConnection(C con) {
         this.databaseConnection = con;
@@ -72,6 +73,18 @@ public abstract class GlobalState<O extends DBMSSpecificOptions<?>, S extends Ab
 
     public void setManager(Main.QueryManager<C> manager) {
         this.manager = manager;
+    }
+
+    public void incrementSuccessCaseNum() {
+        successCaseNum++;
+    }
+
+    public int getSuccessCaseNum() {
+        return successCaseNum;
+    }
+
+    public void setSuccessCaseNum(int successCaseNum) {
+        this.successCaseNum = successCaseNum;
     }
 
     public String getDatabaseName() {

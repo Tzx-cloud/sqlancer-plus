@@ -24,7 +24,7 @@ public class GeneralTableGenerator {
         if (globalState.getHandler().getOption(GeneratorNode.CREATE_DATABASE)) {
             tableName = globalState.getSchema().getFreeTableName();
         } else {
-            tableName = String.format("%s_%s", globalState.getDatabaseName(),
+            tableName = String.format("%s%s%s", globalState.getDatabaseName(),globalState.getDbmsSpecificOptions().dbTableDelim,
                     globalState.getSchema().getFreeTableName());
         }
         sb.append("CREATE TABLE ");

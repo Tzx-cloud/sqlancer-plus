@@ -133,18 +133,18 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
         int firstCount = getFirstQueryCount(con, tableList.stream().collect(Collectors.toList()), columns,
                 randomWhereCondition, joins);
         if (firstCount == -1 || secondCount == -1) {
-            state.getHandler().appendScoreToTable(false);
+            state.getHandler().appendScoreToTable(false, true);
             throw new IgnoreMeException();
         }
         if (firstCount != secondCount) {
-            state.getHandler().appendScoreToTable(true);
+            state.getHandler().appendScoreToTable(true, true);
             String errorMessage = optimizedQueryString + "; -- " + firstCount + "\n" + unoptimizedQueryString + " -- "
                     + secondCount;
             reproducer = new GeneralNoRECReproducer(unoptimizedQueryString, optimizedQueryString,
                     errorMessage);
             throw new AssertionError(errorMessage);
         }
-        state.getHandler().appendScoreToTable(true);
+        state.getHandler().appendScoreToTable(true, true);
     }
 
     private int getSecondQuery(List<Node<GeneralExpression>> tableList, Node<GeneralExpression> randomWhereCondition,
@@ -179,7 +179,7 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
         } catch (Exception e) {
             rs.close();
             Main.nrUnsuccessfulActions.addAndGet(1);
-            state.getHandler().appendScoreToTable(false);
+            state.getHandler().appendScoreToTable(false, true);
             state.getLogger().writeCurrent("-- " + e.getMessage());
             throw new IgnoreMeException();
         }
@@ -218,7 +218,7 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
                 }
             }
         } catch (SQLException e) {
-            state.getHandler().appendScoreToTable(false);
+            state.getHandler().appendScoreToTable(false, true);
             state.getLogger().writeCurrent(e.getMessage());
             throw new IgnoreMeException();
         }

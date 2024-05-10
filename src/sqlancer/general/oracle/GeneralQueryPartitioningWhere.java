@@ -16,7 +16,6 @@ public class GeneralQueryPartitioningWhere extends GeneralQueryPartitioningBase 
 
     public GeneralQueryPartitioningWhere(GeneralGlobalState state) {
         super(state);
-        GeneralErrors.addGroupByErrors(errors);
         GeneralErrors.addExpressionErrors(errors);
     }
 
@@ -78,7 +77,7 @@ public class GeneralQueryPartitioningWhere extends GeneralQueryPartitioningBase 
             // Noticed that, we would still add some extra information to the generator table. Since the UNION ALL query
             // would not be actually executed but fail due to the previous JOIN query.
             // I think it is fine. We could do dependency analysis later.
-            state.getHandler().appendScoreToTable(false);
+            state.getHandler().appendScoreToTable(false, true);
             throw e;
         }
 
@@ -99,7 +98,7 @@ public class GeneralQueryPartitioningWhere extends GeneralQueryPartitioningBase 
             secondResultSet = ComparatorHelper.getCombinedResultSet(firstQueryString, secondQueryString,
                     thirdQueryString, combinedString, !orderBy, state, errors);
         } catch (Exception e) {
-            state.getHandler().appendScoreToTable(false);
+            state.getHandler().appendScoreToTable(false, true);
             throw e;
         }
         try {
@@ -108,12 +107,12 @@ public class GeneralQueryPartitioningWhere extends GeneralQueryPartitioningBase 
         } catch (AssertionError e) {
             // TODO we need to give some information to the handler here
             // state.getHandler().printStatistics();
-            state.getHandler().appendScoreToTable(true);
+            state.getHandler().appendScoreToTable(true, true);
             reproducer = new GeneralQueryPartitioningWhereReproducer(firstQueryString, secondQueryString,
                     thirdQueryString, originalQueryString, orderBy, e.getMessage());
             throw e;
         }
-        state.getHandler().appendScoreToTable(true);
+        state.getHandler().appendScoreToTable(true, true);
     }
 
     @Override

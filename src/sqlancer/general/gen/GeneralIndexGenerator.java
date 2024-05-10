@@ -59,9 +59,6 @@ public final class GeneralIndexGenerator {
             sb.append(GeneralToStringVisitor.asString(expr));
         }
         errors.add("already exists!");
-        if (globalState.getDbmsSpecificOptions().testRowid) {
-            errors.add("Cannot create an index on the rowid!");
-        }
         errors.add("Syntax");
         errors.addRegex(Pattern.compile(".*", Pattern.DOTALL));
         // Update the indexes of the table

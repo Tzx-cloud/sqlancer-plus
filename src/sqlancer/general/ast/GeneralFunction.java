@@ -20,6 +20,10 @@ public class GeneralFunction{
     // Integer: number of arguments, if negative then variadic
     private static HashMap<String, Integer> functions = initFunctions();
 
+    public static int getNrFunctionsNum() {
+        return functions.size();
+    }
+
     public GeneralFunction(int nrArgs, boolean isVariadic, String name) {
         this.nrArgs = nrArgs;
         this.isVariadic = isVariadic;
@@ -90,8 +94,8 @@ public class GeneralFunction{
 
     public static List<GeneralFunction> getRandomCompatibleFunctions(GeneralErrorHandler handler, GeneralCompositeDataType returnType) {
         List<String> funcNames = functions.keySet().stream()
-                .filter(f -> handler.getCompositeOption("FUNCTION" + "-" + f))
-                .filter(f -> handler.getCompositeOption(f, returnType.getPrimitiveDataType().toString())).collect(Collectors.toList());
+                // .filter(f -> handler.getCompositeOption("FUNCTION" + "-" + f))
+                .filter(f -> handler.getCompositeOption( returnType.getPrimitiveDataType().toString(), f)).collect(Collectors.toList());
         
         return funcNames.stream().map(f -> new GeneralFunction(functions.get(f), f)).collect(Collectors.toList());
     }

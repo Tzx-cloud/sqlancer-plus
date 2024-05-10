@@ -1,6 +1,7 @@
 package sqlancer.general.gen;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import sqlancer.Randomly;
@@ -26,7 +27,7 @@ public final class GeneralViewGenerator {
         sb.append("VIEW ");
         String viewName = globalState.getSchema().getFreeViewName();
         viewName = globalState.getHandler().getOption(GeneratorNode.CREATE_DATABASE) ? viewName
-                : globalState.getDatabaseName() + "_" + viewName;
+                : globalState.getDatabaseName() +globalState.getDbmsSpecificOptions().dbTableDelim + viewName;
         sb.append(viewName);
         List<GeneralColumn> columns = new ArrayList<>();
 
@@ -40,6 +41,7 @@ public final class GeneralViewGenerator {
             columns.add(new GeneralColumn("c" + i, GeneralCompositeDataType.getRandomWithoutNull(), false, false));
         }
         sb.append(") AS ");
+        HashMap<String, Integer> tmpCompositeScore = new HashMap<>(globalState.getHandler().getGeneratorInfo().getCompositeGeneratorScore());
         GeneralSelect select = GeneralRandomQuerySynthesizer.generateSelect(globalState, columns);
         sb.append(GeneralToStringVisitor.asString(select));
         GeneralTable newTable = new GeneralTable(viewName, columns, true);
@@ -47,7 +49,7 @@ public final class GeneralViewGenerator {
         globalState.setUpdateTable(newTable);
         ExpectedErrors errors = new ExpectedErrors();
         GeneralErrors.addExpressionErrors(errors);
-        GeneralErrors.addGroupByErrors(errors);
+        globalState.getHandler().loadCompositeScore(tmpCompositeScore);
         return new SQLQueryAdapter(sb.toString(), errors, true);
     }
 
