@@ -82,7 +82,6 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
             globalState.getConnection().close();
         }
         globalState.updateHandler(true);
-        System.out.println("Success case number: " + globalState.getSuccessCaseNum());
         return null;
     }
 

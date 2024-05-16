@@ -207,17 +207,24 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                         handler.setOption(GeneratorNode.UNTYPE_EXPR, true);
                     }
                 }
-                handler.printStatistics();
+                if (getOptions().debugLogs()){
+                    handler.printStatistics();
+                }
                 handler.saveStatistics(this);
                 if (handler.getCurDepth(databaseName) < getOptions().getMaxExpressionDepth()) {
                     handler.incrementCurDepth(databaseName);
                 }
-                System.out.println(databaseName + "Current depth: " + handler.getCurDepth(databaseName));
+                if (getOptions().debugLogs()){
+                    System.out.println(databaseName + "Current depth: " + handler.getCurDepth(databaseName));
+                }
             }
         }
 
         @Override
         public boolean checkIfDuplicate() {
+            if (!getDbmsSpecificOptions().useDeduplicator) {
+                return false;
+            }
             return handler.checkIfDuplicate();
         }
 
@@ -266,8 +273,9 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         } catch (Throwable t) {
             throw new AssertionError(t);
         }
-
-        globalState.getSchema().printTables();
+        if (globalState.getOptions().debugLogs()){
+            globalState.getSchema().printTables();
+        }
     }
 
     private void dropView(GeneralGlobalState globalState, String viewName) {

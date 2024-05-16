@@ -18,7 +18,7 @@ public class MainOptions {
 
     @Parameter(names = {
             "--num-threads" }, description = "How many threads should run concurrently to test separate databases")
-    private int nrConcurrentThreads = 16; // NOPMD
+    private int nrConcurrentThreads = 4; // NOPMD
 
     @Parameter(names = {
             "--random-seed" }, description = "A seed value != -1 that can be set to make the query and database generation deterministic")
@@ -40,7 +40,7 @@ public class MainOptions {
 
     @Parameter(names = {
             "--num-statement-kind-retries" }, description = "Specifies the number of times a specific statement kind (e.g., INSERT) should be retried when the DBMS indicates that it failed")
-    private int nrStatementRetryCount = 1000; // NOPMD
+    private int nrStatementRetryCount = 20; // NOPMD
 
     @Parameter(names = "--log-each-select", description = "Logs every statement issued", arity = 1)
     private boolean logEachSelect = true; // NOPMD
@@ -145,10 +145,13 @@ public class MainOptions {
     private boolean validateResultSizeOnly = false; // NOPMD
 
     @Parameter(names = "--canonicalize-sql-strings", description = "Should canonicalize query string (add ';' at the end", arity = 1)
-    private boolean canonicalizeSqlString = true; // NOPMD
+    private boolean canonicalizeSqlString = false; // NOPMD
 
     @Parameter(names = "--keep-logs", description = "Should keep logs of the executed queries", arity = 1)
     private boolean keepLogs = false; // NOPMD
+
+    @Parameter(names = "--debug-logs", description = "Should println logs for debug usage")
+    private boolean debugLogs = false;
 
     public int getMaxExpressionDepth() {
         return maxExpressionDepth;
@@ -341,6 +344,10 @@ public class MainOptions {
 
     public boolean keepLogs() {
         return keepLogs;
+    }
+
+    public boolean debugLogs() {
+        return debugLogs;
     }
 
 }

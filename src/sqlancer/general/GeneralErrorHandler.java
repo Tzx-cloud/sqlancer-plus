@@ -129,10 +129,10 @@ public class GeneralErrorHandler implements ErrorHandler {
                 // TODO: in case the option hasn't been tested enough
                 generatorAverage.put(entry.getKey(), entry.getValue() / cnt);
             }
-            System.out.println("Successful query rate: " + (double) qsuccess / queryNum);
-            System.out.println("Successful statement rate: " + (double) ssuccess / stmtNum);
-            System.out.println("Generator Average: " + generatorAverage);
-            System.out.println("Count: " + count);
+            System.out.println("Successful query pairs rate: " + (double) qsuccess / queryNum);
+            System.out.println("Successful statements rate: " + (double) ssuccess / stmtNum);
+            // System.out.println("Generator Average: " + generatorAverage);
+            // System.out.println("Count: " + count);
             return generatorAverage;
         }
 
@@ -427,8 +427,8 @@ public class GeneralErrorHandler implements ErrorHandler {
 
         // remove meta nodes
         nodes.remove(GeneratorNode.UNTYPE_EXPR);
-        System.out.println("Nodes: " + nodes);
-        System.out.println("History: " + history);
+        System.out.println("Features: " + nodes);
+        // System.out.println("History: " + history);
 
         for (GeneratorInfo generator : history) {
             if (isError != (!generator.getStatus())) {
@@ -440,7 +440,7 @@ public class GeneralErrorHandler implements ErrorHandler {
             if (generatorNodes.size() == 0) {
                 if (nodes.size() == 0) {
                     duplicate = true;
-                    System.out.println("Duplicate found");
+                    System.out.println("Duplicated bug found, ignore it.");
                     break;
                 } else {
                     continue;
@@ -448,7 +448,7 @@ public class GeneralErrorHandler implements ErrorHandler {
             }
             if (nodes.containsAll(generatorNodes)) {
                 duplicate = true;
-                System.out.println("Duplicate found");
+                System.out.println("Duplicated bug found, ignore it.");
                 if (isError) {
                     System.out.println("Skip the rest of the current test");
                     throw new IgnoreMeException();
