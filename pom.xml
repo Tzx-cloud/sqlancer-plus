@@ -363,9 +363,9 @@
       <version>4.1.1</version>
     </dependency>
     <dependency>
-      <groupId>monetdb</groupId>
-      <artifactId>monetdb-jdbc</artifactId>
-      <version>3.3</version>
+      <groupId>net.snowflake</groupId>
+      <artifactId>snowflake-jdbc</artifactId>
+      <version>3.16.0</version>
     </dependency>
     <dependency>
       <groupId>com.arangodb</groupId>
