@@ -149,3 +149,4 @@ fi
 
 echo "Starting MonetDB daemon"
 monetdbd start -n "$farm_dir"
+sleep infinity

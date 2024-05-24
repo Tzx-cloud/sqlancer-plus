@@ -86,7 +86,7 @@ if __name__ == "__main__":
         print(output)
         if output.find("Image is up to date") != -1 and not args.cache:
             continue
-        print("Starting", dbms)
+        print("Starting", dbms, flush=True)
         proc = start_server(dbms)
         print("Testing", dbms)
         code = start_fuzz(dbms, args.oracle, args.timeout)

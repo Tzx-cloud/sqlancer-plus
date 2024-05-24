@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     cmake \
     flex \
     git \
+    gdb \
     libevent-dev \
     liblz4-dev \
     libprotobuf-c-dev \

@@ -43,7 +43,7 @@ fi
 if [ "$dbms" == "risingwave" ]; then
     docker stop risingwave-test
     docker rm risingwave-test
-    docker run --name risingwave-test -p 10008:4566 risingwavelabs/risingwave:nightly-$date
+    docker run --name risingwave-test -p 10008:4566 risingwavelabs/risingwave:latest
 fi
 # docker stop risingwave-test
 # docker rm risingwave-test
@@ -137,6 +137,13 @@ if [ "$dbms" == "monetdb" ]; then
     docker stop monetdb-test
     docker rm monetdb-test
     docker run --name monetdb-test -p 10021:50000 -e MDB_DB_ADMIN_PASS=monetdb monetdb-source-build
+    # For debug:
+    # docker exec monetdb-test bash -c 'echo -n -e "user=monetdb\npassword=monetdb\n" > /root/.monetdb'
+    # docker exec -it monetdb-test mclient -E UTF-8 -d monetdb
+    # For backtrace:
+    # docker exec -it monetdb-test bash
+    # monetdbd stop /var/monetdb5/dbfarm
+    # gdb mserver5
 fi
 
 if [ "$dbms" == "h2" ]; then

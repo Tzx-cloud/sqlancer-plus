@@ -79,7 +79,7 @@ fi
 # Download and install duckdb
 if [ "$dbms" == "duckdb" ]; then
     # The URL of the repository
-    REPO_URL="https://oss.sonatype.org/content/repositories/snapshots/org/duckdb/duckdb_jdbc/0.10.0-SNAPSHOT/"
+    REPO_URL="https://oss.sonatype.org/content/repositories/snapshots/org/duckdb/duckdb_jdbc/0.11.0-SNAPSHOT/"
 
     # Use curl to fetch the contents of the repository
     # This example assumes the repository lists files in a way that can be parsed with grep and sort
