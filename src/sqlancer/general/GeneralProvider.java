@@ -26,6 +26,7 @@ import sqlancer.common.query.SQLQueryProvider;
 import sqlancer.common.query.SQLancerResultSet;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralSchema.GeneralTable;
+import sqlancer.general.ast.GeneralFunction;
 import sqlancer.general.gen.GeneralIndexGenerator;
 import sqlancer.general.gen.GeneralInsertGenerator;
 import sqlancer.general.gen.GeneralTableGenerator;
@@ -110,6 +111,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         private GeneralErrorHandler handler = new GeneralErrorHandler();
         private GeneralTable updateTable;
 
+        private static final File CONFIG_DIRECTORY = new File("dbconfigs");
+
         @Override
         public GeneralSchema getSchema() {
             // TODO should we also check here if the saved schema match the jdbc schema?
@@ -118,6 +121,10 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
         public GeneralErrorHandler getHandler() {
             return handler;
+        }
+
+        public String getProviderName() {
+            return getDbmsSpecificOptions().getDatabaseEngineFactory().toString();
         }
 
         public void setSchema(List<GeneralTable> tables) {
@@ -226,6 +233,10 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 return false;
             }
             return handler.checkIfDuplicate();
+        }
+
+        public File getConfigDirectory() {
+            return new File(CONFIG_DIRECTORY, getDbmsSpecificOptions().getDatabaseEngineFactory().toString().toLowerCase());
         }
 
     }
@@ -358,6 +369,12 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     @Override
     public String getDBMSName() {
         return "general";
+    }
+
+    @Override
+    public void initializeFeatures(GeneralGlobalState globalState) {
+        // do nothing
+        GeneralFunction.loadFunctionsFromFile(globalState);
     }
 
 }

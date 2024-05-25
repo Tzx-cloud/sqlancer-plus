@@ -405,6 +405,11 @@ public final class Main {
             }
         }
 
+        public void getFeatures() {
+            G state = getInitializedGlobalState(options.getRandomSeed());
+            provider.initializeFeatures(state);
+        }
+
         public void run() throws Exception {
             G state = createGlobalState();
             stateToRepro = provider.getStateToReproduce(databaseName);
@@ -613,6 +618,10 @@ public final class Main {
             }
         }
         final AtomicBoolean someOneFails = new AtomicBoolean(false);
+        if (options.enableExtraFeatures()) {
+            // load external functions
+            executorFactory.getDBMSExecutor(options.getDatabasePrefix() + "feature", new Randomly()).getFeatures();
+        }
 
         for (int i = 0; i < options.getTotalNumberTries(); i++) {
             final String databaseName = options.getDatabasePrefix() + i;

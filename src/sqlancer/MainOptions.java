@@ -153,6 +153,12 @@ public class MainOptions {
     @Parameter(names = "--debug-logs", description = "Should println logs for debug usage")
     private boolean debugLogs = false;
 
+    @Parameter(names = "--enable-extra-features", description = "Use extra features for testing")
+    private boolean enableExtraFeatures = false;
+
+    @Parameter(names = "--enable-learning", description = "Learn features for testing")
+    private boolean enableLearning = false;
+
     public int getMaxExpressionDepth() {
         return maxExpressionDepth;
     }
@@ -348,6 +354,14 @@ public class MainOptions {
 
     public boolean debugLogs() {
         return debugLogs;
+    }
+
+    public boolean enableExtraFeatures() {
+        return enableExtraFeatures;
+    }
+
+    public boolean enableLearning() {
+        return enableLearning;
     }
 
 }

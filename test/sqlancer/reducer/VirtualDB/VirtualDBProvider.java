@@ -51,4 +51,9 @@ public class VirtualDBProvider extends SQLProviderAdapter<VirtualDBGlobalState, 
     public void setReproducerForTesting(Reproducer<VirtualDBGlobalState> reproducer) {
         this.reproducerForTesting = reproducer;
     }
+
+    @Override
+    public void initializeFeatures(VirtualDBGlobalState globalState) {
+        throw new UnsupportedOperationException();
+    }
 }

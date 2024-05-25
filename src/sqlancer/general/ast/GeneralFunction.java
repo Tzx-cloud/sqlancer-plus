@@ -1,18 +1,21 @@
 package sqlancer.general.ast;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import sqlancer.Randomly;
 import sqlancer.general.GeneralErrorHandler;
+import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 
 
-public class GeneralFunction{
+public class GeneralFunction {
+    private static final String CONFIG_NAME = "functions.txt";
+
     private int nrArgs;
     private boolean isVariadic;
     private String name;
@@ -52,21 +55,6 @@ public class GeneralFunction{
         for (GeneralDBFunction func : GeneralDBFunction.values()) {
             initFunctions.put(func.toString(), func.getVarArgs());
         }
-        // read all functions from file.txt and put them into hashmap functions
-        try {
-            // Make it hardcode for now
-            // not sure if need to switch to ALL FUNCTIONS
-            BufferedReader reader = new BufferedReader(new FileReader("logs/ExternalFunctions.txt"));
-            String line = reader.readLine();
-            while (line != null) {
-                String[] parts = line.split(" ");
-                initFunctions.put(parts[0].toUpperCase(), Integer.parseInt(parts[1]));
-                line = reader.readLine();
-            }
-            reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         return initFunctions;
     }
 
@@ -99,4 +87,34 @@ public class GeneralFunction{
         
         return funcNames.stream().map(f -> new GeneralFunction(functions.get(f), f)).collect(Collectors.toList());
     }
+
+    public static void loadFunctionsFromFile(GeneralGlobalState globalState) {
+        if (globalState.getOptions().debugLogs()) {
+            System.out.println("Loading external functions from " + globalState.getConfigDirectory() + " ...");
+        }
+        File configFile = new File(globalState.getConfigDirectory(), CONFIG_NAME);
+        HashMap<String, Integer> newFuncs = new HashMap<>();
+        if (configFile.exists()) {
+            String line = "";
+            try (BufferedReader br = new BufferedReader(new FileReader(configFile))) {
+                while ((line = br.readLine()) != null) {
+                    String[] args = line.split(" ");
+                    newFuncs.put(args[0].toUpperCase(), Integer.parseInt(args[1]));
+                }
+            } catch (Exception e) {
+                System.out.println(line);
+                throw new AssertionError(e);
+            }
+            mergeFunctions(newFuncs);
+        } else {
+            if (globalState.getOptions().debugLogs()) {
+                System.out.println("WARNING: No external function file found");
+            }
+        }
+    }
+    
+    public static void mergeFunctions(HashMap<String, Integer> newFunctions) {
+        functions.putAll(newFunctions);
+    }
+
 }
