@@ -406,7 +406,7 @@ public final class Main {
         }
 
         public void getFeatures() {
-            G state = getInitializedGlobalState(options.getRandomSeed());
+            G state = getInitializedGlobalState(System.currentTimeMillis());
             provider.initializeFeatures(state);
         }
 

@@ -12,61 +12,62 @@ import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.GeneralSchema.GeneralTable;
+import sqlancer.general.learner.GeneralElements;
+import sqlancer.general.learner.GeneralStringBuilder;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 
 public class GeneralTableGenerator {
 
-    public SQLQueryAdapter getQuery(GeneralGlobalState globalState) {
+    private static GeneralTableElements elements = new GeneralTableElements();
+    private static final String CONFIG_NAME = "tablegenerator.txt";
+
+    private final static class GeneralTableElements extends GeneralElements {
+        public GeneralTableElements() {
+            super();
+        }
+
+        @Override
+        public synchronized String genLearnStatement(GeneralGlobalState globalState) {
+            setLearn(true);
+            String stmt = getQuery(globalState).getQueryString();
+            setLearn(false);
+            if (globalState.getOptions().debugLogs()) {
+                System.out.println(stmt);
+            }
+            return stmt;
+        }
+
+        @Override
+        public String getConfigName() {
+            return CONFIG_NAME;
+        }
+    }
+
+    public static SQLQueryAdapter getQuery(GeneralGlobalState globalState) {
         ExpectedErrors errors = new ExpectedErrors();
-        StringBuilder sb = new StringBuilder();
         String tableName;
         // TODO check if this is correct
         if (globalState.getHandler().getOption(GeneratorNode.CREATE_DATABASE)) {
             tableName = globalState.getSchema().getFreeTableName();
         } else {
-            tableName = String.format("%s%s%s", globalState.getDatabaseName(),globalState.getDbmsSpecificOptions().dbTableDelim,
+            tableName = String.format("%s%s%s", globalState.getDatabaseName(),
+                    globalState.getDbmsSpecificOptions().dbTableDelim,
                     globalState.getSchema().getFreeTableName());
         }
-        sb.append("CREATE TABLE ");
-        sb.append(tableName);
+        GeneralStringBuilder<GeneralTableElements> sb = new GeneralStringBuilder<GeneralTableElements>(globalState,
+                elements);
+        sb.append("CREATE TABLE ", 0);
+        sb.append(tableName, 1);
         sb.append("(");
         List<GeneralColumn> columns = getNewColumns(globalState);
-        // UntypedExpressionGenerator<Node<GeneralExpression>, GeneralColumn> gen = new GeneralExpressionGenerator(
-        // globalState).setColumns(columns);
         for (int i = 0; i < columns.size(); i++) {
             if (i != 0) {
                 sb.append(", ");
             }
             sb.append(columns.get(i).getName());
             sb.append(" ");
-            sb.append(columns.get(i).getType());
-            // if (globalState.getDbmsSpecificOptions().testCollate && Randomly.getBooleanWithRatherLowProbability()
-            // && columns.get(i).getType().getPrimitiveDataType() == GeneralDataType.VARCHAR) {
-            // sb.append(" COLLATE ");
-            // sb.append(getRandomCollate());
-            // }
-            // if (globalState.getDbmsSpecificOptions().testIndexes && Randomly.getBooleanWithRatherLowProbability()) {
-            // sb.append(" UNIQUE");
-            // }
-            // if (globalState.getDbmsSpecificOptions().testNotNullConstraints
-            // && Randomly.getBooleanWithRatherLowProbability()) {
-            // sb.append(" NOT NULL");
-            // }
-            // if (globalState.getDbmsSpecificOptions().testCheckConstraints
-            // && Randomly.getBooleanWithRatherLowProbability()) {
-            // sb.append(" CHECK(");
-            // sb.append(GeneralToStringVisitor.asString(gen.generateExpression()));
-            // GeneralErrors.addExpressionErrors(errors);
-            // sb.append(")");
-            // }
-            // if (Randomly.getBoolean() && globalState.getDbmsSpecificOptions().testDefaultValues) {
-            // sb.append(" DEFAULT(");
-            // sb.append(GeneralToStringVisitor.asString(gen.generateConstant()));
-            // sb.append(")");
-            // }
+            sb.append(columns.get(i).getType(), 2);
         }
-        // get a new List that is the columns pop one item
-        // List<GeneralColumn> columnsWithoutLast = new ArrayList<>(columns.subList(0, columns.size() - 1));
         List<GeneralColumn> columnsToAdd = new ArrayList<>();
         if (globalState.getDbmsSpecificOptions().testIndexes && !Randomly.getBooleanWithRatherLowProbability()) {
             List<GeneralColumn> primaryKeyColumns = Randomly
@@ -74,15 +75,16 @@ public class GeneralTableGenerator {
             globalState.getHandler().addScore(GeneratorNode.PRIMARY_KEY);
             sb.append(", PRIMARY KEY(");
             sb.append(primaryKeyColumns.stream().map(c -> c.getName()).collect(Collectors.joining(", ")));
-            sb.append(")");
-            // operate on the columns: if the column name is in primaryKeyColumns, then it is a primary key
+            sb.append(")", 3);
+            // operate on the columns: if the column name is in primaryKeyColumns, then it
+            // is a primary key
             for (GeneralColumn c : columns) {
                 columnsToAdd.add(new GeneralColumn(c.getName(), c.getType(), primaryKeyColumns.contains(c), false));
             }
         } else {
             columnsToAdd = columns;
         }
-        sb.append(")");
+        sb.append(")", 4);
         errors.addRegex(Pattern.compile(".*", Pattern.DOTALL));
         GeneralTable newTable = new GeneralTable(tableName, columnsToAdd, false);
         newTable.getColumns().forEach(c -> c.setTable(newTable));
@@ -106,6 +108,14 @@ public class GeneralTableGenerator {
             columns.add(new GeneralColumn(columnName, columnType, false, false));
         }
         return columns;
+    }
+
+    public static String getTemplateQuery(GeneralGlobalState globalState) {
+        return elements.genLearnStatement(globalState);
+    }
+
+    public static void initializeElements(GeneralGlobalState globalState) {
+        elements.loadElementsFromFile(globalState);
     }
 
 }
