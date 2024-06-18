@@ -136,7 +136,7 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:postgresql://localhost:10008/dev?user=root");
             }
-            
+
             @Override
             public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
                     throws SQLException {
@@ -314,7 +314,33 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
                 conn = DriverManager.getConnection(getJDBCString(globalState));
                 return conn;
             }
-        },;
+        },
+        CLICKHOUSE {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:clickhouse://localhost:10023/default");
+            }
+
+            @Override
+            public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
+                    throws SQLException {
+                Connection conn = DriverManager.getConnection(getJDBCString(globalState));
+                setIsNewSchema(false);
+                String dbTableDelim = globalState.getDbmsSpecificOptions().dbTableDelim;
+                for (int i = 0; i < 100; i++) {
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP TABLE %s%st%d", databaseName, dbTableDelim, i));
+                    } catch (SQLException e1) {
+                    }
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP VIEW %s%sv%d", databaseName, dbTableDelim, i));
+                    } catch (SQLException e1) {
+                    }
+                }
+                return conn;
+            }
+        },
+        ;
 
         private boolean isNewSchema = true;
 

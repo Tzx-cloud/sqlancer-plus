@@ -166,7 +166,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             if (success && getOptions().printSucceedingStatements()) {
                 System.out.println(q.getQueryString());
             }
-            if (logExecutionTime) {
+            if (logExecutionTime && success) {
                 getLogger().writeCurrent(" -- " + timer.end().asString());
             }
             if (q.couldAffectSchema() && success) {
@@ -315,7 +315,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             boolean success;
             int nrTries = 0;
             do {
-                SQLQueryAdapter qt = new GeneralTableGenerator().getQuery(globalState);
+                SQLQueryAdapter qt = GeneralTableGenerator.getQuery(globalState);
                 // TODO add error handling here
                 success = globalState.executeStatement(qt);
             } while (!success && nrTries++ < 100);
@@ -375,6 +375,9 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     public void initializeFeatures(GeneralGlobalState globalState) {
         // do nothing
         GeneralFunction.loadFunctionsFromFile(globalState);
+        GeneralTableGenerator.getTemplateQuery(globalState);
+        GeneralTableGenerator.initializeElements(globalState);
+
     }
 
 }

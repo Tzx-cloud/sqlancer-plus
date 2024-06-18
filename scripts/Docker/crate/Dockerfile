@@ -3,7 +3,7 @@ FROM ubuntu:22.04
 ARG USERNAME="crate"
 
 WORKDIR /app
-RUN apt-get update --yes && apt-get install git python3 python3-pip openjdk-11-jdk maven --yes --no-install-recommends && useradd -u 1000 -m ${USERNAME} -d /home/${USERNAME} && chmod 777 /app
+RUN apt-get update --yes && apt-get install git python3 python3-pip openjdk-11-jdk maven wget --yes --no-install-recommends && useradd -u 1000 -m ${USERNAME} -d /home/${USERNAME} && chmod 777 /app
 
 RUN  git clone --depth 1  https://github.com/crate/crate.git
 WORKDIR /app/crate

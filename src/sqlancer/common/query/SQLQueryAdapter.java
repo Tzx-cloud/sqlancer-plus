@@ -104,6 +104,7 @@ public class SQLQueryAdapter extends Query<SQLConnection> {
         } catch (Exception e) {
             Main.nrUnsuccessfulActions.addAndGet(1);
             checkException(e);
+            globalState.getLogger().writeCurrent(" -- " + e.getMessage());
             return false;
         } finally {
             s.close();

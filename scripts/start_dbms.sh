@@ -150,3 +150,10 @@ if [ "$dbms" == "h2" ]; then
     rm -rf $current_dir/databases/h2
     mkdir -p $current_dir/databases/h2
 fi
+
+if [ "$dbms" == "clickhouse" ]; then
+    docker stop clickhouse-test
+    docker rm clickhouse-test
+    docker run --name clickhouse-test -p 10023:8123 -p 10024:9000 clickhouse/clickhouse-server:head-alpine
+
+fi
