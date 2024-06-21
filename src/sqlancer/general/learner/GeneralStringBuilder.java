@@ -2,16 +2,16 @@ package sqlancer.general.learner;
 
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 
-public class GeneralStringBuilder <E extends GeneralElements>{
+public class GeneralStringBuilder <E extends GeneralFragments>{
 
     private StringBuilder sb;
-    private E elements;
+    private E fragments;
     private GeneralGlobalState state;
 
-    public GeneralStringBuilder(GeneralGlobalState globalState, E elements) {
+    public GeneralStringBuilder(GeneralGlobalState globalState, E fragments) {
         this.sb = new StringBuilder();
         this.state = globalState;
-        this.elements = elements;
+        this.fragments = fragments;
     }
 
     public void append(String str) {
@@ -24,7 +24,7 @@ public class GeneralStringBuilder <E extends GeneralElements>{
 
     public void append(Object obj, int index) {
         sb.append(obj);
-        sb.append(elements.get(index, state));
+        sb.append(fragments.get(index, state));
     }
 
     public String toString() {

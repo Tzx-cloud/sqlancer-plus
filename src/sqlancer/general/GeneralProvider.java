@@ -376,7 +376,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         // do nothing
         GeneralFunction.loadFunctionsFromFile(globalState);
         GeneralTableGenerator.getTemplateQuery(globalState);
-        GeneralTableGenerator.initializeElements(globalState);
+        GeneralTableGenerator.initializeFragments(globalState);
 
     }
 

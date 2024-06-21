@@ -12,17 +12,17 @@ import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.GeneralSchema.GeneralTable;
-import sqlancer.general.learner.GeneralElements;
+import sqlancer.general.learner.GeneralFragments;
 import sqlancer.general.learner.GeneralStringBuilder;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 
 public class GeneralTableGenerator {
 
-    private static GeneralTableElements elements = new GeneralTableElements();
+    private static GeneralTableFragments fragments = new GeneralTableFragments();
     private static final String CONFIG_NAME = "tablegenerator.txt";
 
-    private final static class GeneralTableElements extends GeneralElements {
-        public GeneralTableElements() {
+    private final static class GeneralTableFragments extends GeneralFragments {
+        public GeneralTableFragments() {
             super();
         }
 
@@ -54,8 +54,8 @@ public class GeneralTableGenerator {
                     globalState.getDbmsSpecificOptions().dbTableDelim,
                     globalState.getSchema().getFreeTableName());
         }
-        GeneralStringBuilder<GeneralTableElements> sb = new GeneralStringBuilder<GeneralTableElements>(globalState,
-                elements);
+        GeneralStringBuilder<GeneralTableFragments> sb = new GeneralStringBuilder<GeneralTableFragments>(globalState,
+                fragments);
         sb.append("CREATE TABLE ", 0);
         sb.append(tableName, 1);
         sb.append("(");
@@ -111,11 +111,11 @@ public class GeneralTableGenerator {
     }
 
     public static String getTemplateQuery(GeneralGlobalState globalState) {
-        return elements.genLearnStatement(globalState);
+        return fragments.genLearnStatement(globalState);
     }
 
-    public static void initializeElements(GeneralGlobalState globalState) {
-        elements.loadElementsFromFile(globalState);
+    public static void initializeFragments(GeneralGlobalState globalState) {
+        fragments.loadFragmentsFromFile(globalState);
     }
 
 }

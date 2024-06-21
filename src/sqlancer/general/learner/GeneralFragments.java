@@ -20,9 +20,9 @@ import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.ast.GeneralConstant;
 import sqlancer.general.ast.GeneralExpression;
 
-public abstract class GeneralElements {
+public abstract class GeneralFragments {
 
-    protected enum GeneralElementVariable {
+    protected enum GeneralFragmentVariable {
         CONSTANT((g) -> {
             return GeneralConstant.createIntConstant(g.getRandomly().getInteger());
         }),
@@ -42,7 +42,7 @@ public abstract class GeneralElements {
         private Node<GeneralExpression> node;
         private GeneralVariableGenerator<GeneralGlobalState> generator;
 
-        GeneralElementVariable(GeneralVariableGenerator<GeneralGlobalState> generator) {
+        GeneralFragmentVariable(GeneralVariableGenerator<GeneralGlobalState> generator) {
             this.generator = generator;
         }
 
@@ -55,12 +55,12 @@ public abstract class GeneralElements {
         }
     }
 
-    protected class GeneralElementChoice {
+    protected class GeneralFragmentChoice {
 
         private String fmtString;
-        private GeneralElementVariable var;
+        private GeneralFragmentVariable var;
 
-        public GeneralElementChoice(String fmtString, GeneralElementVariable var) {
+        public GeneralFragmentChoice(String fmtString, GeneralFragmentVariable var) {
             this.fmtString = fmtString;
             this.var = var;
         }
@@ -74,33 +74,33 @@ public abstract class GeneralElements {
 
     private boolean learnFlag = false;
     public static final String PLACEHOLDER = "{%d}";
-    private HashMap<Integer, List<GeneralElementChoice>> elements = new HashMap<>();
+    private HashMap<Integer, List<GeneralFragmentChoice>> fragments = new HashMap<>();
 
-    public GeneralElements() {
-        this.elements = new HashMap<>();
+    public GeneralFragments() {
+        this.fragments = new HashMap<>();
     }
 
     public void setLearn(boolean learnFlag) {
         this.learnFlag = learnFlag;
     }
 
-    public HashMap<Integer, List<GeneralElementChoice>> getElements() {
-        return elements;
+    public HashMap<Integer, List<GeneralFragmentChoice>> getFragments() {
+        return fragments;
     }
 
-    public void addElement(int index, String fmtString, GeneralElementVariable var) {
-        if (!elements.containsKey(index)) {
-            elements.put(index, new ArrayList<>());
+    public void addFragment(int index, String fmtString, GeneralFragmentVariable var) {
+        if (!fragments.containsKey(index)) {
+            fragments.put(index, new ArrayList<>());
         }
-        elements.get(index).add(new GeneralElementChoice(fmtString, var));
+        fragments.get(index).add(new GeneralFragmentChoice(fmtString, var));
     }
 
     public String get(int index, GeneralGlobalState state) {
         if (learnFlag) {
             return getPlaceHolder(index);
         }
-        if (elements.containsKey(index)) {
-            return Randomly.fromList(elements.get(index)).toString(state);
+        if (fragments.containsKey(index)) {
+            return Randomly.fromList(fragments.get(index)).toString(state);
         } else {
             return "";
         }
@@ -110,7 +110,7 @@ public abstract class GeneralElements {
         return String.format(PLACEHOLDER, index);
     }
 
-    public void loadElementsFromFile(GeneralGlobalState globalState) {
+    public void loadFragmentsFromFile(GeneralGlobalState globalState) {
         File configFile = new File(globalState.getConfigDirectory(), getConfigName());
         if (configFile.exists()) {
             // read from file
@@ -120,7 +120,7 @@ public abstract class GeneralElements {
                 for (String[] s : r) {
                     // parseElements(s);
                     try {
-                        parseElements(s);
+                        parseFragments(s);
                     } catch (Exception e) {
                         System.out.println(String.format("Error parsing %s from file %s", s[1], getConfigName()));
                     }
@@ -131,7 +131,7 @@ public abstract class GeneralElements {
         }
     }
 
-    private void parseElements(String[] s) {
+    private void parseFragments(String[] s) {
         int i = Integer.parseInt(s[0]);
 
         Pattern pattern = Pattern.compile("<([^>]*)>");
@@ -143,9 +143,9 @@ public abstract class GeneralElements {
         if (matcher.find()) {
             content = matcher.group(1);
             output = matcher.replaceAll("%s");
-            addElement(i, output, GeneralElementVariable.valueOf(content.toUpperCase()));
+            addFragment(i, output, GeneralFragmentVariable.valueOf(content.toUpperCase()));
         } else {
-            addElement(i, output, GeneralElementVariable.NULL);
+            addFragment(i, output, GeneralFragmentVariable.NULL);
         }
         
     }
