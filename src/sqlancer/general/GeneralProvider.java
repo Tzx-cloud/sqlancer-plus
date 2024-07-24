@@ -92,7 +92,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 return 0;
             }
             // fall through
-            return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
+            return r.getInteger(1, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
         // case VACUUM: // seems to be ignored
         case ANALYZE: // seems to be ignored
         return r.getInteger(0, 2);
@@ -140,7 +140,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         }
 
         @Override
-        public void updateSchema() throws Exception {
+        public void updateSchema(){
             if (updateTable != null) {
                 List<GeneralTable> databaseTables = new ArrayList<>(schema.getDatabaseTables());
                 boolean found = false;
@@ -375,8 +375,13 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     public void initializeFeatures(GeneralGlobalState globalState) {
         // do nothing
         GeneralFunction.loadFunctionsFromFile(globalState);
-        GeneralTableGenerator.getTemplateQuery(globalState);
-        GeneralTableGenerator.initializeFragments(globalState);
+        GeneralTableGenerator.getFragments().genLearnStatement(globalState);
+        GeneralTableGenerator.getFragments().loadFragmentsFromFile(globalState);
+
+        GeneralIndexGenerator.getFragments().genLearnStatement(globalState);
+        GeneralIndexGenerator.getFragments().loadFragmentsFromFile(globalState);
+        // GeneralTableGenerator.getTemplateQuery(globalState);
+        // GeneralTableGenerator.initializeFragments(globalState);
 
     }
 

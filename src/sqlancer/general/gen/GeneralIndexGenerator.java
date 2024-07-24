@@ -15,15 +15,51 @@ import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.ast.GeneralExpression;
+import sqlancer.general.learner.GeneralFragments;
+import sqlancer.general.learner.GeneralStringBuilder;
 
 public final class GeneralIndexGenerator {
 
     private GeneralIndexGenerator() {
     }
 
+    private static GeneralIndexFragments fragments = new GeneralIndexFragments();
+    private static final String CONFIG_NAME = "indexgenerator.txt";
+    private static final String STATEMENT = "CREATE_INDEX";
+
+
+    private final static class GeneralIndexFragments extends GeneralFragments {
+        public GeneralIndexFragments() {
+            super();
+        }
+
+        @Override
+        public synchronized String genLearnStatement(GeneralGlobalState globalState) {
+            GeneralTableGenerator.getQuery(globalState);
+            globalState.updateSchema();
+            setLearn(true);
+            String stmt = getQuery(globalState).getQueryString();
+            setLearn(false);
+            if (globalState.getOptions().debugLogs()) {
+                System.out.println(stmt);
+            }
+            return stmt;
+        }
+
+        @Override
+        public String getConfigName() {
+            return CONFIG_NAME;
+        }
+
+        public String getStatementType() {
+            return STATEMENT;
+        }
+    }
+
     public static SQLQueryAdapter getQuery(GeneralGlobalState globalState) {
         ExpectedErrors errors = new ExpectedErrors();
-        StringBuilder sb = new StringBuilder();
+        // StringBuilder sb = new StringBuilder();
+        GeneralStringBuilder<GeneralIndexFragments> sb = new GeneralStringBuilder<>(globalState, fragments);
         globalState.getHandler().addScore(GeneratorNode.CREATE_INDEX);
         sb.append("CREATE ");
         if (Randomly.getBoolean()) {
@@ -38,7 +74,7 @@ public final class GeneralIndexGenerator {
         String indexName = table.getName() + (table.getIndexes().isEmpty() ? "i0" : "i" + table.getIndexes().size());
         sb.append(indexName);
         sb.append(" ON ");
-        sb.append(table.getName());
+        sb.append(table.getName(), 0);
         sb.append("(");
         List<GeneralColumn> columns = table.getRandomNonEmptyColumnSubset();
         for (int i = 0; i < columns.size(); i++) {
@@ -46,12 +82,12 @@ public final class GeneralIndexGenerator {
                 sb.append(", ");
             }
             sb.append(columns.get(i).getName());
-            sb.append(" ");
-            if (Randomly.getBooleanWithRatherLowProbability()) {
-                sb.append(Randomly.fromOptions("ASC", "DESC"));
-            }
+            sb.append(" ", 1);
+            // if (Randomly.getBooleanWithRatherLowProbability()) {
+            //     sb.append(Randomly.fromOptions("ASC", "DESC"));
+            // }
         }
-        sb.append(")");
+        sb.append(")", 2);
         if (Randomly.getBoolean()) {
             sb.append(" WHERE ");
             Node<GeneralExpression> expr = new GeneralExpressionGenerator(globalState).setColumns(table.getColumns())
@@ -70,6 +106,10 @@ public final class GeneralIndexGenerator {
         SQLQueryAdapter q = new SQLQueryAdapter(sb.toString(), errors, true, false);
         globalState.setUpdateTable(new GeneralTable(table.getName(), table.getColumns(), indexes, false));
         return q;
+    }
+
+    public static GeneralFragments getFragments() {
+        return fragments;
     }
 
 }
