@@ -20,6 +20,7 @@ public class GeneralTableGenerator {
 
     private static GeneralTableFragments fragments = new GeneralTableFragments();
     private static final String CONFIG_NAME = "tablegenerator.txt";
+    private static final String STATEMENT = "CREATE_TABLE";
 
     private final static class GeneralTableFragments extends GeneralFragments {
         public GeneralTableFragments() {
@@ -40,6 +41,10 @@ public class GeneralTableGenerator {
         @Override
         public String getConfigName() {
             return CONFIG_NAME;
+        }
+
+        public String getStatementType() {
+            return STATEMENT;
         }
     }
 
@@ -110,12 +115,8 @@ public class GeneralTableGenerator {
         return columns;
     }
 
-    public static String getTemplateQuery(GeneralGlobalState globalState) {
-        return fragments.genLearnStatement(globalState);
-    }
-
-    public static void initializeFragments(GeneralGlobalState globalState) {
-        fragments.loadFragmentsFromFile(globalState);
+    public static GeneralFragments getFragments() {
+        return fragments;
     }
 
 }

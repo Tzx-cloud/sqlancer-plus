@@ -13,6 +13,7 @@ import com.opencsv.CSVReader;
 import sqlancer.Randomly;
 import sqlancer.common.ast.newast.ColumnReferenceNode;
 import sqlancer.common.ast.newast.Node;
+import sqlancer.general.GeneralErrorHandler;
 import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
@@ -55,7 +56,7 @@ public abstract class GeneralFragments {
         }
     }
 
-    protected class GeneralFragmentChoice {
+    public class GeneralFragmentChoice {
 
         private String fmtString;
         private GeneralFragmentVariable var;
@@ -68,6 +69,11 @@ public abstract class GeneralFragments {
         public String toString(GeneralGlobalState state) {
             var.genVariable(state);
             return String.format(fmtString, var.toString());
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s-%s-%s", getStatementType(), fmtString, var.name());
         }
 
     }
@@ -100,7 +106,9 @@ public abstract class GeneralFragments {
             return getPlaceHolder(index);
         }
         if (fragments.containsKey(index)) {
-            return Randomly.fromList(fragments.get(index)).toString(state);
+            GeneralFragmentChoice choice = Randomly.fromList(fragments.get(index));
+            state.getHandler().addScore(choice);
+            return choice.toString(state);
         } else {
             return "";
         }
@@ -147,10 +155,20 @@ public abstract class GeneralFragments {
         } else {
             addFragment(i, output, GeneralFragmentVariable.NULL);
         }
-        
+
+    }
+    
+    public synchronized void updateFragmentByFeedback(GeneralErrorHandler handler) {
+        // Iterate the fragments and remove the ones that are not useful
+        for (int i : fragments.keySet()) {
+            List<GeneralFragmentChoice> choices = fragments.get(i);
+            choices.removeIf(choice -> !handler.getFragmentOption(choice));
+        }
     }
 
     public abstract String getConfigName();
+
+    public abstract String getStatementType();
 
     public abstract String genLearnStatement(GeneralGlobalState globalState);
 
