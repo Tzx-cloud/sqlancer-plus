@@ -3,6 +3,7 @@ package sqlancer.general.gen;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import sqlancer.Randomly;
 import sqlancer.common.gen.AbstractInsertGenerator;
 import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.SQLQueryAdapter;
@@ -42,13 +43,30 @@ public class GeneralInsertGenerator extends AbstractInsertGenerator<GeneralColum
     }
 
     @Override
+    protected void insertColumns(List<GeneralColumn> columns) {
+        for (int nrRows = 0; nrRows < Randomly.smallNumber() + 1; nrRows++) {
+            if (nrRows != 0) {
+                sb.append(", ");
+            }
+            sb.append("(");
+            for (int nrColumn = 0; nrColumn < columns.size(); nrColumn++) {
+                if (nrColumn != 0) {
+                    sb.append(", ");
+                }
+                insertValue(columns.get(nrColumn));
+            }
+            sb.append(")");
+        }
+    }
+
+    @Override
     protected void insertValue(GeneralColumn columnGeneral) {
-        // TODO: select a more meaningful value
-        // if (Randomly.getBooleanWithRatherLowProbability()) {
-        // sb.append("DEFAULT");
-        // } else {
-        sb.append(GeneralToStringVisitor.asString(new GeneralExpressionGenerator(globalState).generateConstant()));
-        // }
+        if (globalState.getHandler().getOption(GeneratorNode.UNTYPE_EXPR) || Randomly.getBooleanWithSmallProbability()) {
+            sb.append(GeneralToStringVisitor.asString(new GeneralExpressionGenerator(globalState).generateConstant()));
+        } else {
+            sb.append(GeneralToStringVisitor.asString(
+                    new GeneralTypedExpressionGenerator(globalState).generateConstant(columnGeneral.getType())));
+        }
     }
 
 }
