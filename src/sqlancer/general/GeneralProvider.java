@@ -197,6 +197,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
         @Override
         public void updateHandler(boolean status) {
+            // status means whether the execution is stopped by bug or not
             String databaseName = getDatabaseName();
             if (getDbmsSpecificOptions().enableErrorHandling) {
                 handler.incrementExecDatabaseNum();
@@ -214,16 +215,20 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                         handler.setOption(GeneratorNode.UNTYPE_EXPR, true);
                     }
                 }
-                if (getOptions().debugLogs()){
+                if (getOptions().debugLogs()) {
                     handler.printStatistics();
                 }
                 handler.saveStatistics(this);
                 if (handler.getCurDepth(databaseName) < getOptions().getMaxExpressionDepth()) {
                     handler.incrementCurDepth(databaseName);
                 }
-                if (getOptions().debugLogs()){
+                if (getOptions().debugLogs()) {
                     System.out.println(databaseName + "Current depth: " + handler.getCurDepth(databaseName));
                 }
+            }
+            if (getDbmsSpecificOptions().enableLearning && status) {
+                GeneralTableGenerator.getFragments().updateFragmentsFromLearner(this);
+                GeneralIndexGenerator.getFragments().updateFragmentsFromLearner(this);
             }
         }
 
@@ -318,7 +323,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 SQLQueryAdapter qt = GeneralTableGenerator.getQuery(globalState);
                 // TODO add error handling here
                 success = globalState.executeStatement(qt);
-            } while (!success && nrTries++ < 100);
+            } while (!success && nrTries++ < 200);
         }
         if (globalState.getSchema().getDatabaseTables().isEmpty()) {
             throw new AssertionError("Failed to create any table"); // TODO
@@ -375,11 +380,14 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     public void initializeFeatures(GeneralGlobalState globalState) {
         // do nothing
         GeneralFunction.loadFunctionsFromFile(globalState);
-        GeneralTableGenerator.getFragments().genLearnStatement(globalState);
-        GeneralTableGenerator.getFragments().loadFragmentsFromFile(globalState);
+        // GeneralTableGenerator.getFragments().genLearnStatement(globalState);
+        // GeneralTableGenerator.getFragments().loadFragmentsFromFile(globalState);
 
-        GeneralIndexGenerator.getFragments().genLearnStatement(globalState);
-        GeneralIndexGenerator.getFragments().loadFragmentsFromFile(globalState);
+        // GeneralIndexGenerator.getFragments().genLearnStatement(globalState);
+        // GeneralIndexGenerator.getFragments().loadFragmentsFromFile(globalState);
+
+        GeneralTableGenerator.getFragments().updateFragmentsFromLearner(globalState);
+        GeneralIndexGenerator.getFragments().updateFragmentsFromLearner(globalState);
         // GeneralTableGenerator.getTemplateQuery(globalState);
         // GeneralTableGenerator.initializeFragments(globalState);
 

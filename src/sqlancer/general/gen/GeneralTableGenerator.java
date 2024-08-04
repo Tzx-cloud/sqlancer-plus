@@ -61,17 +61,21 @@ public class GeneralTableGenerator {
         }
         GeneralStringBuilder<GeneralTableFragments> sb = new GeneralStringBuilder<GeneralTableFragments>(globalState,
                 fragments);
-        sb.append("CREATE TABLE ", 0);
-        sb.append(tableName, 1);
+        sb.append("CREATE ", 0);
+        sb.append(" TABLE ");
+        sb.append(" ");
+        sb.append(tableName);
         sb.append("(");
         List<GeneralColumn> columns = getNewColumns(globalState);
+        // this is for rand column generation
+        globalState.setUpdateTable(new GeneralTable(tableName, columns, false));
         for (int i = 0; i < columns.size(); i++) {
             if (i != 0) {
                 sb.append(", ");
             }
             sb.append(columns.get(i).getName());
             sb.append(" ");
-            sb.append(columns.get(i).getType(), 2);
+            sb.append(columns.get(i).getType(), 1);
         }
         List<GeneralColumn> columnsToAdd = new ArrayList<>();
         if (globalState.getDbmsSpecificOptions().testIndexes && !Randomly.getBooleanWithRatherLowProbability()) {
@@ -80,7 +84,7 @@ public class GeneralTableGenerator {
             globalState.getHandler().addScore(GeneratorNode.PRIMARY_KEY);
             sb.append(", PRIMARY KEY(");
             sb.append(primaryKeyColumns.stream().map(c -> c.getName()).collect(Collectors.joining(", ")));
-            sb.append(")", 3);
+            sb.append(")", 2);
             // operate on the columns: if the column name is in primaryKeyColumns, then it
             // is a primary key
             for (GeneralColumn c : columns) {
@@ -89,7 +93,7 @@ public class GeneralTableGenerator {
         } else {
             columnsToAdd = columns;
         }
-        sb.append(")", 4);
+        sb.append(")", 3);
         errors.addRegex(Pattern.compile(".*", Pattern.DOTALL));
         GeneralTable newTable = new GeneralTable(tableName, columnsToAdd, false);
         newTable.getColumns().forEach(c -> c.setTable(newTable));

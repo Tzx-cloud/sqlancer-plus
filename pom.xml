@@ -120,6 +120,7 @@
           <failOnWarning>true</failOnWarning>
         </configuration>
         <dependencies>
+        
           <dependency>
             <groupId>org.codehaus.plexus</groupId>
             <artifactId>plexus-compiler-eclipse</artifactId>
@@ -277,6 +278,16 @@
   </repositories>
   <dependencies>
     <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>4.9.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20240303</version>
+    </dependency>
+    <dependency>
       <groupId>com.google.auto.service</groupId>
       <artifactId>auto-service</artifactId>
       <version>1.0.1</version>
@@ -325,11 +336,6 @@
       <groupId>org.duckdb</groupId>
       <artifactId>duckdb_jdbc</artifactId>
       <version>1.0.0</version>
-    </dependency>
-    <dependency>
-      <groupId>com.facebook.presto</groupId>
-      <artifactId>presto-jdbc</artifactId>
-      <version>0.283</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>

@@ -2,9 +2,12 @@ package sqlancer.general.learner;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,12 +27,19 @@ import sqlancer.general.ast.GeneralExpression;
 public abstract class GeneralFragments {
 
     protected enum GeneralFragmentVariable {
-        CONSTANT((g) -> {
+        RAND_INT((g) -> {
             return GeneralConstant.createIntConstant(g.getRandomly().getInteger());
         }),
-        COLUMN((g) -> {
+        RAND_STRING((g) -> {
+            return GeneralConstant.createStringConstant(g.getRandomly().getString());
+        }),
+        RAND_COLUMN((g) -> {
+            if (g.getUpdateTable() != null) {
+                return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(g.getUpdateTable().getRandomColumn());
+            } else {
             GeneralTable table = g.getSchema().getRandomTable(t -> !t.isView());
-            return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(table.getRandomColumn());
+                return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(table.getRandomColumn());
+            }
         }),
         NULL((g) -> {
             return null;
@@ -60,10 +70,12 @@ public abstract class GeneralFragments {
 
         private String fmtString;
         private GeneralFragmentVariable var;
+        private int index;
 
-        public GeneralFragmentChoice(String fmtString, GeneralFragmentVariable var) {
+        public GeneralFragmentChoice(String fmtString, GeneralFragmentVariable var, int index) {
             this.fmtString = fmtString;
             this.var = var;
+            this.index = index;
         }
 
         public String toString(GeneralGlobalState state) {
@@ -73,7 +85,7 @@ public abstract class GeneralFragments {
 
         @Override
         public String toString() {
-            return String.format("%s-%s-%s", getStatementType(), fmtString, var.name());
+            return String.format("%s-%d-%s-%s", getStatementType(), index, fmtString, var.name());
         }
 
     }
@@ -98,7 +110,14 @@ public abstract class GeneralFragments {
         if (!fragments.containsKey(index)) {
             fragments.put(index, new ArrayList<>());
         }
-        fragments.get(index).add(new GeneralFragmentChoice(fmtString, var));
+        // avoid duplicate:
+        for (GeneralFragmentChoice choice : fragments.get(index)) {
+            if (choice.fmtString.equals(fmtString) && choice.var == var) {
+                System.out.println("Duplicate fragment");
+                return;
+            }
+        }
+        fragments.get(index).add(new GeneralFragmentChoice(fmtString, var, index));
     }
 
     public String get(int index, GeneralGlobalState state) {
@@ -122,20 +141,38 @@ public abstract class GeneralFragments {
         File configFile = new File(globalState.getConfigDirectory(), getConfigName());
         if (configFile.exists()) {
             // read from file
-            try (CSVReader reader = new CSVReader(new FileReader(configFile))) {
-                List<String[]> r = reader.readAll();
-                // GeneralElementChoice choice;
-                for (String[] s : r) {
-                    // parseElements(s);
-                    try {
-                        parseFragments(s);
-                    } catch (Exception e) {
-                        System.out.println(String.format("Error parsing %s from file %s", s[1], getConfigName()));
-                    }
-                }
+            FileReader fileReader;
+            System.out.println(String.format("Loading fragments from file %s.", getConfigName()));
+            try {
+                fileReader = new FileReader(configFile);
+                loadFragmentsFromCSV(fileReader);
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        } else {
+            System.err.println(String.format("File %s does not exist", getConfigName()));
+        }
+    }
+
+    private void loadFragmentsFromCSV(Reader configReader) {
+        try (CSVReader reader = new CSVReader(configReader)) {
+            List<String[]> r = reader.readAll();
+            // GeneralElementChoice choice;
+            for (String[] s : r) {
+                // parseElements(s);
+                try {
+                    parseFragments(s);
+                } catch (Exception e) {
+                    // e.printStackTrace();
+                    System.out.println(String.format("Error parsing %s for statement %s", s[1], getStatementType()));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // add empty choices for each index of the fragments
+        for (int i : fragments.keySet()) {
+            addFragment(i, "", GeneralFragmentVariable.NULL);
         }
     }
 
@@ -150,7 +187,11 @@ public abstract class GeneralFragments {
 
         if (matcher.find()) {
             content = matcher.group(1);
-            output = matcher.replaceAll("%s");
+            output = matcher.replaceFirst("%s");
+            if (matcher.find()) {
+                System.err.println("More than one variable in fragment");
+                return;
+            }
             addFragment(i, output, GeneralFragmentVariable.valueOf(content.toUpperCase()));
         } else {
             addFragment(i, output, GeneralFragmentVariable.NULL);
@@ -164,6 +205,43 @@ public abstract class GeneralFragments {
             List<GeneralFragmentChoice> choices = fragments.get(i);
             choices.removeIf(choice -> !handler.getFragmentOption(choice));
         }
+    }
+
+    public void updateFragmentsFromLearner(GeneralGlobalState globalState) {
+        String template = genLearnStatement(globalState);
+        String variables = getVariables();
+        GeneralTemplateLearner learner = new GeneralTemplateLearner(globalState, getStatementType(), template, variables);
+        System.out.println("Updating fragments from learner");
+        learner.learn();
+        System.out.println("Processing and loading fragments from learner");
+        String fragments = learner.getFragments();
+        if (fragments != "") {
+            loadFragmentsFromCSV(new StringReader(fragments));
+        } else {
+            System.err.println("No fragments returned from learner");
+        }
+        printFragments();
+    }
+    
+    public void printFragments() {
+        System.out.println(String.format("Fragments for %s", getStatementType()));
+        for (int i : fragments.keySet()) {
+            System.out.println(String.format("Fragment %d", i));
+            for (GeneralFragmentChoice choice : fragments.get(i)) {
+                System.out.println(choice.toString());
+            }
+        }
+    }
+
+    private String getVariables() {
+        StringBuilder sb = new StringBuilder();
+        for (GeneralFragmentVariable var : GeneralFragmentVariable.values()) {
+            if(var == GeneralFragmentVariable.NULL) {
+                continue;
+            }
+            sb.append(String.format("<%s>, ", var.name()));
+        }
+        return sb.toString();
     }
 
     public abstract String getConfigName();

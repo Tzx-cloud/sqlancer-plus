@@ -20,6 +20,7 @@ import sqlancer.general.ast.GeneralCast;
 import sqlancer.general.ast.GeneralFunction;
 import sqlancer.general.ast.GeneralUnaryPostfixOperator;
 import sqlancer.general.ast.GeneralUnaryPrefixOperator;
+import sqlancer.general.gen.GeneralIndexGenerator;
 import sqlancer.general.gen.GeneralTableGenerator;
 import sqlancer.general.learner.GeneralFragments.GeneralFragmentChoice;
 
@@ -337,6 +338,11 @@ public class GeneralErrorHandler implements ErrorHandler {
 
     private synchronized void updateFragments() {
         GeneralTableGenerator.getFragments().updateFragmentByFeedback(this);
+        GeneralIndexGenerator.getFragments().updateFragmentByFeedback(this);
+        
+        GeneralIndexGenerator.getFragments().printFragments();
+        GeneralTableGenerator.getFragments().printFragments();
+
     }
 
     public void calcAverageScore() {
