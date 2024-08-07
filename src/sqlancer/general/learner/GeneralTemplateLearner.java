@@ -17,11 +17,14 @@ public class GeneralTemplateLearner implements FeatureLearner {
 
     private final String chat_url = "https://api.openai.com/v1/chat/completions";
     private final String apiKey = System.getenv("OPENAI_API_KEY");
+
+    
     private String raw_fragments = "";
     private GeneralGlobalState globalState;
     private String stmt_type;
     private String template;
     private String variables;
+    private String system_prompt;
 
     @Override
     public void learn() {
@@ -35,11 +38,12 @@ public class GeneralTemplateLearner implements FeatureLearner {
         raw_fragments = process(response);
     }
 
-    GeneralTemplateLearner(GeneralGlobalState globalState, String stmt_type, String template, String variables) {
+    public GeneralTemplateLearner(GeneralGlobalState globalState, String stmt_type, String template, String variables, String system_prompt) {
         this.globalState = globalState;
         this.stmt_type = stmt_type;
         this.template = template;
         this.variables = variables;
+        this.system_prompt = system_prompt;
     }
 
     @Override
@@ -83,7 +87,7 @@ public class GeneralTemplateLearner implements FeatureLearner {
     private String getDialectFromURL(String url) {
         String response = "";
         String model = "gpt-4o";
-        String system = "This GPT is an expert in SQL dialects. It helps users generate correct SQL statements for different DBMSs. Users specify a DBMS and provide a SQL template with SQL keywords and placeholders. The GPT fills placeholders with concrete string alternatives unless the user specifies variables. The response is a CSV file with two columns: one for placeholders (without brackets) and one for alternatives, without a header. Each alternative is split into separate rows. Provide as many and detailed answers as possible for each placeholder. Avoid explanations.";
+        String system = system_prompt;
         String user = String.format("DBMS: %s\n" + //
                 "Reference: %s\n" + //
                 "Template: %s\n" + //

@@ -7,7 +7,6 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -70,12 +69,12 @@ public abstract class GeneralFragments {
 
         private String fmtString;
         private GeneralFragmentVariable var;
-        private int index;
+        private String key;
 
-        public GeneralFragmentChoice(String fmtString, GeneralFragmentVariable var, int index) {
+        public GeneralFragmentChoice(String fmtString, GeneralFragmentVariable var, String key) {
             this.fmtString = fmtString;
             this.var = var;
-            this.index = index;
+            this.key = key;
         }
 
         public String toString(GeneralGlobalState state) {
@@ -85,14 +84,14 @@ public abstract class GeneralFragments {
 
         @Override
         public String toString() {
-            return String.format("%s-%d-%s-%s", getStatementType(), index, fmtString, var.name());
+            return String.format("%s-%s-%s-%s", getStatementType(), key, fmtString, var.name());
         }
 
     }
 
     private boolean learnFlag = false;
     public static final String PLACEHOLDER = "{%d}";
-    private HashMap<Integer, List<GeneralFragmentChoice>> fragments = new HashMap<>();
+    private HashMap<String, List<GeneralFragmentChoice>> fragments = new HashMap<>();
 
     public GeneralFragments() {
         this.fragments = new HashMap<>();
@@ -102,30 +101,31 @@ public abstract class GeneralFragments {
         this.learnFlag = learnFlag;
     }
 
-    public HashMap<Integer, List<GeneralFragmentChoice>> getFragments() {
+    public HashMap<String, List<GeneralFragmentChoice>> getFragments() {
         return fragments;
     }
 
-    public void addFragment(int index, String fmtString, GeneralFragmentVariable var) {
-        if (!fragments.containsKey(index)) {
-            fragments.put(index, new ArrayList<>());
+    public void addFragment(String key, String fmtString, GeneralFragmentVariable var) {
+        if (!fragments.containsKey(key)) {
+            fragments.put(key, new ArrayList<>());
         }
         // avoid duplicate:
-        for (GeneralFragmentChoice choice : fragments.get(index)) {
+        for (GeneralFragmentChoice choice : fragments.get(key)) {
             if (choice.fmtString.equals(fmtString) && choice.var == var) {
                 System.out.println("Duplicate fragment");
                 return;
             }
         }
-        fragments.get(index).add(new GeneralFragmentChoice(fmtString, var, index));
+        fragments.get(key).add(new GeneralFragmentChoice(fmtString, var, key));
     }
 
     public String get(int index, GeneralGlobalState state) {
+        String key = String.valueOf(index);
         if (learnFlag) {
             return getPlaceHolder(index);
         }
-        if (fragments.containsKey(index)) {
-            GeneralFragmentChoice choice = Randomly.fromList(fragments.get(index));
+        if (fragments.containsKey(key)) {
+            GeneralFragmentChoice choice = Randomly.fromList(fragments.get(key));
             state.getHandler().addScore(choice);
             return choice.toString(state);
         } else {
@@ -154,7 +154,7 @@ public abstract class GeneralFragments {
         }
     }
 
-    private void loadFragmentsFromCSV(Reader configReader) {
+    protected void loadFragmentsFromCSV(Reader configReader) {
         try (CSVReader reader = new CSVReader(configReader)) {
             List<String[]> r = reader.readAll();
             // GeneralElementChoice choice;
@@ -171,13 +171,21 @@ public abstract class GeneralFragments {
             e.printStackTrace();
         }
         // add empty choices for each index of the fragments
-        for (int i : fragments.keySet()) {
-            addFragment(i, "", GeneralFragmentVariable.NULL);
+        for (String key : fragments.keySet()) {
+            addFragment(key, "", GeneralFragmentVariable.NULL);
         }
     }
 
-    private void parseFragments(String[] s) {
-        int i = Integer.parseInt(s[0]);
+    protected void parseFragments(String[] s) {
+        // assume all the rows are in the format "integer index, <content>"
+
+        try {
+            Integer.parseInt(s[0]);
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid fragment key");
+            return;
+        }
+        String key = s[0];
 
         Pattern pattern = Pattern.compile("<([^>]*)>");
         Matcher matcher = pattern.matcher(s[1]);
@@ -192,17 +200,17 @@ public abstract class GeneralFragments {
                 System.err.println("More than one variable in fragment");
                 return;
             }
-            addFragment(i, output, GeneralFragmentVariable.valueOf(content.toUpperCase()));
+            addFragment(key, output, GeneralFragmentVariable.valueOf(content.toUpperCase()));
         } else {
-            addFragment(i, output, GeneralFragmentVariable.NULL);
+            addFragment(key, output, GeneralFragmentVariable.NULL);
         }
 
     }
     
     public synchronized void updateFragmentByFeedback(GeneralErrorHandler handler) {
         // Iterate the fragments and remove the ones that are not useful
-        for (int i : fragments.keySet()) {
-            List<GeneralFragmentChoice> choices = fragments.get(i);
+        for (String key : fragments.keySet()) {
+            List<GeneralFragmentChoice> choices = fragments.get(key);
             choices.removeIf(choice -> !handler.getFragmentOption(choice));
         }
     }
@@ -210,7 +218,9 @@ public abstract class GeneralFragments {
     public void updateFragmentsFromLearner(GeneralGlobalState globalState) {
         String template = genLearnStatement(globalState);
         String variables = getVariables();
-        GeneralTemplateLearner learner = new GeneralTemplateLearner(globalState, getStatementType(), template, variables);
+        String systemPrompt = getSystemPrompt();
+        GeneralTemplateLearner learner = new GeneralTemplateLearner(globalState, getStatementType(), template,
+                variables, systemPrompt);
         System.out.println("Updating fragments from learner");
         learner.learn();
         System.out.println("Processing and loading fragments from learner");
@@ -220,20 +230,24 @@ public abstract class GeneralFragments {
         } else {
             System.err.println("No fragments returned from learner");
         }
-        printFragments();
+        // printFragments();
+    }
+    
+    protected String getSystemPrompt() {
+        return "This GPT is an expert in SQL dialects. It helps users generate correct SQL statements for different DBMSs. Users specify a DBMS and provide a SQL template with SQL keywords and placeholders. The GPT fills placeholders with concrete string alternatives unless the user specifies variables. The response is a CSV file with two columns: one for placeholders (without brackets) and one for alternatives, without a header. Each alternative is split into separate rows. Provide as many and detailed answers as possible for each placeholder. Avoid explanations.";
     }
     
     public void printFragments() {
         System.out.println(String.format("Fragments for %s", getStatementType()));
-        for (int i : fragments.keySet()) {
-            System.out.println(String.format("Fragment %d", i));
-            for (GeneralFragmentChoice choice : fragments.get(i)) {
+        for (String key : fragments.keySet()) {
+            System.out.println(String.format("Fragment %s", key));
+            for (GeneralFragmentChoice choice : fragments.get(key)) {
                 System.out.println(choice.toString());
             }
         }
     }
 
-    private String getVariables() {
+    protected String getVariables() {
         StringBuilder sb = new StringBuilder();
         for (GeneralFragmentVariable var : GeneralFragmentVariable.values()) {
             if(var == GeneralFragmentVariable.NULL) {

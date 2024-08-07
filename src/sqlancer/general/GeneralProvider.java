@@ -199,6 +199,10 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         public void updateHandler(boolean status) {
             // status means whether the execution is stopped by bug or not
             String databaseName = getDatabaseName();
+            if (getDbmsSpecificOptions().enableLearning && status) {
+                GeneralTableGenerator.getFragments().updateFragmentsFromLearner(this);
+                GeneralIndexGenerator.getFragments().updateFragmentsFromLearner(this);
+            }
             if (getDbmsSpecificOptions().enableErrorHandling) {
                 handler.incrementExecDatabaseNum();
                 if (!status) {
@@ -225,10 +229,6 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 if (getOptions().debugLogs()) {
                     System.out.println(databaseName + "Current depth: " + handler.getCurDepth(databaseName));
                 }
-            }
-            if (getDbmsSpecificOptions().enableLearning && status) {
-                GeneralTableGenerator.getFragments().updateFragmentsFromLearner(this);
-                GeneralIndexGenerator.getFragments().updateFragmentsFromLearner(this);
             }
         }
 

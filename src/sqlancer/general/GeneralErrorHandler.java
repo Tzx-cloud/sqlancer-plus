@@ -486,9 +486,9 @@ public class GeneralErrorHandler implements ErrorHandler {
         // System.out.println("Generator Table: " + generatorTable);
         System.out.println("Generator Options: " + generatorOptions);
         // System.out.println("Composite Generator Options: " + compositeGeneratorOptions);
-        System.out.println("Fragment Options: " + fragmentOptions);
-        System.out.println("Fragment Success" + fragmentSuccess);
-        System.out.println("Fragment Count" + fragmentCount);
+        // System.out.println("Fragment Options: " + fragmentOptions);
+        System.out.println("Fragment Success " + fragmentSuccess);
+        // System.out.println("Fragment Count" + fragmentCount);
 
         // get the average value for each key for all the hashmap in the
         // successGeneratorTable
