@@ -26,13 +26,13 @@ import sqlancer.general.ast.GeneralExpression;
 public abstract class GeneralFragments {
 
     protected enum GeneralFragmentVariable {
-        RAND_INT((g) -> {
+        RANDAM_INT((g) -> {
             return GeneralConstant.createIntConstant(g.getRandomly().getInteger());
         }),
-        RAND_STRING((g) -> {
+        RANDAM_STRING((g) -> {
             return GeneralConstant.createStringConstant(g.getRandomly().getString());
         }),
-        RAND_COLUMN((g) -> {
+        RANDAM_COLUMN((g) -> {
             if (g.getUpdateTable() != null) {
                 return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(g.getUpdateTable().getRandomColumn());
             } else {
@@ -230,8 +230,10 @@ public abstract class GeneralFragments {
         String template = genLearnStatement(globalState);
         String variables = getVariables();
         String systemPrompt = getSystemPrompt();
+        String examples = getExamples();
         GeneralTemplateLearner learner = new GeneralTemplateLearner(globalState, getStatementType(), template,
                 variables, systemPrompt);
+        learner.setExamples(examples);
         System.out.println("Updating fragments from learner");
         learner.learn();
         System.out.println("Processing and loading fragments from learner");
@@ -261,12 +263,16 @@ public abstract class GeneralFragments {
     protected String getVariables() {
         StringBuilder sb = new StringBuilder();
         for (GeneralFragmentVariable var : GeneralFragmentVariable.values()) {
-            if(var == GeneralFragmentVariable.NULL) {
+            if (var == GeneralFragmentVariable.NULL) {
                 continue;
             }
             sb.append(String.format("<%s>, ", var.name()));
         }
         return sb.toString();
+    }
+    
+    protected String getExamples() {
+        return "";
     }
 
     public abstract String getConfigName();

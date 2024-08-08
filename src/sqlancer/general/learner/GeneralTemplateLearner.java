@@ -26,6 +26,9 @@ public class GeneralTemplateLearner implements FeatureLearner {
     private String variables;
     private String system_prompt;
 
+    // optional things
+    private String examples = "";
+
     @Override
     public void learn() {
         String response = "";
@@ -96,6 +99,9 @@ public class GeneralTemplateLearner implements FeatureLearner {
                 url,
                 template,
                 variables);
+        if (examples != "") {
+            user += "\nExamples:\n" + examples;
+        }
         System.out.println(user);
         try {
             response = getChatGPTResponse(model, system, user);
@@ -158,5 +164,13 @@ public class GeneralTemplateLearner implements FeatureLearner {
 
     public String getFragments() {
         return raw_fragments;
+    }
+
+    public void setExamples(String examples) {
+        this.examples = examples;
+    }
+
+    public String getExamples() {
+        return examples;
     }
 }

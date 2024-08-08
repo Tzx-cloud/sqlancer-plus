@@ -200,7 +200,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         public void updateHandler(boolean status) {
             // status means whether the execution is stopped by bug or not
             String databaseName = getDatabaseName();
-            if (getDbmsSpecificOptions().enableLearning && status && Randomly.getBooleanWithSmallProbability()) {
+            if (getDbmsSpecificOptions().enableLearning && status && Randomly.getBooleanWithRatherLowProbability()) {
                 GeneralTableGenerator.getFragments().updateFragmentsFromLearner(this);
                 GeneralIndexGenerator.getFragments().updateFragmentsFromLearner(this);
             }
