@@ -1,16 +1,14 @@
 package sqlancer.general;
 
-import java.sql.DatabaseMetaData;
-import java.sql.Types;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import sqlancer.Randomly;
-import sqlancer.SQLConnection;
-import sqlancer.common.DBMSCommon;
+import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.common.schema.AbstractRelationalTable;
 import sqlancer.common.schema.AbstractSchema;
 import sqlancer.common.schema.AbstractTableColumn;
@@ -18,13 +16,110 @@ import sqlancer.common.schema.AbstractTables;
 import sqlancer.common.schema.TableIndex;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralTable;
+import sqlancer.general.learner.GeneralFragments;
+import sqlancer.general.learner.GeneralStringBuilder;
 
 public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTable> {
+    private static GeneralTypeFragments fragments = new GeneralTypeFragments();
+    private static final String CONFIG_NAME = "typegenerator.txt";
+    private static final String STATEMENT = "TYPE";
+
+    private static int typeCounter = 0;
+    private static HashMap<Integer, String> typeMap = new HashMap<>();
+
+    private final static class GeneralTypeFragments extends GeneralFragments {
+        public GeneralTypeFragments() {
+            super();
+        }
+
+
+        @Override
+        public synchronized String genLearnStatement(GeneralGlobalState globalState) {
+            setLearn(true);
+            String stmt = getQuery(globalState).getQueryString();
+            setLearn(false);
+            if (globalState.getOptions().debugLogs()) {
+                System.out.println(stmt);
+            }
+            return stmt;
+        }
+
+        @Override
+        public String getConfigName() {
+            return CONFIG_NAME;
+        }
+
+        public String getStatementType() {
+            return STATEMENT;
+        }
+
+        @Override
+        // rare keywords
+        // use options
+        protected String getSystemPrompt() {
+            return "This GPT is an expert in SQL dialects. It helps users generate correct SQL statements for different DBMSs. Users specify a DBMS, provide a SQL template with SQL keywords and placeholders, and give random variable generators. The GPT fills placeholders with data types ({1}) and the format of the data types ({2}), consists of concrete strings or random variable generators user provided. The response is a CSV file with two columns: one for data type names and one for the format, without a header. Each data type is split into separate rows. Provide at least 20 different answers. Be rare and complex. Avoid explanations.";
+        }
+
+        @Override
+        protected void parseFragments(String[] s) {
+            String key = s[0];
+
+            Pattern pattern = Pattern.compile("<([^>]*)>");
+            Matcher matcher = pattern.matcher(s[1]);
+
+            String content = "";
+            String output = s[1];
+
+            if (matcher.find()) {
+                content = matcher.group(1);
+                output = matcher.replaceFirst("%s");
+                if (matcher.find()) {
+                    System.err.println("More than one variable in fragment");
+                    return;
+                }
+                validateFragment(output, "test");
+                addFragment(key, output, GeneralFragmentVariable.valueOf(content.toUpperCase()));
+            } else {
+                addFragment(key, output, GeneralFragmentVariable.NULL);
+            }
+            typeMap.put(typeCounter, key);
+            typeCounter++;
+
+        }
+
+        @Override
+        public String get(int index, GeneralGlobalState state) {
+            if (getLearn()) {
+                return super.get(index, state);
+            }
+
+            String key = typeMap.get(index);
+            if (getFragments().containsKey(key)) {
+                GeneralFragmentChoice choice = Randomly.fromList(getFragments().get(key));
+                state.getHandler().addScore(choice);
+                return choice.toString(state);
+            } else {
+                return "NULL";
+            }
+        }
+    }
+
+    public static SQLQueryAdapter getQuery(GeneralGlobalState globalState) {
+        GeneralStringBuilder<GeneralTypeFragments> sb = new GeneralStringBuilder<GeneralTypeFragments>(globalState,
+                fragments);
+        sb.append("CREATE TABLE test (c0 ", 0);
+        sb.append(");\n");
+
+        sb.append("INSERT INTO test VALUES (", 1);
+        sb.append(")");
+
+        return new SQLQueryAdapter(sb.toString());
+    }
 
     public enum GeneralDataType {
 
         // INT, VARCHAR, BOOLEAN, FLOAT, DATE, TIMESTAMP, NULL;
-        INT, NULL, BOOLEAN, STRING;
+        INT, NULL, BOOLEAN, STRING, VARTYPE;
 
         public static GeneralDataType getRandomWithoutNull() {
             GeneralDataType dt;
@@ -44,22 +139,22 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
 
         private final GeneralDataType dataType;
 
-        private final int size;
+        private final int id;
 
-        public GeneralCompositeDataType(GeneralDataType dataType, int size) {
+        public GeneralCompositeDataType(GeneralDataType dataType, int id) {
             this.dataType = dataType;
-            this.size = size;
+            this.id = id;
         }
 
         public GeneralDataType getPrimitiveDataType() {
             return dataType;
         }
 
-        public int getSize() {
-            if (size == -1) {
+        public int getId() {
+            if (id == -1) {
                 throw new AssertionError(this);
             }
-            return size;
+            return id;
         }
 
         public static List<GeneralCompositeDataType> getSupportedTypes() {
@@ -75,10 +170,10 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
 
         public static GeneralCompositeDataType getRandomWithoutNull() {
             GeneralDataType type = GeneralDataType.getRandomWithoutNull();
-            int size = -1;
+            int typeID = -1;
             switch (type) {
             case INT:
-                size = Randomly.fromOptions(1, 2, 4, 8);
+                typeID = Randomly.fromOptions(1, 2, 4, 8);
                 break;
             // case FLOAT:
             // size = Randomly.fromOptions(4, 8);
@@ -88,16 +183,20 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                 // case DATE:
                 // case TIMESTAMP:
                 if (Randomly.getBoolean()) {
-                    size = 500; // As MySQL Generator here is 500
+                    typeID = 500; // As MySQL Generator here is 500
                 } else {
-                    size = 0;
+                    typeID = 0;
                 }
+                break;
+            case VARTYPE:
+                // pick a random type id from the typeMap
+                typeID = Randomly.fromList(List.copyOf(typeMap.keySet()));
                 break;
             default:
                 throw new AssertionError(type);
             }
 
-            return new GeneralCompositeDataType(type, size);
+            return new GeneralCompositeDataType(type, typeID);
         }
 
         @Override
@@ -118,10 +217,10 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             // throw new AssertionError(size);
             // }
             case STRING:
-                if (size == 0) {
+                if (id == 0) {
                     return "VARCHAR";
                 } else {
-                    return "VARCHAR(" + size + ")";
+                    return "VARCHAR(" + id + ")";
                 }
                 // case FLOAT:
                 // switch (size) {
@@ -140,6 +239,9 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             // return Randomly.fromOptions("DATE");
             case NULL:
                 return Randomly.fromOptions("NULL");
+            case VARTYPE:
+            //TODO catch exception here
+                return typeMap.get(id).toUpperCase();
             default:
                 throw new AssertionError(getPrimitiveDataType());
             }
@@ -185,37 +287,6 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         return new GeneralTables(Randomly.nonEmptySubset(getDatabaseTables()));
     }
 
-    private static GeneralCompositeDataType getColumnType(int type) {
-        switch (type) {
-        case Types.INTEGER:
-            return new GeneralCompositeDataType(GeneralDataType.INT, 4);
-        case Types.SMALLINT:
-            return new GeneralCompositeDataType(GeneralDataType.INT, 2);
-        case Types.BIGINT:
-            return new GeneralCompositeDataType(GeneralDataType.INT, 8);
-        case Types.TINYINT:
-            return new GeneralCompositeDataType(GeneralDataType.INT, 1);
-        case Types.VARCHAR:
-            return new GeneralCompositeDataType(GeneralDataType.INT, 0);
-        case Types.FLOAT:
-            return new GeneralCompositeDataType(GeneralDataType.INT, 4);
-        case Types.DOUBLE:
-            return new GeneralCompositeDataType(GeneralDataType.INT, 8);
-        case Types.BOOLEAN:
-            return new GeneralCompositeDataType(GeneralDataType.INT, 0);
-        case Types.DATE:
-            return new GeneralCompositeDataType(GeneralDataType.INT, 0);
-        case Types.TIMESTAMP:
-            return new GeneralCompositeDataType(GeneralDataType.INT, 0);
-        case Types.NULL:
-            return new GeneralCompositeDataType(GeneralDataType.NULL, 0);
-        default:
-            throw new AssertionError(type);
-        }
-    }
-
-
-
     public static class GeneralTable extends AbstractRelationalTable<GeneralColumn, TableIndex, GeneralGlobalState> {
 
         public GeneralTable(String tableName, List<GeneralColumn> columns, boolean isView) {
@@ -228,67 +299,6 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
 
     }
 
-    public static GeneralSchema fromConnection(SQLConnection con, String databaseName) throws SQLException {
-        List<GeneralTable> databaseTables = new ArrayList<>();
-        List<String> tableNames = getTableNames(con);
-
-        for (String tableName : tableNames) {
-            if (DBMSCommon.matchesIndexName(tableName)) {
-                continue; // TODO: unexpected?
-            }
-            List<GeneralColumn> databaseColumns = getTableColumns(con, tableName);
-            boolean isView = tableName.startsWith("v");
-            GeneralTable t = new GeneralTable(tableName, databaseColumns, isView);
-            for (GeneralColumn c : databaseColumns) {
-                c.setTable(t);
-            }
-            databaseTables.add(t);
-
-        }
-        return new GeneralSchema(databaseTables);
-    }
-
-    private static List<String> getTableNames(SQLConnection con) throws SQLException {
-        List<String> tableNames = new ArrayList<>();
-        // try (Statement s = con.createStatement()) {
-        // try (ResultSet rs = s.executeQuery("SELECT * FROM sqlite_master WHERE type='table' or type='view'")) {
-        // while (rs.next()) {
-        // tableNames.add(rs.getString("name"));
-        // }
-        // }
-        // }
-        DatabaseMetaData metaData = con.getMetaData();
-        // TODO only for less than 10 tables
-        ResultSet tables = metaData.getTables(null, null, "T_", null);
-        while (tables.next()) {
-            tableNames.add(tables.getString("TABLE_NAME"));
-        }
-        return tableNames;
-    }
-
-    private static List<GeneralColumn> getTableColumns(SQLConnection con, String tableName) throws SQLException {
-        List<GeneralColumn> columns = new ArrayList<>();
-        String primaryColumnName = null;
-        DatabaseMetaData metaData = con.getMetaData();
-        // try (Statement s = con.createStatement()) {
-        try (ResultSet rs = metaData.getColumns(null, null, tableName, null)) {
-            // ResultSetMetaData rsmd = rs.getMetaData();
-            while (rs.next()) {
-                String columnName = rs.getString("COLUMN_NAME");
-                int dataType = rs.getInt("DATA_TYPE");
-                boolean isNullable = rs.getString("IS_NULLABLE").contentEquals("true");
-                // try (ResultSet rs2 = metaData.getPrimaryKeys(null, null, tableName)) {
-                // while (rs2.next()) {
-                // primaryColumnName = rs2.getString("COLUMN_NAME");
-                // }
-                // }
-                boolean isPrimaryKey = primaryColumnName != null && primaryColumnName.contentEquals(columnName);
-                GeneralColumn c = new GeneralColumn(columnName, getColumnType(dataType), isPrimaryKey, isNullable);
-                columns.add(c);
-            }
-        }
-        return columns;
-    }
 
     @Override
     public String getFreeTableName() {
@@ -312,5 +322,9 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                 System.out.println(c.getName() + " " + c.getType());
             }
         }
+    }
+
+    public static GeneralFragments getFragments() {
+        return fragments;
     }
 }

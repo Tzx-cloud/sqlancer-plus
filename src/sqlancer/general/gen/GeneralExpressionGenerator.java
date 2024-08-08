@@ -159,6 +159,7 @@ public final class GeneralExpressionGenerator
         // }
         // return GeneralConstant.createTimestampConstant(globalState.getRandomly().getInteger());
         case STRING:
+        case VARTYPE:
             // if (!globalState.getDbmsSpecificOptions().testStringConstants) {
             // throw new IgnoreMeException();
             // }

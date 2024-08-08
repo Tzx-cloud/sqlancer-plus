@@ -113,7 +113,7 @@ public class GeneralTableGenerator {
             GeneralCompositeDataType columnType = GeneralCompositeDataType.getRandomWithoutNull();
             // TODO Handle IllegalArgumentExeption?
             globalState.getHandler()
-                    .addScore(GeneratorNode.valueOf("COLUMN_" + columnType.getPrimitiveDataType().toString()));
+                    .addScore("COLUMN-" + columnType.toString());
             columns.add(new GeneralColumn(columnName, columnType, false, false));
         }
         return columns;

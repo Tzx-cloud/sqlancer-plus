@@ -161,6 +161,25 @@ public class GeneralConstant implements Node<GeneralExpression> {
 
     }
 
+    public static class GeneralVartypeConstant extends GeneralConstant {
+
+        private final String value;
+
+        public GeneralVartypeConstant(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        @Override
+        public String toString() {
+            return value;
+        }
+
+    }
+
     public static Node<GeneralExpression> createStringConstant(String text) {
         return new GeneralTextConstant(text);
     }
@@ -187,6 +206,10 @@ public class GeneralConstant implements Node<GeneralExpression> {
 
     public static Node<GeneralExpression> createTimestampConstant(long integer) {
         return new GeneralTimestampConstant(integer);
+    }
+
+    public static Node<GeneralExpression> createVartypeConstant(String text) {
+        return new GeneralVartypeConstant(text);
     }
 
 }

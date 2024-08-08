@@ -101,6 +101,10 @@ public abstract class GeneralFragments {
         this.learnFlag = learnFlag;
     }
 
+    public boolean getLearn() {
+        return learnFlag;
+    }
+
     public HashMap<String, List<GeneralFragmentChoice>> getFragments() {
         return fragments;
     }
@@ -164,7 +168,8 @@ public abstract class GeneralFragments {
                     parseFragments(s);
                 } catch (Exception e) {
                     // e.printStackTrace();
-                    System.out.println(String.format("Error parsing %s for statement %s", s[1], getStatementType()));
+                    // Index 1 our of bounds for length 1
+                    System.out.println(String.format("Error parsing %s for statement %s", s, getStatementType()));
                 }
             }
         } catch (Exception e) {
@@ -174,6 +179,10 @@ public abstract class GeneralFragments {
         for (String key : fragments.keySet()) {
             addFragment(key, "", GeneralFragmentVariable.NULL);
         }
+    }
+
+    protected void validateFragment(String fmtString, String var) {
+        String.format(fmtString, var);  
     }
 
     protected void parseFragments(String[] s) {
@@ -200,6 +209,8 @@ public abstract class GeneralFragments {
                 System.err.println("More than one variable in fragment");
                 return;
             }
+            // should try if the variable is valid
+            validateFragment(output, "test");
             addFragment(key, output, GeneralFragmentVariable.valueOf(content.toUpperCase()));
         } else {
             addFragment(key, output, GeneralFragmentVariable.NULL);

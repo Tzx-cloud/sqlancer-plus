@@ -18,6 +18,7 @@ import sqlancer.common.ast.newast.NewUnaryPrefixOperatorNode;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.gen.TypedExpressionGenerator;
 import sqlancer.general.GeneralErrorHandler;
+import sqlancer.general.GeneralSchema;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
@@ -182,6 +183,9 @@ public class GeneralTypedExpressionGenerator
                 // stringExpr = new CockroachDBCollate(stringExpr, CockroachDBCommon.getRandomCollate());
                 // }
                 return stringExpr; // TODO
+            case VARTYPE:
+                // TODO maybe learn the function here..
+                return generateLeafNode(type);
             // case FLOAT:
             // return generateLeafNode(type); // TODO
             default:
@@ -352,6 +356,8 @@ public class GeneralTypedExpressionGenerator
         case STRING:
             // case BYTES: // TODO: also generate byte constants
             return GeneralConstant.createStringConstant(globalState.getRandomly().getString());
+        case VARTYPE:
+            return GeneralConstant.createVartypeConstant(GeneralSchema.getFragments().get(type.getId(), globalState));
         // case FLOAT:
         // return CockroachDBConstant.createFloatConstant(globalState.getRandomly().getDouble());
         // case BIT:
@@ -394,12 +400,10 @@ public class GeneralTypedExpressionGenerator
 
     @Override
     protected Node<GeneralExpression> generateColumn(GeneralCompositeDataType type) {
+        // TODO: how to compare the type of the column if it's VARTYPE?
         GeneralColumn column = Randomly
                 .fromList(columns.stream().filter(c -> c.getType() == type).collect(Collectors.toList()));
         Node<GeneralExpression> columnReference = new GeneralColumnReference(column);
-        // if (column.getType().isString() && Randomly.getBooleanWithRatherLowProbability()) {
-        // columnReference = new CockroachDBCollate(columnReference, CockroachDBCommon.getRandomCollate());
-        // }
         return columnReference;
     }
 
