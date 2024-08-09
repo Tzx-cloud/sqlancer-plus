@@ -88,7 +88,7 @@ public final class GeneralIndexGenerator {
             // }
         }
         sb.append(")", 2);
-        if (Randomly.getBoolean()) {
+        if (Randomly.getBooleanWithRatherLowProbability()) {
             sb.append(" WHERE ");
             Node<GeneralExpression> expr = new GeneralExpressionGenerator(globalState).setColumns(table.getColumns())
                     .generateExpression();

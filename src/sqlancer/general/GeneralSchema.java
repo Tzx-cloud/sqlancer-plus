@@ -32,7 +32,6 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             super();
         }
 
-
         @Override
         public synchronized String genLearnStatement(GeneralGlobalState globalState) {
             setLearn(true);
@@ -85,7 +84,6 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                     System.err.println("More than one variable in fragment");
                     return;
                 }
-                validateFragment(output, "test");
                 addFragment(key, output, GeneralFragmentVariable.valueOf(content.toUpperCase()));
             } else {
                 addFragment(key, output, GeneralFragmentVariable.NULL);
@@ -135,6 +133,11 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                 dt = Randomly.fromOptions(values());
             } while (dt == GeneralDataType.NULL);
             return dt;
+        }
+
+        public static GeneralDataType getRandomWithProb() {
+            GeneralDataType[] types = { INT, BOOLEAN, STRING, VARTYPE, VARTYPE, VARTYPE };
+            return Randomly.fromOptions(types);
         }
 
         public GeneralCompositeDataType get() {

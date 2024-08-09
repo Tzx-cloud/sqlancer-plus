@@ -26,13 +26,13 @@ import sqlancer.general.ast.GeneralExpression;
 public abstract class GeneralFragments {
 
     protected enum GeneralFragmentVariable {
-        RANDAM_INT((g) -> {
+        RANDOM_INT((g) -> {
             return GeneralConstant.createIntConstant(g.getRandomly().getInteger());
         }),
-        RANDAM_STRING((g) -> {
+        RANDOM_STRING((g) -> {
             return GeneralConstant.createStringConstant(g.getRandomly().getString());
         }),
-        RANDAM_COLUMN((g) -> {
+        RANDOM_COLUMN((g) -> {
             if (g.getUpdateTable() != null) {
                 return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(g.getUpdateTable().getRandomColumn());
             } else {
@@ -120,6 +120,13 @@ public abstract class GeneralFragments {
                 return;
             }
         }
+        try {
+            validateFragment(fmtString, "test");
+        } catch (Exception e) {
+            System.err.println(String.format("Invalid format string %s", fmtString));
+            e.printStackTrace();
+            throw e;
+        }
         fragments.get(key).add(new GeneralFragmentChoice(fmtString, var, key));
     }
 
@@ -169,7 +176,8 @@ public abstract class GeneralFragments {
                 } catch (Exception e) {
                     // e.printStackTrace();
                     // Index 1 our of bounds for length 1
-                    System.out.println(String.format("Error parsing %s for statement %s", s, getStatementType()));
+                    System.out.println(String.format("Error parsing %s for statement %s", String.join(" ", s), getStatementType()));
+                    System.err.println(e.getMessage());
                 }
             }
         } catch (Exception e) {
@@ -210,7 +218,6 @@ public abstract class GeneralFragments {
                 return;
             }
             // should try if the variable is valid
-            validateFragment(output, "test");
             addFragment(key, output, GeneralFragmentVariable.valueOf(content.toUpperCase()));
         } else {
             addFragment(key, output, GeneralFragmentVariable.NULL);
