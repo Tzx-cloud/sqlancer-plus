@@ -136,7 +136,11 @@ public abstract class GeneralFragments {
             return getPlaceHolder(index);
         }
         if (fragments.containsKey(key)) {
-            GeneralFragmentChoice choice = Randomly.fromList(fragments.get(key));
+            List<GeneralFragmentChoice> choices = fragments.get(key);
+            if (choices.isEmpty()) {
+                return "";
+            }
+            GeneralFragmentChoice choice = Randomly.fromList(choices);
             state.getHandler().addScore(choice);
             return choice.toString(state);
         } else {
