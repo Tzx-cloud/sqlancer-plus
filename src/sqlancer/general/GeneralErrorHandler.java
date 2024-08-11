@@ -482,12 +482,12 @@ public class GeneralErrorHandler implements ErrorHandler {
 
     public void printStatistics() {
         System.out.println("Executed Databases: " + execDatabaseNum);
-        System.out.println("Generator Score: " + generatorInfo);
+        // System.out.println("Generator Score: " + generatorInfo);
         // System.out.println("Generator Table: " + generatorTable);
-        System.out.println("Generator Options: " + generatorOptions);
+        // System.out.println("Generator Options: " + generatorOptions);
         // System.out.println("Composite Generator Options: " + compositeGeneratorOptions);
         // System.out.println("Fragment Options: " + fragmentOptions);
-        System.out.println("Fragment Success " + fragmentSuccess);
+        // System.out.println("Fragment Success " + fragmentSuccess);
         // System.out.println("Fragment Count" + fragmentCount);
 
         // get the average value for each key for all the hashmap in the

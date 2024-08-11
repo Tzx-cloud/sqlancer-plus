@@ -68,23 +68,26 @@ public abstract class GeneralFragments {
     public class GeneralFragmentChoice {
 
         private String fmtString;
-        private GeneralFragmentVariable var;
+        private List<GeneralFragmentVariable> vars;
         private String key;
 
-        public GeneralFragmentChoice(String fmtString, GeneralFragmentVariable var, String key) {
+        public GeneralFragmentChoice(String fmtString, List<GeneralFragmentVariable> vars, String key) {
             this.fmtString = fmtString;
-            this.var = var;
+            this.vars = vars;
             this.key = key;
         }
 
         public String toString(GeneralGlobalState state) {
-            var.genVariable(state);
-            return String.format(fmtString, var.toString());
+            for (GeneralFragmentVariable var : vars) {
+                var.genVariable(state);
+            }
+            return String.format(fmtString, vars.stream().map(var -> var.toString()).toArray());
         }
 
         @Override
         public String toString() {
-            return String.format("%s-%s-%s-%s", getStatementType(), key, fmtString, var.name());
+            String fragmentName = String.format(fmtString, vars.stream().map(var -> var.name()).toArray());
+            return String.format("%s-%s-%s", getStatementType(), key, fragmentName);
         }
 
     }
@@ -109,25 +112,25 @@ public abstract class GeneralFragments {
         return fragments;
     }
 
-    public void addFragment(String key, String fmtString, GeneralFragmentVariable var) {
+    public void addFragment(String key, String fmtString, List<GeneralFragmentVariable> vars) {
         if (!fragments.containsKey(key)) {
             fragments.put(key, new ArrayList<>());
         }
         // avoid duplicate:
         for (GeneralFragmentChoice choice : fragments.get(key)) {
-            if (choice.fmtString.equals(fmtString) && choice.var == var) {
+            if (choice.fmtString.equals(fmtString)) {
                 System.out.println("Duplicate fragment");
                 return;
             }
         }
         try {
-            validateFragment(fmtString, "test");
+            validateFragment(fmtString, vars);
         } catch (Exception e) {
             System.err.println(String.format("Invalid format string %s", fmtString));
             e.printStackTrace();
             throw e;
         }
-        fragments.get(key).add(new GeneralFragmentChoice(fmtString, var, key));
+        fragments.get(key).add(new GeneralFragmentChoice(fmtString, vars, key));
     }
 
     public String get(int index, GeneralGlobalState state) {
@@ -167,6 +170,7 @@ public abstract class GeneralFragments {
         } else {
             System.err.println(String.format("File %s does not exist", getConfigName()));
         }
+        // printFragments();
     }
 
     protected void loadFragmentsFromCSV(Reader configReader) {
@@ -189,12 +193,12 @@ public abstract class GeneralFragments {
         }
         // add empty choices for each index of the fragments
         for (String key : fragments.keySet()) {
-            addFragment(key, "", GeneralFragmentVariable.NULL);
+            addFragment(key, "", List.of());
         }
     }
 
-    protected void validateFragment(String fmtString, String var) {
-        String.format(fmtString, var);  
+    protected void validateFragment(String fmtString, List<GeneralFragmentVariable> vars) {
+        String.format(fmtString, vars.stream().map(var -> var.name()).toArray());  
     }
 
     protected void parseFragments(String[] s) {
@@ -212,20 +216,18 @@ public abstract class GeneralFragments {
         Matcher matcher = pattern.matcher(s[1]);
 
         String content = "";
-        String output = s[1];
+        StringBuffer fmtString = new StringBuffer();
 
-        if (matcher.find()) {
+        List<GeneralFragmentVariable> vars = new ArrayList<>();
+
+        while (matcher.find()) {
             content = matcher.group(1);
-            output = matcher.replaceFirst("%s");
-            if (matcher.find()) {
-                System.err.println("More than one variable in fragment");
-                return;
-            }
-            // should try if the variable is valid
-            addFragment(key, output, GeneralFragmentVariable.valueOf(content.toUpperCase()));
-        } else {
-            addFragment(key, output, GeneralFragmentVariable.NULL);
+            matcher.appendReplacement(fmtString, "%s");
+            vars.add(GeneralFragmentVariable.valueOf(content.toUpperCase()));
         }
+        matcher.appendTail(fmtString);
+        
+        addFragment(key, fmtString.toString(), vars);
 
     }
     

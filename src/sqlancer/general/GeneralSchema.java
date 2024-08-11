@@ -75,19 +75,19 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             Matcher matcher = pattern.matcher(s[1]);
 
             String content = "";
-            String output = s[1];
+            StringBuffer output = new StringBuffer();
 
-            if (matcher.find()) {
+            List<GeneralFragmentVariable> vars = new ArrayList<>();
+
+            while (matcher.find()) {
                 content = matcher.group(1);
-                output = matcher.replaceFirst("%s");
-                if (matcher.find()) {
-                    System.err.println("More than one variable in fragment");
-                    return;
-                }
-                addFragment(key, output, GeneralFragmentVariable.valueOf(content.toUpperCase()));
-            } else {
-                addFragment(key, output, GeneralFragmentVariable.NULL);
+                matcher.appendReplacement(output, "%s");
+                vars.add(GeneralFragmentVariable.valueOf(content.toUpperCase()));
             }
+            matcher.appendTail(output);
+            
+            addFragment(key, output.toString(), vars);
+
             typeMap.put(typeCounter, key);
             typeCounter++;
 
