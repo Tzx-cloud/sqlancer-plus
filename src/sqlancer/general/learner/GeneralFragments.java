@@ -28,10 +28,10 @@ public abstract class GeneralFragments {
     protected enum GeneralFragmentVariable {
         RANDOM_INT((g) -> {
             return GeneralConstant.createIntConstant(g.getRandomly().getInteger());
-        }),
+        }, "Random integer"),
         RANDOM_STRING((g) -> {
-            return GeneralConstant.createStringConstant(g.getRandomly().getString());
-        }),
+            return GeneralConstant.createVartypeConstant(g.getRandomly().getString());
+        }, "Random string"),
         RANDOM_COLUMN((g) -> {
             if (g.getUpdateTable() != null) {
                 return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(g.getUpdateTable().getRandomColumn());
@@ -39,7 +39,10 @@ public abstract class GeneralFragments {
             GeneralTable table = g.getSchema().getRandomTable(t -> !t.isView());
                 return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(table.getRandomColumn());
             }
-        }),
+        }, "Random column"),
+        RANDOM_POSITIVE_INT((g) -> {
+            return GeneralConstant.createIntConstant(g.getRandomly().getPositiveIntegerInt());
+        }, "Random positive integer"),
         NULL((g) -> {
             return null;
         }) {
@@ -51,9 +54,15 @@ public abstract class GeneralFragments {
 
         private Node<GeneralExpression> node;
         private GeneralVariableGenerator<GeneralGlobalState> generator;
+        private String description = "";
 
         GeneralFragmentVariable(GeneralVariableGenerator<GeneralGlobalState> generator) {
             this.generator = generator;
+        }
+
+        GeneralFragmentVariable(GeneralVariableGenerator<GeneralGlobalState> generator, String description) {
+            this.generator = generator;
+            this.description = description;
         }
 
         public void genVariable(GeneralGlobalState state) {
@@ -62,6 +71,10 @@ public abstract class GeneralFragments {
 
         public String toString() {
             return GeneralToStringVisitor.asString(node);
+        }
+
+        public String getDescription() {
+            return description;
         }
     }
 
@@ -279,7 +292,7 @@ public abstract class GeneralFragments {
             if (var == GeneralFragmentVariable.NULL) {
                 continue;
             }
-            sb.append(String.format("<%s>, ", var.name()));
+            sb.append(String.format("<%s>: %s\n", var.name(), var.getDescription()));
         }
         return sb.toString();
     }

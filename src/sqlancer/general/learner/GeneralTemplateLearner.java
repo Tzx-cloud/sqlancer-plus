@@ -94,13 +94,13 @@ public class GeneralTemplateLearner implements FeatureLearner {
         String user = String.format("DBMS: %s\n" + //
                 "Reference: %s\n" + //
                 "Template: %s\n" + //
-                "Available variable: %s",
+                "Available variables and their descriptions:\n%s",
                 globalState.getDbmsSpecificOptions().getDatabaseEngineFactory().toString(),
                 url,
                 template,
                 variables);
         if (examples != "") {
-            user += "\nExamples:\n" + examples;
+            user += "Examples:\n" + examples;
         }
         System.out.println(user);
         try {
