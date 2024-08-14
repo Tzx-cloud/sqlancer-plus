@@ -201,6 +201,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                 break;
             case VARTYPE:
                 // pick a random type id from the typeMap
+                // TODO an exception here
                 typeID = Randomly.fromList(List.copyOf(typeMap.keySet()));
                 break;
             default:

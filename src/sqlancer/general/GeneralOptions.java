@@ -343,6 +343,12 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
                 return conn;
             }
         },
+        VITESS {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:mysql://localhost:10027/?user=root");
+            }
+        },
         ;
 
         private boolean isNewSchema = true;

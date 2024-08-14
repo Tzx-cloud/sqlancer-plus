@@ -43,7 +43,7 @@ fi
 if [ "$dbms" == "risingwave" ]; then
     docker stop risingwave-test
     docker rm risingwave-test
-    docker run --name risingwave-test -p 10008:4566 risingwavelabs/risingwave:latest
+    docker run --name risingwave-test -p 10008:4566 risingwavelabs/risingwave:nightly-$date
 fi
 # docker stop risingwave-test
 # docker rm risingwave-test
@@ -156,4 +156,24 @@ if [ "$dbms" == "clickhouse" ]; then
     docker rm clickhouse-test
     docker run --name clickhouse-test -p 10023:8123 -p 10024:9000 clickhouse/clickhouse-server:head-alpine
 
+fi
+
+if [ "$dbms" == "vitess" ]; then
+    docker kill vitess-test
+    docker rm vitess-test
+    docker run --name vitess-test \
+    -p 10025:33574 \
+    -p 10026:33575 \
+    -p 10027:33577 \
+    -e PORT=33574 \
+    -e KEYSPACES=test,unsharded \
+    -e NUM_SHARDS=2,1 \
+    -e MYSQL_MAX_CONNECTIONS=70000 \
+    -e MYSQL_BIND_HOST=0.0.0.0 \
+    -e VTCOMBO_BIND_HOST=0.0.0.0 \
+    --health-cmd="mysqladmin ping -h127.0.0.1 -P33577" \
+    --health-interval=5s \
+    --health-timeout=2s \
+    --health-retries=5 \
+    vitess/vttestserver:mysql80
 fi

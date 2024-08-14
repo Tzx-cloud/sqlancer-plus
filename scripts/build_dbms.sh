@@ -79,25 +79,34 @@ fi
 # Download and install duckdb
 if [ "$dbms" == "duckdb" ]; then
     # The URL of the repository
-    REPO_URL="https://oss.sonatype.org/content/repositories/snapshots/org/duckdb/duckdb_jdbc/0.11.0-SNAPSHOT/"
+    # REPO_URL="https://oss.sonatype.org/content/repositories/snapshots/org/duckdb/duckdb_jdbc/0.11.0-SNAPSHOT/"
 
-    # Use curl to fetch the contents of the repository
-    # This example assumes the repository lists files in a way that can be parsed with grep and sort
-    # This part of the script will likely need to be customized based on the actual repository structure
-    LATEST_JAR_URL=$(curl -s $REPO_URL | grep -oP 'href=".*[0-9]+\.jar"' | sort -r | head -1 | cut -d '"' -f 2)
+    # # Use curl to fetch the contents of the repository
+    # # This example assumes the repository lists files in a way that can be parsed with grep and sort
+    # # This part of the script will likely need to be customized based on the actual repository structure
+    # LATEST_JAR_URL=$(curl -s $REPO_URL | grep -oP 'href=".*[0-9]+\.jar"' | sort -r | head -1 | cut -d '"' -f 2)
 
-    # Full URL of the latest jar file
-    FULL_URL="$LATEST_JAR_URL"
+    # # Full URL of the latest jar file
+    # FULL_URL="$LATEST_JAR_URL"
+    FULL_URL="https://artifacts.duckdb.org/duckdb-java/latest/java-jars.zip"
 
     # Download the latest jar file with wget
     cd $current_dir/resources
+    rm -rf duckdb
+    mkdir -p duckdb
+    cd duckdb
+
     wget $FULL_URL
 
+
     echo "Downloaded latest JAR file from $FULL_URL"
-    cd ..
+
+    unzip java-jars.zip
+
+    cd ../..
 
     # Install the jar file
-    mv resources/duckdb_jdbc*.jar $current_dir/target/duckdb_jdbc.jar
+    mv resources/duckdb/java-linux-amd64/duckdb_jdbc.jar $current_dir/target/duckdb_jdbc.jar
     mvn install:install-file -Dfile=target/duckdb_jdbc.jar -DgroupId=org.duckdb -DartifactId=duckdb_jdbc -Dversion=0.9.2 -Dpackaging=jar
     mvn package -DskipTests
 fi
