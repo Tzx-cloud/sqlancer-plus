@@ -56,7 +56,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         // rare keywords
         // use options
         protected String getSystemPrompt() {
-            return "This GPT is an expert in SQL dialects. It helps users generate correct SQL statements for different DBMSs. Users specify a DBMS, provide a SQL template with SQL keywords and placeholders, and give random variable generators. The GPT fills placeholders with data types ({0}) and the format of the data types ({1}), consists of concrete strings or random variable generators user provided. The response is a CSV file with two columns: one for data type names and one for the format, without a header. Each data type is split into separate rows. Provide at least 20 different answers. Be rare and complex. Avoid explanations.";
+            return "This GPT is an expert in SQL dialects. It helps users generate correct SQL statements for different DBMSs. Users specify a DBMS, provide a SQL template with SQL keywords and placeholders, and give random variable generators. The GPT fills placeholders with data types ({0}) and the format of the data types ({1}), consists of concrete strings or random variable generators user provided. You should check whether the format The response is a CSV file with two columns: one for data type names and one for the format, without a header. Each data type is split into separate rows. Provide at least 20 different answers. Be rare and complex. Avoid explanations.";
         }
 
         @Override
@@ -64,7 +64,9 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             return "INT,<RANDOM_INT>\n"
                     + "VARCHAR,'<RANDOM_STRING>'\n"
                     + "BOOLEAN,TRUE\n"
-                    + "BOOLEAN,FALSE";
+                    + "DATE,'<RANDOM_DATE>'\n"
+                    + "DATE,'2021-01-01'\n"
+                    ;
         }
 
         @Override

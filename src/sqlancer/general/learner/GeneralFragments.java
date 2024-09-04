@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,10 +30,10 @@ public abstract class GeneralFragments {
     protected enum GeneralFragmentVariable {
         RANDOM_INT((g) -> {
             return GeneralConstant.createIntConstant(g.getRandomly().getInteger());
-        }, "Random integer"),
+        }, "Get a random integer. e.g., 42"),
         RANDOM_STRING((g) -> {
-            return GeneralConstant.createVartypeConstant(g.getRandomly().getString());
-        }, "Random string"),
+            return GeneralConstant.createStringConstant(g.getRandomly().getString());
+        }, "Get a random string without quotes. e.g., hello"),
         RANDOM_COLUMN((g) -> {
             if (g.getUpdateTable() != null) {
                 return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(g.getUpdateTable().getRandomColumn());
@@ -43,6 +45,16 @@ public abstract class GeneralFragments {
         RANDOM_POSITIVE_INT((g) -> {
             return GeneralConstant.createIntConstant(g.getRandomly().getPositiveIntegerInt());
         }, "Random positive integer"),
+        RANDOM_DATE((g) -> {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            Timestamp timestamp = new Timestamp(g.getRandomly().getInteger());
+            return GeneralConstant.createVartypeConstant(dateFormat.format(timestamp));
+        }, "Get a random date. e.g., 2021-01-01"),
+        RANDOM_TIMESTAMP((g) -> {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Timestamp timestamp = new Timestamp(g.getRandomly().getInteger());
+            return GeneralConstant.createVartypeConstant(dateFormat.format(timestamp));
+        }, "Get a random timestamp. e.g., 2021-01-01 00:00:00"),
         NULL((g) -> {
             return null;
         }) {
