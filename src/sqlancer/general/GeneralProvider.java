@@ -299,13 +299,50 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     private void dropView(GeneralGlobalState globalState, String viewName) {
         try {
             globalState.getLogger().writeCurrent("DROP VIEW " + viewName);
-            globalState.executeStatement(new SQLQueryAdapter("DROP VIEW " + viewName, true));
+            globalState.getManager().execute(new SQLQueryAdapter("DROP VIEW " + viewName, true));
         } catch (Throwable t2) {
             globalState.getLogger().writeCurrent(" -- " + t2.getMessage());
         } finally {
             List<GeneralTable> databaseTables = new ArrayList<>(globalState.getSchema().getDatabaseTables());
             for (int i = 0; i < databaseTables.size(); i++) {
                 if (databaseTables.get(i).getName().equals(viewName)) {
+                    databaseTables.remove(i);
+                    break;
+                }
+            }
+            globalState.setSchema(databaseTables);
+        }
+    }
+
+    public boolean checkTableIsValid(GeneralGlobalState globalState, String tableName) {
+        globalState.getLogger().writeCurrent("SELECT * FROM " + tableName);
+        SQLQueryAdapter q = new SQLQueryAdapter("SELECT * FROM " + tableName);
+        try {
+            if (!q.execute(globalState)) {
+                dropTable(globalState, tableName);
+                return false;
+            }
+        } catch (Throwable t) {
+            // if it's query error, we need to drop the table
+            globalState.getLogger().writeCurrent("-- query failed");
+            dropTable(globalState, tableName);
+            return false;
+        }
+        return true;
+    }
+
+    private void dropTable(GeneralGlobalState globalState, String tableName) {
+        try {
+            String dropStmt = globalState.getDbmsSpecificOptions().getDatabaseEngineFactory()
+                    .getDropTableStatement(tableName);
+            globalState.getLogger().writeCurrent(dropStmt);
+            globalState.getManager().execute(new SQLQueryAdapter(dropStmt, true));
+        } catch (Throwable t2) {
+            globalState.getLogger().writeCurrent("-- Warning: drop table fail");
+        } finally {
+            List<GeneralTable> databaseTables = new ArrayList<>(globalState.getSchema().getDatabaseTables());
+            for (int i = 0; i < databaseTables.size(); i++) {
+                if (databaseTables.get(i).getName().equals(tableName)) {
                     databaseTables.remove(i);
                     break;
                 }
@@ -323,8 +360,13 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             int nrTries = 0;
             do {
                 SQLQueryAdapter qt = GeneralTableGenerator.getQuery(globalState);
+                GeneralTable updateTable = globalState.getUpdateTable();
                 // TODO add error handling here
                 success = globalState.executeStatement(qt);
+                // We need to check if the table could be select
+                if (success) {
+                    success = checkTableIsValid(globalState, updateTable.getName());
+                }
             } while (!success && nrTries++ < 200);
         }
         if (globalState.getSchema().getDatabaseTables().isEmpty()) {

@@ -361,6 +361,10 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             this.isNewSchema = isNewSchema;
         }
 
+        public String getDropTableStatement(String tableName) {
+            return String.format("DROP TABLE %s", tableName);
+        }
+
         @Override
         public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
                 throws SQLException {
