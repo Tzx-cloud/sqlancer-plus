@@ -435,6 +435,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         // GeneralIndexGenerator.getFragments().updateFragmentsFromLearner(globalState);
         // GeneralTableGenerator.getTemplateQuery(globalState);
         // GeneralTableGenerator.initializeFragments(globalState);
+        GeneralSchema.GeneralDataType.calcWeight();
 
     }
 

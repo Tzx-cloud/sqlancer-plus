@@ -141,7 +141,7 @@ public final class GeneralExpressionGenerator
         if (Randomly.getBooleanWithSmallProbability()) {
             return GeneralConstant.createNullConstant();
         }
-        GeneralDataType type = GeneralDataType.getRandomWithoutNull();
+        GeneralDataType type = GeneralDataType.getRandomWithProb();
         switch (type) {
         case INT:
             if (!globalState.getDbmsSpecificOptions().testIntConstants) {

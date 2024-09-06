@@ -129,6 +129,8 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         // INT, VARCHAR, BOOLEAN, FLOAT, DATE, TIMESTAMP, NULL;
         INT, NULL, BOOLEAN, STRING, VARTYPE;
 
+        public static GeneralDataType[] weightTypes = {};
+
         public static GeneralDataType getRandomWithoutNull() {
             GeneralDataType dt;
             do {
@@ -137,9 +139,27 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             return dt;
         }
 
+        public static void calcWeight() {
+            // iterate values to add them into an array, and update the weightTypes array
+            // with the new values
+            List<GeneralDataType> types = new ArrayList<>();
+            for (GeneralDataType dt : GeneralDataType.values()) {
+                if (dt == GeneralDataType.NULL) {
+                    continue;
+                }
+                if (dt == GeneralDataType.VARTYPE) {
+                    for (int i = 0; i < typeCounter; i++) {
+                        types.add(dt);
+                    }
+                    continue;
+                }
+                types.add(dt);
+            }
+            weightTypes = types.toArray(new GeneralDataType[0]);
+        }
+
         public static GeneralDataType getRandomWithProb() {
-            GeneralDataType[] types = { INT, BOOLEAN, STRING, VARTYPE, VARTYPE, VARTYPE };
-            return Randomly.fromOptions(types);
+            return Randomly.fromOptions(weightTypes);
         }
 
         public GeneralCompositeDataType get() {
@@ -176,13 +196,19 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                 if (dt == GeneralDataType.NULL) {
                     continue;
                 }
+                if (dt == GeneralDataType.VARTYPE) {
+                    for (int i = 0; i < typeCounter; i++) {
+                        types.add(new GeneralCompositeDataType(dt, i));
+                    }
+                    continue;
+                }
                 types.add(new GeneralCompositeDataType(dt, 0));
             }
             return types;
         }
 
         public static GeneralCompositeDataType getRandomWithoutNull() {
-            GeneralDataType type = GeneralDataType.getRandomWithoutNull();
+            GeneralDataType type = GeneralDataType.getRandomWithProb();
             int typeID = -1;
             switch (type) {
             case INT:
