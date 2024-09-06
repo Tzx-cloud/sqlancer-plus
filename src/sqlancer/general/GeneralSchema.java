@@ -1,5 +1,8 @@
 package sqlancer.general;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -65,8 +68,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                     + "VARCHAR,'<RANDOM_STRING>'\n"
                     + "BOOLEAN,TRUE\n"
                     + "DATE,'<RANDOM_DATE>'\n"
-                    + "DATE,'2021-01-01'\n"
-                    ;
+                    + "DATE,'2021-01-01'\n";
         }
 
         @Override
@@ -87,7 +89,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                 vars.add(GeneralFragmentVariable.valueOf(content.toUpperCase()));
             }
             matcher.appendTail(output);
-            
+
             addFragment(key, output.toString(), vars);
 
             typeMap.put(typeCounter, key);
@@ -108,6 +110,31 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                 return choice.toString(state);
             } else {
                 return "NULL";
+            }
+        }
+
+        @Override
+        protected void loadFragmentsFromCSV(Reader configReader) {
+            // get file lines by the reader
+            try (BufferedReader reader = new BufferedReader(configReader)) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (!line.contains(",")) {
+                        continue;
+                    }
+                    String typeName = line.substring(0, line.indexOf(","));
+                    String typeFormat = line.substring(line.indexOf(",") + 1);
+                    String[] s = { typeName, typeFormat };
+                    try {
+                        parseFragments(s);
+                    } catch (Exception e) {
+                        System.out.println(String.format("Error parsing %s for statement %s", String.join(" ", s),
+                                getStatementType()));
+                        System.err.println(e.getMessage());
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -211,29 +238,29 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             GeneralDataType type = GeneralDataType.getRandomWithProb();
             int typeID = -1;
             switch (type) {
-            case INT:
-                typeID = Randomly.fromOptions(1, 2, 4, 8);
-                break;
-            // case FLOAT:
-            // size = Randomly.fromOptions(4, 8);
-            // break;
-            case BOOLEAN:
-            case STRING:
-                // case DATE:
-                // case TIMESTAMP:
-                if (Randomly.getBoolean()) {
-                    typeID = 500; // As MySQL Generator here is 500
-                } else {
-                    typeID = 0;
-                }
-                break;
-            case VARTYPE:
-                // pick a random type id from the typeMap
-                // TODO an exception here
-                typeID = Randomly.fromList(List.copyOf(typeMap.keySet()));
-                break;
-            default:
-                throw new AssertionError(type);
+                case INT:
+                    typeID = Randomly.fromOptions(1, 2, 4, 8);
+                    break;
+                // case FLOAT:
+                // size = Randomly.fromOptions(4, 8);
+                // break;
+                case BOOLEAN:
+                case STRING:
+                    // case DATE:
+                    // case TIMESTAMP:
+                    if (Randomly.getBoolean()) {
+                        typeID = 500; // As MySQL Generator here is 500
+                    } else {
+                        typeID = 0;
+                    }
+                    break;
+                case VARTYPE:
+                    // pick a random type id from the typeMap
+                    // TODO an exception here
+                    typeID = Randomly.fromList(List.copyOf(typeMap.keySet()));
+                    break;
+                default:
+                    throw new AssertionError(type);
             }
 
             return new GeneralCompositeDataType(type, typeID);
@@ -242,48 +269,48 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         @Override
         public String toString() {
             switch (getPrimitiveDataType()) {
-            case INT:
-                return Randomly.fromOptions("INT", "INTEGER");
-            // switch (size) {
-            // case 8:
-            // return Randomly.fromOptions("BIGINT", "INT8");
-            // case 4:
-            // return Randomly.fromOptions("INTEGER", "INT", "INT4", "SIGNED");
-            // case 2:
-            // return Randomly.fromOptions("SMALLINT", "INT2");
-            // case 1:
-            // return Randomly.fromOptions("TINYINT", "INT1");
-            // default:
-            // throw new AssertionError(size);
-            // }
-            case STRING:
-                if (id == 0) {
-                    return "VARCHAR";
-                } else {
-                    return "VARCHAR(" + id + ")";
-                }
-                // case FLOAT:
+                case INT:
+                    return Randomly.fromOptions("INT", "INTEGER");
                 // switch (size) {
                 // case 8:
-                // return Randomly.fromOptions("DOUBLE");
+                // return Randomly.fromOptions("BIGINT", "INT8");
                 // case 4:
-                // return Randomly.fromOptions("REAL", "FLOAT4");
+                // return Randomly.fromOptions("INTEGER", "INT", "INT4", "SIGNED");
+                // case 2:
+                // return Randomly.fromOptions("SMALLINT", "INT2");
+                // case 1:
+                // return Randomly.fromOptions("TINYINT", "INT1");
                 // default:
                 // throw new AssertionError(size);
                 // }
-            case BOOLEAN:
-                return Randomly.fromOptions("BOOLEAN", "BOOL");
-            // case TIMESTAMP:
-            // return Randomly.fromOptions("TIMESTAMP", "DATETIME");
-            // case DATE:
-            // return Randomly.fromOptions("DATE");
-            case NULL:
-                return Randomly.fromOptions("NULL");
-            case VARTYPE:
-            //TODO catch exception here
-                return typeMap.get(id).toUpperCase();
-            default:
-                throw new AssertionError(getPrimitiveDataType());
+                case STRING:
+                    if (id == 0) {
+                        return "VARCHAR";
+                    } else {
+                        return "VARCHAR(" + id + ")";
+                    }
+                    // case FLOAT:
+                    // switch (size) {
+                    // case 8:
+                    // return Randomly.fromOptions("DOUBLE");
+                    // case 4:
+                    // return Randomly.fromOptions("REAL", "FLOAT4");
+                    // default:
+                    // throw new AssertionError(size);
+                    // }
+                case BOOLEAN:
+                    return Randomly.fromOptions("BOOLEAN", "BOOL");
+                // case TIMESTAMP:
+                // return Randomly.fromOptions("TIMESTAMP", "DATETIME");
+                // case DATE:
+                // return Randomly.fromOptions("DATE");
+                case NULL:
+                    return Randomly.fromOptions("NULL");
+                case VARTYPE:
+                    // TODO catch exception here
+                    return typeMap.get(id).toUpperCase();
+                default:
+                    throw new AssertionError(getPrimitiveDataType());
             }
         }
 
@@ -338,7 +365,6 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         }
 
     }
-
 
     @Override
     public String getFreeTableName() {

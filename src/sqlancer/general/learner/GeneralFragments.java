@@ -209,7 +209,8 @@ public abstract class GeneralFragments {
                 } catch (Exception e) {
                     // e.printStackTrace();
                     // Index 1 our of bounds for length 1
-                    System.out.println(String.format("Error parsing %s for statement %s", String.join(" ", s), getStatementType()));
+                    System.out.println(String.format("Error parsing %s for statement %s", String.join(" ", s),
+                            getStatementType()));
                     System.err.println(e.getMessage());
                 }
             }
