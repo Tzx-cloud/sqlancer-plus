@@ -69,7 +69,7 @@ public class GeneralTypedExpressionGenerator
     @Override
     public List<Node<GeneralExpression>> generateOrderBys() {
         HashMap<String, Integer> tmpCompositeScore = new HashMap<>(globalState.getHandler().getGeneratorInfo().getCompositeGeneratorScore());
-        globalState.getLogger().writeCurrent("-- " + tmpCompositeScore);
+        // globalState.getLogger().writeCurrent("-- " + tmpCompositeScore);
         List<Node<GeneralExpression>> expr = super.generateOrderBys();
         List<Node<GeneralExpression>> orderingTerms = new ArrayList<>(expr.size());
         for (Node<GeneralExpression> curExpr : expr) {

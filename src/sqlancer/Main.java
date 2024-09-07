@@ -54,6 +54,7 @@ public final class Main {
         private File curFile;
         private File queryPlanFile;
         private File reduceFile;
+        private File learnerFileDir;
         private FileWriter logFileWriter;
         public FileWriter currentFileWriter;
         private FileWriter queryPlanFileWriter;
@@ -62,6 +63,7 @@ public final class Main {
         private static final List<String> INITIALIZED_PROVIDER_NAMES = new ArrayList<>();
         private final boolean logEachSelect;
         private final boolean logQueryPlan;
+        private final boolean useLearner;
 
         private final boolean useReducer;
         private final DatabaseProvider<?, ?, ?> databaseProvider;
@@ -108,6 +110,13 @@ public final class Main {
                 }
                 this.reduceFile = new File(reduceFileDir, databaseName + "-reduce.log");
 
+            }
+            useLearner = options.enableExtraFeatures();
+            if (useLearner) {
+                learnerFileDir = new File(dir, "learner");
+                if (!learnerFileDir.exists()) {
+                    learnerFileDir.mkdir();
+                }
             }
             this.databaseProvider = provider;
         }
@@ -186,6 +195,13 @@ public final class Main {
                 }
             }
             return reduceFileWriter;
+        }
+
+        public File getLearnerFileDir() {
+            if (!useLearner) {
+                throw new UnsupportedOperationException();
+            }
+            return learnerFileDir;
         }
 
         public void writeCurrent(StateToReproduce state) {

@@ -2,6 +2,7 @@ package sqlancer.general.learner;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.sql.Timestamp;
@@ -111,8 +112,12 @@ public abstract class GeneralFragments {
 
         @Override
         public String toString() {
-            String fragmentName = String.format(fmtString, vars.stream().map(var -> var.name()).toArray());
+            String fragmentName = String.format(fmtString, vars.stream().map(var -> String.format("<%s>", var.name())).toArray());
             return String.format("%s-%s-%s", getStatementType(), key, fragmentName);
+        }
+
+        public String getFragmentName() {
+            return String.format(fmtString, vars.stream().map(var -> String.format("<%s>", var.name())).toArray());
         }
 
     }
@@ -296,6 +301,20 @@ public abstract class GeneralFragments {
             for (GeneralFragmentChoice choice : fragments.get(key)) {
                 System.out.println(choice.toString());
             }
+        }
+    }
+
+    public void dumpFragments(GeneralGlobalState globalState) {
+        System.out.println(String.format("Dumping fragments for %s", getStatementType()));
+        File dir = globalState.getLogger().getLearnerFileDir();
+        try (FileWriter writer = new FileWriter(new File(dir, String.format("%s-%s-config.txt", globalState.getDatabaseName(), getStatementType())))) {
+            for (String key : fragments.keySet()) {
+                for (GeneralFragmentChoice choice : fragments.get(key)) {
+                    writer.write(String.format("%s,%s\n", key, choice.getFragmentName()));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
