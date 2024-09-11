@@ -349,6 +349,40 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
                 return String.format("jdbc:mysql://localhost:10027/?user=root");
             }
         },
+        PRESTO {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:presto://localhost:10028/memory?user=test");
+            }
+
+            @Override
+            public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName) throws SQLException {
+                Connection conn = DriverManager.getConnection(getJDBCString(globalState));
+                for (int i = 0; i < 100; i++) {
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP TABLE IF EXISTS MEMORY.%s.t%d", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP VIEW IF EXISTS MEMORY.%s.v%d", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
+                }
+                try (Statement s = conn.createStatement()) {
+                    s.execute("DROP SCHEMA IF EXISTS MEMORY." + databaseName);
+                    globalState.getState().logStatement("DROP SCHEMA IF EXISTS MEMORY." + databaseName);
+                    s.execute("CREATE SCHEMA MEMORY." + databaseName);
+                    globalState.getState().logStatement("CREATE SCHEMA MEMORY." + databaseName);
+                    s.execute("USE MEMORY." + databaseName);
+                    globalState.getState().logStatement("USE MEMORY." + databaseName);
+                    setIsNewSchema(true);
+                } catch (SQLException e) {
+                    setIsNewSchema(false);
+                    e.printStackTrace();
+                }
+                return conn;
+            }
+        },
         ;
 
         private boolean isNewSchema = true;

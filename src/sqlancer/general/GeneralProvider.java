@@ -266,7 +266,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     protected void checkViewsAreValid(GeneralGlobalState globalState) {
         List<GeneralTable> views = globalState.getSchema().getViews();
         for (GeneralTable view : views) {
-            SQLQueryAdapter q = new SQLQueryAdapter("SELECT * FROM " + view.getName());
+            SQLQueryAdapter q = new SQLQueryAdapter("SELECT * FROM " + view.getName(), new ExpectedErrors(), false,globalState.getOptions().canonicalizeSqlString());
             try {
                 if (!q.execute(globalState)) {
                     dropView(globalState, view.getName());
@@ -285,7 +285,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             }
         }
         // check if query result is larger than 1000 rows
-        SQLQueryAdapter q2 = new SQLQueryAdapter(sb);
+        SQLQueryAdapter q2 = new SQLQueryAdapter(sb, new ExpectedErrors(), false,globalState.getOptions().canonicalizeSqlString());
         SQLancerResultSet resultSet;
         try {
             resultSet = q2.executeAndGet(globalState);
@@ -330,7 +330,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
     public boolean checkTableIsValid(GeneralGlobalState globalState, String tableName) {
         globalState.getLogger().writeCurrent("SELECT * FROM " + tableName);
-        SQLQueryAdapter q = new SQLQueryAdapter("SELECT * FROM " + tableName);
+        SQLQueryAdapter q = new SQLQueryAdapter("SELECT * FROM " + tableName, new ExpectedErrors(), false,globalState.getOptions().canonicalizeSqlString());
         try {
             if (!q.execute(globalState)) {
                 dropTable(globalState, tableName);
@@ -338,7 +338,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             }
         } catch (Throwable t) {
             // if it's query error, we need to drop the table
-            globalState.getLogger().writeCurrent("-- query failed");
+            globalState.getLogger().writeCurrent("-- query failed " + t.getMessage());
             dropTable(globalState, tableName);
             return false;
         }
@@ -370,6 +370,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         DatabaseEngineFactory<GeneralGlobalState> databaseEngineFactory = globalState.getDbmsSpecificOptions()
                 .getDatabaseEngineFactory();
         globalState.setCreatingDatabase(true);
+        GeneralSchema.GeneralDataType.calcWeight();
         for (int i = 0; i < Randomly.fromOptions(1, 2); i++) {
             boolean success;
             int nrTries = 0;
@@ -451,7 +452,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         // GeneralIndexGenerator.getFragments().updateFragmentsFromLearner(globalState);
         // GeneralTableGenerator.getTemplateQuery(globalState);
         // GeneralTableGenerator.initializeFragments(globalState);
-        GeneralSchema.GeneralDataType.calcWeight();
+        // GeneralSchema.GeneralDataType.calcWeight();
 
     }
 

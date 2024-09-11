@@ -177,3 +177,9 @@ if [ "$dbms" == "vitess" ]; then
     --health-retries=5 \
     vitess/vttestserver:mysql80
 fi
+
+if [ "$dbms" == "presto" ]; then
+    docker stop presto-test
+    docker rm presto-test
+    docker run --name presto-test -p 10028:8080 -v $current_dir/scripts/configs/presto/memory.properties:/opt/presto-server/etc/catalog/memory.properties prestodb/presto:latest
+fi
