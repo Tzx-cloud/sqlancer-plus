@@ -33,7 +33,7 @@ public abstract class GeneralFragments {
             return GeneralConstant.createIntConstant(g.getRandomly().getInteger());
         }, "Get a random integer. e.g., 42"),
         RANDOM_STRING((g) -> {
-            return GeneralConstant.createStringConstant(g.getRandomly().getString());
+            return GeneralConstant.createVartypeConstant(g.getRandomly().getString());
         }, "Get a random string without quotes. e.g., hello"),
         RANDOM_COLUMN((g) -> {
             if (g.getUpdateTable() != null) {
@@ -329,6 +329,7 @@ public abstract class GeneralFragments {
         return sb.toString();
     }
     
+    // TODO: load the examples from the configs
     protected String getExamples() {
         return "";
     }

@@ -97,6 +97,7 @@ public class GeneralTypedExpressionGenerator
         List<Node<GeneralExpression>> args = new ArrayList<>();
         for (int i = 0; i < function.getNrArgs(); i++) {
             final int ind = i;
+            // TODO: looks like we could make this invarian out of the loop. Not sure if stronly needed.
             List<GeneralCompositeDataType> availTypes = GeneralCompositeDataType.getSupportedTypes().stream()
                     .filter(t -> handler.getCompositeOption(function.toString(), ind + t.toString()))
                     .collect(Collectors.toList());
@@ -106,7 +107,7 @@ public class GeneralTypedExpressionGenerator
             args.add(newExpr);
             // check if newExpr is a 
             if (!nullFlag) {
-                String key = function.toString() + "-" + ind + type.getPrimitiveDataType().toString();
+                String key = function.toString() + "-" + ind + type.toString();
                 handler.addScore(key);
             }
             nullFlag = false;
@@ -127,12 +128,11 @@ public class GeneralTypedExpressionGenerator
         } else {
             if (Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.FUNC)) {
                 handler.addScore(GeneratorNode.FUNC);
-                // TODO current implementation does not support automatically type inference
                 List<GeneralFunction> applicableFunctions = getFunctionsCompatibleWith(type);
                 if (!applicableFunctions.isEmpty()) {
                     GeneralFunction function = Randomly.fromList(applicableFunctions);
                     handler.addScore("FUNCTION-" + function.toString());
-                    handler.addScore( type.getPrimitiveDataType().toString() + "-" + function.toString());
+                    handler.addScore(type.toString() + "-" + function.toString());
                     return new NewFunctionNode<GeneralExpression, GeneralFunction>(
                             generateFunctionExpressions(function, depth + 1, handler), function);
                 }
@@ -348,50 +348,20 @@ public class GeneralTypedExpressionGenerator
         }
         switch (type.getPrimitiveDataType()) {
         case INT:
-            // case SERIAL:
-            // case DECIMAL: // TODO: generate random decimals
             return GeneralConstant.createIntConstant(globalState.getRandomly().getInteger());
         case BOOLEAN:
             return GeneralConstant.createBooleanConstant(Randomly.getBoolean());
         case STRING:
-            // case BYTES: // TODO: also generate byte constants
             return GeneralConstant.createStringConstant(globalState.getRandomly().getString());
         case VARTYPE:
-            return GeneralConstant.createVartypeConstant(GeneralSchema.getFragments().get(type.getId(), globalState));
-        // case FLOAT:
-        // return CockroachDBConstant.createFloatConstant(globalState.getRandomly().getDouble());
-        // case BIT:
-        // return CockroachDBConstant.createBitConstantWithSize(type.getSize());
-        // case VARBIT:
-        // if (Randomly.getBoolean()) {
-        // return CockroachDBConstant.createBitConstant(globalState.getRandomly().getInteger());
-        // } else {
-        // return CockroachDBConstant.createBitConstantWithSize((int) Randomly.getNotCachedInteger(1, 10));
-        // }
-        // case INTERVAL:
-        // return CockroachDBConstant.createIntervalConstant(globalState.getRandomly().getInteger(),
-        // globalState.getRandomly().getInteger(), globalState.getRandomly().getInteger(),
-        // globalState.getRandomly().getInteger(), globalState.getRandomly().getInteger(),
-        // globalState.getRandomly().getInteger());
-        // case TIMESTAMP:
-        // return CockroachDBConstant.createTimestampConstant(globalState.getRandomly().getInteger());
-        // case TIMESTAMPTZ:
-        // return CockroachDBConstant.createTimestamptzConstant(globalState.getRandomly().getInteger());
-        // case TIME:
-        // return CockroachDBConstant.createTimeConstant(globalState.getRandomly().getInteger());
-        // case TIMETZ:
-        // return CockroachDBConstant.createTimetz(globalState.getRandomly().getInteger());
-        // case ARRAY:
-        // List<GeneralExpression> elements = new ArrayList<>();
-        // for (int i = 0; i < Randomly.smallNumber(); i++) {
-        // elements.add(generateConstant(type.getElementType()));
-        // }
-        // return CockroachDBConstant.createArrayConstant(elements);
-        // case JSONB:
-        // return CockroachDBConstant.createNullConstant(); // TODO
+            return generateVartypeConstant(type);
         default:
             throw new AssertionError(type);
         }
+    }
+
+    private Node<GeneralExpression> generateVartypeConstant(GeneralCompositeDataType type) {
+        return GeneralConstant.createVartypeConstant(GeneralSchema.getFragments().get(type.getId(), globalState));
     }
 
     public GeneralGlobalState getGlobalState() {

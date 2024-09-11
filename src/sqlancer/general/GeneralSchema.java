@@ -104,9 +104,15 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             }
 
             String key = typeMap.get(index);
+            // actually, if typeMap contains the key, then fragments must contain the key
             if (getFragments().containsKey(key)) {
                 GeneralFragmentChoice choice = Randomly.fromList(getFragments().get(key));
-                state.getHandler().addScore(choice);
+                if (state.getCreatingDatabase()) {
+                    // only consider feedback when creating the database
+                    // otherwise any constant generated will be considered
+                    // can't match data format with type
+                    state.getHandler().addScore(choice);
+                }
                 return choice.toString(state);
             } else {
                 return "NULL";
@@ -270,40 +276,15 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         public String toString() {
             switch (getPrimitiveDataType()) {
                 case INT:
-                    return Randomly.fromOptions("INT", "INTEGER");
-                // switch (size) {
-                // case 8:
-                // return Randomly.fromOptions("BIGINT", "INT8");
-                // case 4:
-                // return Randomly.fromOptions("INTEGER", "INT", "INT4", "SIGNED");
-                // case 2:
-                // return Randomly.fromOptions("SMALLINT", "INT2");
-                // case 1:
-                // return Randomly.fromOptions("TINYINT", "INT1");
-                // default:
-                // throw new AssertionError(size);
-                // }
+                    return Randomly.fromOptions("INT");
                 case STRING:
                     if (id == 0) {
                         return "VARCHAR";
                     } else {
                         return "VARCHAR(" + id + ")";
                     }
-                    // case FLOAT:
-                    // switch (size) {
-                    // case 8:
-                    // return Randomly.fromOptions("DOUBLE");
-                    // case 4:
-                    // return Randomly.fromOptions("REAL", "FLOAT4");
-                    // default:
-                    // throw new AssertionError(size);
-                    // }
                 case BOOLEAN:
-                    return Randomly.fromOptions("BOOLEAN", "BOOL");
-                // case TIMESTAMP:
-                // return Randomly.fromOptions("TIMESTAMP", "DATETIME");
-                // case DATE:
-                // return Randomly.fromOptions("DATE");
+                    return Randomly.fromOptions("BOOLEAN");
                 case NULL:
                     return Randomly.fromOptions("NULL");
                 case VARTYPE:

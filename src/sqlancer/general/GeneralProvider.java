@@ -110,6 +110,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         private GeneralSchema schema = new GeneralSchema(new ArrayList<>());
         private GeneralErrorHandler handler = new GeneralErrorHandler();
         private GeneralTable updateTable;
+        private boolean creatingDatabase = false; // is currently creating database
 
         private static final File CONFIG_DIRECTORY = new File("dbconfigs");
 
@@ -137,6 +138,14 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
         public GeneralTable getUpdateTable() {
             return updateTable;
+        }
+
+        public boolean getCreatingDatabase() {
+            return creatingDatabase;
+        }
+
+        public void setCreatingDatabase(boolean creatingDatabase) {
+            this.creatingDatabase = creatingDatabase;
         }
 
         @Override
@@ -360,6 +369,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     public void generateDatabase(GeneralGlobalState globalState) throws Exception {
         DatabaseEngineFactory<GeneralGlobalState> databaseEngineFactory = globalState.getDbmsSpecificOptions()
                 .getDatabaseEngineFactory();
+        globalState.setCreatingDatabase(true);
         for (int i = 0; i < Randomly.fromOptions(1, 2); i++) {
             boolean success;
             int nrTries = 0;
@@ -389,6 +399,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 });
         se.executeStatements();
         databaseEngineFactory.syncData(globalState);
+        globalState.setCreatingDatabase(false);
     }
 
     public void tryDeleteFile(String fname) {

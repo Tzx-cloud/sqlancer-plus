@@ -10,6 +10,7 @@ import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
+import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
@@ -64,8 +65,9 @@ public class GeneralInsertGenerator extends AbstractInsertGenerator<GeneralColum
         if (globalState.getHandler().getOption(GeneratorNode.UNTYPE_EXPR) || Randomly.getBooleanWithSmallProbability()) {
             sb.append(GeneralToStringVisitor.asString(new GeneralExpressionGenerator(globalState).generateConstant()));
         } else {
+            GeneralCompositeDataType columnType = columnGeneral.getType();
             sb.append(GeneralToStringVisitor.asString(
-                    new GeneralTypedExpressionGenerator(globalState).generateConstant(columnGeneral.getType())));
+                    new GeneralTypedExpressionGenerator(globalState).generateConstant(columnType)));
         }
     }
 
