@@ -371,7 +371,7 @@ public class GeneralErrorHandler implements ErrorHandler {
 
         GeneralIndexGenerator.getFragments().printFragments();
         GeneralTableGenerator.getFragments().printFragments();
-        GeneralSchema.getFragments().printFragments();
+        // GeneralSchema.getFragments().printFragments();
 
     }
 

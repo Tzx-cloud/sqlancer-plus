@@ -216,6 +216,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 if (status && Randomly.getBooleanWithRatherLowProbability()) {
                     GeneralTableGenerator.getFragments().updateFragmentsFromLearner(this);
                     GeneralIndexGenerator.getFragments().updateFragmentsFromLearner(this);
+                    GeneralSchema.getFragments().updateFragmentsFromLearner(this);
                 }
             }
             if (getDbmsSpecificOptions().enableErrorHandling) {

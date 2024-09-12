@@ -29,6 +29,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
 
     private static int typeCounter = 0;
     private static HashMap<Integer, String> typeMap = new HashMap<>();
+    private static HashMap<String, Boolean> typeAvailabilityMap = new HashMap<>();
 
     private final static class GeneralTypeFragments extends GeneralFragments {
         public GeneralTypeFragments() {
@@ -92,9 +93,12 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
 
             addFragment(key, output.toString(), vars);
 
-            typeMap.put(typeCounter, key);
-            typeCounter++;
-
+            // if key is not in the typeMap, add it
+            if (!typeMap.containsValue(key)) {
+                typeMap.put(typeCounter, key);
+                typeAvailabilityMap.put(key, true);
+                typeCounter++;
+            }
         }
 
         @Override
@@ -105,7 +109,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
 
             String key = typeMap.get(index);
             // actually, if typeMap contains the key, then fragments must contain the key
-            if (getFragments().containsKey(key)) {
+            if (getFragments().containsKey(key) && typeAvailabilityMap.get(key)) {
                 GeneralFragmentChoice choice = Randomly.fromList(getFragments().get(key));
                 if (state.getCreatingDatabase()) {
                     // only consider feedback when creating the database
@@ -117,6 +121,21 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             } else {
                 return "NULL";
             }
+        }
+
+        @Override
+        public synchronized void updateFragmentByFeedback(GeneralErrorHandler handler) {
+            super.updateFragmentByFeedback(handler);
+            // iterate over the fragments, if the choices is empty
+            // then typeAvailabilityMap will be updated
+            for (String key : getFragments().keySet()) {
+                if (getFragments().get(key).isEmpty()) {
+                    typeAvailabilityMap.put(key, false);
+                } else {
+                    typeAvailabilityMap.put(key, true);
+                }
+            }
+            
         }
 
         @Override

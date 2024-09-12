@@ -75,7 +75,7 @@ public class GeneralTableGenerator {
             }
             sb.append(columns.get(i).getName());
             sb.append(" ");
-            sb.append(columns.get(i).getType(), 1);
+            sb.append(String.format("%s ",columns.get(i).getType()), 1);
         }
         List<GeneralColumn> columnsToAdd = new ArrayList<>();
         if (globalState.getDbmsSpecificOptions().testIndexes && !Randomly.getBooleanWithRatherLowProbability()) {
