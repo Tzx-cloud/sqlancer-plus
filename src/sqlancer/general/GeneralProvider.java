@@ -217,6 +217,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                     GeneralTableGenerator.getFragments().updateFragmentsFromLearner(this);
                     GeneralIndexGenerator.getFragments().updateFragmentsFromLearner(this);
                     GeneralSchema.getFragments().updateFragmentsFromLearner(this);
+                    // GeneralFunction.getFragments().updateFragmentsFromLearner(this);
                 }
             }
             if (getDbmsSpecificOptions().enableErrorHandling) {
@@ -443,6 +444,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         // do nothing
         GeneralFunction.loadFunctionsFromFile(globalState);
         GeneralSchema.getFragments().updateFragmentsFromLearner(globalState);
+        GeneralFunction.getFragments().updateFragmentsFromLearner(globalState);
         // GeneralTableGenerator.getFragments().genLearnStatement(globalState);
         // GeneralTableGenerator.getFragments().loadFragmentsFromFile(globalState);
 

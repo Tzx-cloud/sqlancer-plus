@@ -93,15 +93,17 @@ public class GeneralTemplateLearner implements FeatureLearner {
         String system = system_prompt;
         String user = String.format("DBMS: %s\n" + //
                 "Reference: %s\n" + //
-                "Template: %s\n" + //
-                "Available variables and their descriptions:\n%s",
+                "Template: %s\n",
                 globalState.getDbmsSpecificOptions().getDatabaseEngineFactory().toString(),
                 url,
-                template,
-                variables);
+                template);
+        if (variables != "") {
+            user += "Available variables and their descriptions:\n" + variables;
+        }
         if (examples != "") {
             user += "Examples:\n" + examples;
         }
+        user += "Note: Please do not call functions in DBMS that would bring randomness to the query. Function calls should be deterministic.";
         System.out.println(user);
         try {
             response = getChatGPTResponse(model, system, user);
