@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
+import java.util.function.Supplier;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -58,6 +58,25 @@ public class GeneralErrorHandler implements ErrorHandler {
             return fragmentScore;
         }
 
+        public <N> void countSuccess(HashMap<N, Integer> success, HashMap<N, Integer> count,
+                HashMap<N, Integer> score) {
+            // HashMap<N, Integer> generator = supplier.get();
+            int executionStatus = status ? 1 : 0;
+
+            // sum up all the successful generator options
+            for (Map.Entry<N, Integer> entry : score.entrySet()) {
+                N key = entry.getKey();
+                int value = entry.getValue();
+                if (success.containsKey(key)) {
+                    success.put(key, success.get(key) + value * executionStatus);
+                    count.put(key, count.get(key) + 1);
+                } else {
+                    success.put(key, value * executionStatus);
+                    count.put(key, 1);
+                }
+            }
+        }
+
         public boolean getStatus() {
             return status;
         }
@@ -82,10 +101,9 @@ public class GeneralErrorHandler implements ErrorHandler {
 
     private class GeneratorInfoTable {
         private ArrayList<GeneratorInfo> generatorTable;
-        private HashMap<GeneratorNode, Double> generatorAverage;
-        private HashMap<String, Double> compositeAverage;
-        private HashMap<GeneralFragmentChoice, Double> fragmentAverage;
 
+        private HashMap<GeneratorNode, Integer> nodeSuccess = new HashMap<>();
+        private HashMap<GeneratorNode, Integer> nodeCount = new HashMap<>();
         private HashMap<String, Integer> compositeSuccess = new HashMap<>();
         private HashMap<String, Integer> compositeCount = new HashMap<>();
         private HashMap<GeneralFragmentChoice, Integer> fragmentSuccess = new HashMap<>();
@@ -93,8 +111,6 @@ public class GeneralErrorHandler implements ErrorHandler {
 
         public GeneratorInfoTable() {
             this.generatorTable = new ArrayList<>();
-            this.compositeAverage = new HashMap<>();
-            this.fragmentAverage = new HashMap<>();
         }
 
         public ArrayList<GeneratorInfo> getGeneratorTable() {
@@ -109,145 +125,159 @@ public class GeneralErrorHandler implements ErrorHandler {
             return generatorTable.get(generatorTable.size() - 1);
         }
 
-        public HashMap<GeneratorNode, Double> calcAverageGeneratorScore() {
-            generatorAverage = new HashMap<>();
-            HashMap<GeneratorNode, Double> tmpAverage = new HashMap<>();
-            HashMap<GeneratorNode, Integer> count = new HashMap<>();
+        // public HashMap<GeneratorNode, Double> calcAverageGeneratorScore() {
+        // generatorAverage = new HashMap<>();
+        // HashMap<GeneratorNode, Double> tmpAverage = new HashMap<>();
+        // HashMap<GeneratorNode, Integer> count = new HashMap<>();
+        // int stmtNum = 0;
+        // int queryNum = 0;
+        // int qsuccess = 0;
+        // int ssuccess = 0;
+        // for (GeneratorInfo info : generatorTable) {
+        // HashMap<GeneratorNode, Integer> generator = info.getGeneratorScore();
+        // int executionStatus = info.getStatus() ? 1 : 0;
+        // if (info.isQuery()) {
+        // qsuccess += executionStatus;
+        // queryNum++;
+        // } else {
+        // ssuccess += executionStatus;
+        // stmtNum++;
+        // }
+
+        // // sum up all the successful generator options
+        // for (Map.Entry<GeneratorNode, Integer> entry : generator.entrySet()) {
+        // GeneratorNode key = entry.getKey();
+        // int value = entry.getValue();
+        // if (tmpAverage.containsKey(key)) {
+        // tmpAverage.put(key, tmpAverage.get(key) + value * executionStatus);
+        // count.put(key, count.get(key) + 1);
+        // } else {
+        // tmpAverage.put(key, (double) (value * executionStatus));
+        // count.put(key, 1);
+        // }
+        // }
+        // }
+        // for (Map.Entry<GeneratorNode, Double> entry : tmpAverage.entrySet()) {
+        // int cnt = count.get(entry.getKey());
+        // // TODO: in case the option hasn't been tested enough
+        // generatorAverage.put(entry.getKey(), entry.getValue() / cnt);
+        // }
+        // System.out.println("Successful query pairs rate: " + (double) qsuccess /
+        // queryNum);
+        // System.out.println("Successful statements rate: " + (double) ssuccess /
+        // stmtNum);
+        // // System.out.println("Generator Average: " + generatorAverage);
+        // // System.out.println("Count: " + count);
+        // return generatorAverage;
+        // }
+
+        public void calcNodeSuccess() {
             int stmtNum = 0;
             int queryNum = 0;
             int qsuccess = 0;
             int ssuccess = 0;
             for (GeneratorInfo info : generatorTable) {
-                HashMap<GeneratorNode, Integer> generator = info.getGeneratorScore();
-                int executionStatus = info.getStatus() ? 1 : 0;
+                info.countSuccess(nodeSuccess, nodeCount, info.getGeneratorScore());
+                // logging info
                 if (info.isQuery()) {
-                    qsuccess += executionStatus;
+                    qsuccess += info.getStatus() ? 1 : 0;
                     queryNum++;
                 } else {
-                    ssuccess += executionStatus;
+                    ssuccess += info.getStatus() ? 1 : 0;
                     stmtNum++;
                 }
-
-                // sum up all the successful generator options
-                for (Map.Entry<GeneratorNode, Integer> entry : generator.entrySet()) {
-                    GeneratorNode key = entry.getKey();
-                    int value = entry.getValue();
-                    if (tmpAverage.containsKey(key)) {
-                        tmpAverage.put(key, tmpAverage.get(key) + value * executionStatus);
-                        count.put(key, count.get(key) + 1);
-                    } else {
-                        tmpAverage.put(key, (double) (value * executionStatus));
-                        count.put(key, 1);
-                    }
-                }
             }
-            for (Map.Entry<GeneratorNode, Double> entry : tmpAverage.entrySet()) {
-                int cnt = count.get(entry.getKey());
-                // TODO: in case the option hasn't been tested enough
-                generatorAverage.put(entry.getKey(), entry.getValue() / cnt);
-            }
-            System.out.println("Successful query pairs rate: " + (double) qsuccess / queryNum);
-            System.out.println("Successful statements rate: " + (double) ssuccess / stmtNum);
-            // System.out.println("Generator Average: " + generatorAverage);
-            // System.out.println("Count: " + count);
-            return generatorAverage;
+            System.out.println("Successful query pairs rate: " + (double) qsuccess /
+                    queryNum);
+            System.out.println("Successful statements rate: " + (double) ssuccess /
+                    stmtNum);
         }
 
         public void calcCompositeSuccess() {
             for (GeneratorInfo info : generatorTable) {
-                HashMap<String, Integer> generator = info.getCompositeGeneratorScore();
-                int executionStatus = info.getStatus() ? 1 : 0;
-
-                // sum up all the successful generator options
-                for (Map.Entry<String, Integer> entry : generator.entrySet()) {
-                    String key = entry.getKey();
-                    int value = entry.getValue();
-                    if (compositeSuccess.containsKey(key)) {
-                        compositeSuccess.put(key,
-                                compositeSuccess.get(key) + value * executionStatus);
-                        compositeCount.put(key, compositeCount.get(key) + 1);
-                    } else {
-                        compositeSuccess.put(key, value * executionStatus);
-                        compositeCount.put(key, 1);
-                    }
-                }
+                info.countSuccess(compositeSuccess, compositeCount, info.getCompositeGeneratorScore());
             }
-            // System.out.println("Composite Average: " + compositeAverage);
-            // System.out.println(String.format("Count[%d]: ", count.size()) + count);
         }
 
-        public synchronized HashMap<String, Double> calcAverageCompositeScore() {
-            // sum the composite success and count
-            for (Map.Entry<String, Integer> entry : compositeSuccess.entrySet()) {
-                String key = entry.getKey();
-                if (allCompositeSuccess.containsKey(key)) {
-                    allCompositeSuccess.put(key, allCompositeSuccess.get(key) + entry.getValue());
-                    allCompositeCount.put(key, allCompositeCount.get(key) + compositeCount.get(key));
-                } else {
-                    allCompositeSuccess.put(key, entry.getValue());
-                    allCompositeCount.put(key, compositeCount.get(key));
-                }
-            }
-            for (Map.Entry<String, Integer> entry : allCompositeSuccess.entrySet()) {
-                int cnt = allCompositeCount.get(entry.getKey());
-                if (cnt > 500) {
-                    compositeAverage.put(entry.getKey(), (double) entry.getValue() / cnt);
-                }
-            }
-            return compositeAverage;
-        }
+        // public synchronized HashMap<String, Double> calcAverageCompositeScore() {
+        // // sum the composite success and count
+        // for (Map.Entry<String, Integer> entry : compositeSuccess.entrySet()) {
+        // String key = entry.getKey();
+        // if (allCompositeSuccess.containsKey(key)) {
+        // allCompositeSuccess.put(key, allCompositeSuccess.get(key) +
+        // entry.getValue());
+        // allCompositeCount.put(key, allCompositeCount.get(key) +
+        // compositeCount.get(key));
+        // } else {
+        // allCompositeSuccess.put(key, entry.getValue());
+        // allCompositeCount.put(key, compositeCount.get(key));
+        // }
+        // }
+        // for (Map.Entry<String, Integer> entry : allCompositeSuccess.entrySet()) {
+        // int cnt = allCompositeCount.get(entry.getKey());
+        // if (cnt > 500) {
+        // compositeAverage.put(entry.getKey(), (double) entry.getValue() / cnt);
+        // }
+        // }
+        // return compositeAverage;
+        // }
 
         public void calcFragmentSuccess() {
             for (GeneratorInfo info : generatorTable) {
-                HashMap<GeneralFragmentChoice, Integer> generator = info.getFragmentScore();
-                int executionStatus = info.getStatus() ? 1 : 0;
-
-                // sum up all the successful generator options
-                for (Map.Entry<GeneralFragmentChoice, Integer> entry : generator.entrySet()) {
-                    GeneralFragmentChoice key = entry.getKey();
-                    int value = entry.getValue();
-                    if (fragmentSuccess.containsKey(key)) {
-                        fragmentSuccess.put(key, fragmentSuccess.get(key) + value * executionStatus);
-                        fragmentCount.put(key, fragmentCount.get(key) + 1);
-                    } else {
-                        fragmentSuccess.put(key, value * executionStatus);
-                        fragmentCount.put(key, 1);
-                    }
-                }
+                info.countSuccess(fragmentSuccess, fragmentCount, info.getFragmentScore());
             }
         }
 
-        public synchronized HashMap<GeneralFragmentChoice, Double> calcAverageFragmentScore() {
-            // sum the fragment success and count
-            for (Map.Entry<GeneralFragmentChoice, Integer> entry : fragmentSuccess.entrySet()) {
-                GeneralFragmentChoice key = entry.getKey();
-                if (allFragmentSuccess.containsKey(key)) {
-                    allFragmentSuccess.put(key, allFragmentSuccess.get(key) + entry.getValue());
-                    allFragmentCount.put(key, allFragmentCount.get(key) + fragmentCount.get(key));
+        // public synchronized HashMap<GeneralFragmentChoice, Double>
+        // calcAverageFragmentScore() {
+        // // sum the fragment success and count
+        // for (Map.Entry<GeneralFragmentChoice, Integer> entry :
+        // fragmentSuccess.entrySet()) {
+        // GeneralFragmentChoice key = entry.getKey();
+        // if (allFragmentSuccess.containsKey(key)) {
+        // allFragmentSuccess.put(key, allFragmentSuccess.get(key) + entry.getValue());
+        // allFragmentCount.put(key, allFragmentCount.get(key) +
+        // fragmentCount.get(key));
+        // } else {
+        // allFragmentSuccess.put(key, entry.getValue());
+        // allFragmentCount.put(key, fragmentCount.get(key));
+        // }
+        // }
+        // for (Map.Entry<GeneralFragmentChoice, Integer> entry :
+        // allFragmentSuccess.entrySet()) {
+        // int cnt = allFragmentCount.get(entry.getKey());
+        // if (cnt > 10 || entry.getValue() > 0) {
+        // fragmentAverage.put(entry.getKey(), (double) entry.getValue() / cnt);
+        // }
+        // }
+        // return fragmentAverage;
+        // }
+
+        public synchronized <N> HashMap<N, Double> calcAverageScore(HashMap<N, Integer> success,
+                HashMap<N, Integer> count,
+                HashMap<N, Integer> allSuccess,
+                HashMap<N, Integer> allCount,
+                int minCnt,
+                boolean quickStart) {
+            HashMap<N, Double> average = new HashMap<>();
+            // sum the success and count
+            for (Map.Entry<N, Integer> entry : success.entrySet()) {
+                N key = entry.getKey();
+                if (allSuccess.containsKey(key)) {
+                    allSuccess.put(key, allSuccess.get(key) + entry.getValue());
+                    allCount.put(key, allCount.get(key) + count.get(key));
                 } else {
-                    allFragmentSuccess.put(key, entry.getValue());
-                    allFragmentCount.put(key, fragmentCount.get(key));
+                    allSuccess.put(key, entry.getValue());
+                    allCount.put(key, count.get(key));
                 }
             }
-            for (Map.Entry<GeneralFragmentChoice, Integer> entry : allFragmentSuccess.entrySet()) {
-                int cnt = allFragmentCount.get(entry.getKey());
-                if (cnt > 10 || entry.getValue() > 0) {
-                    fragmentAverage.put(entry.getKey(), (double) entry.getValue() / cnt);
+            for (Map.Entry<N, Integer> entry : allSuccess.entrySet()) {
+                int cnt = allCount.get(entry.getKey());
+                if (cnt > minCnt || (quickStart && entry.getValue() > 0)) {
+                    average.put(entry.getKey(), (double) entry.getValue() / cnt);
                 }
             }
-            return fragmentAverage;
-        }
-
-        public HashMap<GeneratorNode, Double> getGeneratorAverage() {
-            return generatorAverage;
-        }
-
-        public HashMap<String, Double> getCompositeAverage() {
-            return compositeAverage;
-        }
-
-        public HashMap<GeneralFragmentChoice, Double> getFragmentAverage() {
-            return fragmentAverage;
+            return average;
         }
 
     }
@@ -266,6 +296,12 @@ public class GeneralErrorHandler implements ErrorHandler {
     private static volatile HashMap<String, Integer> allCompositeCount = new HashMap<>();
     private static volatile HashMap<GeneralFragmentChoice, Integer> allFragmentSuccess = new HashMap<>();
     private static volatile HashMap<GeneralFragmentChoice, Integer> allFragmentCount = new HashMap<>();
+    private static volatile HashMap<GeneratorNode, Integer> allNodeSuccess = new HashMap<>();
+    private static volatile HashMap<GeneratorNode, Integer> allNodeCount = new HashMap<>();
+
+    private static volatile HashMap<GeneratorNode, Double> generatorAverage = new HashMap<>();
+    private static volatile HashMap<String, Double> compositeAverage = new HashMap<>();
+    private static volatile HashMap<GeneralFragmentChoice, Double> fragmentAverage = new HashMap<>();
 
     private double nodeNum = GeneratorNode.values().length;
 
@@ -353,17 +389,6 @@ public class GeneralErrorHandler implements ErrorHandler {
 
     }
 
-    // private synchronized <N> void updateByLeastOncePerRun(HashMap<N, Double> score, HashMap<N, Boolean> options) {
-    //     for (Map.Entry<N, Double> entry : score.entrySet()) {
-    //         if (entry.getValue() > 0.01) {
-    //             options.put(entry.getKey(), true);
-    //         } else {
-    //             options.put(entry.getKey(), false);
-    //         }
-    //     }
-
-    // }
-
     private synchronized void updateFragments() {
         GeneralTableGenerator.getFragments().updateFragmentByFeedback(this);
         GeneralIndexGenerator.getFragments().updateFragmentByFeedback(this);
@@ -376,22 +401,26 @@ public class GeneralErrorHandler implements ErrorHandler {
     }
 
     public void calcAverageScore() {
-        generatorTable.calcAverageGeneratorScore();
+        generatorTable.calcNodeSuccess();
+        generatorAverage = generatorTable.calcAverageScore(generatorTable.nodeSuccess, generatorTable.nodeCount,
+                allNodeSuccess, allNodeCount, 100, true);
         // generatorTable.calcAverageCompositeScore();
         generatorTable.calcCompositeSuccess();
-        generatorTable.calcAverageCompositeScore();
+        compositeAverage = generatorTable.calcAverageScore(generatorTable.compositeSuccess, generatorTable.compositeCount,
+                allCompositeSuccess, allCompositeCount, 500, false);
 
         generatorTable.calcFragmentSuccess();
-        generatorTable.calcAverageFragmentScore();
+        fragmentAverage = generatorTable.calcAverageScore(generatorTable.fragmentSuccess, generatorTable.fragmentCount,
+                allFragmentSuccess, allFragmentCount, 10, true);
     }
 
     public void updateGeneratorOptions() {
-        HashMap<GeneratorNode, Double> average = generatorTable.getGeneratorAverage();
-        HashMap<String, Double> compositeAverage = generatorTable.getCompositeAverage();
-        HashMap<GeneralFragmentChoice, Double> fragmentAverage = generatorTable.getFragmentAverage();
+        // HashMap<GeneratorNode, Double> average = generatorTable.getGeneratorAverage();
+        // HashMap<String, Double> compositeAverage = generatorTable.getCompositeAverage();
+        // HashMap<GeneralFragmentChoice, Double> fragmentAverage = generatorTable.getFragmentAverage();
 
         // if not zero then the option is true
-        updateByLeastOnce(average, generatorOptions);
+        updateByLeastOnce(generatorAverage, generatorOptions);
         updateByLeastOnce(compositeAverage, compositeGeneratorOptions);
         updateByLeastOnce(fragmentAverage, fragmentOptions);
 
@@ -400,7 +429,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         // Special handling for the untype_expr option
         if (generatorOptions.get(GeneratorNode.UNTYPE_EXPR)) {
             // TODO make it super parameter
-            generatorOptions.put(GeneratorNode.UNTYPE_EXPR, average.get(GeneratorNode.UNTYPE_EXPR) > 0.5);
+            generatorOptions.put(GeneratorNode.UNTYPE_EXPR, generatorAverage.get(GeneratorNode.UNTYPE_EXPR) > 0.5);
         }
     }
 

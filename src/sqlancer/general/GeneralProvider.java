@@ -31,6 +31,7 @@ import sqlancer.general.gen.GeneralIndexGenerator;
 import sqlancer.general.gen.GeneralInsertGenerator;
 import sqlancer.general.gen.GeneralTableGenerator;
 import sqlancer.general.gen.GeneralViewGenerator;
+import sqlancer.general.learner.GeneralFragments;
 
 @AutoService(DatabaseProvider.class)
 public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralGlobalState, GeneralOptions> {
@@ -214,10 +215,10 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 GeneralIndexGenerator.getFragments().dumpFragments(this);
                 GeneralSchema.getFragments().dumpFragments(this);
                 if (status && Randomly.getBooleanWithRatherLowProbability()) {
-                    GeneralTableGenerator.getFragments().updateFragmentsFromLearner(this);
-                    GeneralIndexGenerator.getFragments().updateFragmentsFromLearner(this);
-                    GeneralSchema.getFragments().updateFragmentsFromLearner(this);
-                    // GeneralFunction.getFragments().updateFragmentsFromLearner(this);
+                    // randomly pick one of the fragment to update
+                    GeneralFragments f = Randomly.fromOptions(GeneralTableGenerator.getFragments(),
+                            GeneralIndexGenerator.getFragments(), GeneralSchema.getFragments());
+                    f.updateFragmentsFromLearner(this);
                 }
             }
             if (getDbmsSpecificOptions().enableErrorHandling) {
@@ -446,10 +447,10 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         GeneralSchema.getFragments().updateFragmentsFromLearner(globalState);
         GeneralFunction.getFragments().updateFragmentsFromLearner(globalState);
         // GeneralTableGenerator.getFragments().genLearnStatement(globalState);
-        // GeneralTableGenerator.getFragments().loadFragmentsFromFile(globalState);
+        GeneralTableGenerator.getFragments().loadFragmentsFromFile(globalState);
 
         // GeneralIndexGenerator.getFragments().genLearnStatement(globalState);
-        // GeneralIndexGenerator.getFragments().loadFragmentsFromFile(globalState);
+        GeneralIndexGenerator.getFragments().loadFragmentsFromFile(globalState);
 
         // GeneralTableGenerator.getFragments().updateFragmentsFromLearner(globalState);
         // GeneralIndexGenerator.getFragments().updateFragmentsFromLearner(globalState);
