@@ -199,6 +199,27 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:postgresql://localhost:10011/?user=root");
             }
+
+            @Override
+            public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
+                    throws SQLException {
+                Connection conn = DriverManager.getConnection(getJDBCString(globalState));
+                Statement s = conn.createStatement();
+                s.execute("DROP DATABASE IF EXISTS " + databaseName);
+                globalState.getState().logStatement("DROP DATABASE IF EXISTS " + databaseName);
+                s.execute("CREATE DATABASE " + databaseName);
+                globalState.getState().logStatement("CREATE DATABASE " + databaseName);
+                s.execute("USE " + databaseName);
+                globalState.getState().logStatement("USE " + databaseName);
+                setIsNewSchema(true);
+                s.execute("SET CLUSTER SETTING debug.panic_on_failed_assertions = true;");
+                globalState.getState().logStatement("SET CLUSTER SETTING debug.panic_on_failed_assertions = true;");
+                s.execute("SET CLUSTER SETTING diagnostics.reporting.enabled    = false;");
+                globalState.getState().logStatement("SET CLUSTER SETTING diagnostics.reporting.enabled    = false;");
+                s.execute("SET CLUSTER SETTING diagnostics.reporting.send_crash_reports = false;");
+                globalState.getState().logStatement("SET CLUSTER SETTING diagnostics.reporting.send_crash_reports = false;");
+                return conn;
+            }
         },
         TIDB {
             @Override
