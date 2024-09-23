@@ -31,32 +31,26 @@ public abstract class GeneralFragments {
     protected enum GeneralFragmentVariable {
         RANDOM_INT((g) -> {
             return GeneralConstant.createIntConstant(g.getRandomly().getInteger());
-        }, "Get a random integer. e.g., 42"),
-        RANDOM_STRING((g) -> {
+        }, "Get a random integer. e.g., 42"), RANDOM_STRING((g) -> {
             return GeneralConstant.createVartypeConstant(g.getRandomly().getString());
-        }, "Get a random string without quotes. e.g., hello"),
-        RANDOM_COLUMN((g) -> {
+        }, "Get a random string without quotes. e.g., hello"), RANDOM_COLUMN((g) -> {
             if (g.getUpdateTable() != null) {
                 return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(g.getUpdateTable().getRandomColumn());
             } else {
-            GeneralTable table = g.getSchema().getRandomTable(t -> !t.isView());
+                GeneralTable table = g.getSchema().getRandomTable(t -> !t.isView());
                 return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(table.getRandomColumn());
             }
-        }, "Random column"),
-        RANDOM_POSITIVE_INT((g) -> {
+        }, "Random column"), RANDOM_POSITIVE_INT((g) -> {
             return GeneralConstant.createIntConstant(g.getRandomly().getPositiveIntegerInt());
-        }, "Random positive integer"),
-        RANDOM_DATE((g) -> {
+        }, "Random positive integer"), RANDOM_DATE((g) -> {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             Timestamp timestamp = new Timestamp(g.getRandomly().getInteger());
             return GeneralConstant.createVartypeConstant(dateFormat.format(timestamp));
-        }, "Get a random date. e.g., 2021-01-01"),
-        RANDOM_TIMESTAMP((g) -> {
+        }, "Get a random date. e.g., 2021-01-01"), RANDOM_TIMESTAMP((g) -> {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             Timestamp timestamp = new Timestamp(g.getRandomly().getInteger());
             return GeneralConstant.createVartypeConstant(dateFormat.format(timestamp));
-        }, "Get a random timestamp. e.g., 2021-01-01 00:00:00"),
-        NULL((g) -> {
+        }, "Get a random timestamp. e.g., 2021-01-01 00:00:00"), NULL((g) -> {
             return null;
         }) {
             @Override
@@ -112,7 +106,8 @@ public abstract class GeneralFragments {
 
         @Override
         public String toString() {
-            String fragmentName = String.format(fmtString, vars.stream().map(var -> String.format("<%s>", var.name())).toArray());
+            String fragmentName = String.format(fmtString,
+                    vars.stream().map(var -> String.format("<%s>", var.name())).toArray());
             return String.format("%s-%s-%s", getStatementType(), key, fragmentName);
         }
 
@@ -229,7 +224,7 @@ public abstract class GeneralFragments {
     }
 
     protected void validateFragment(String fmtString, List<GeneralFragmentVariable> vars) {
-        String.format(fmtString, vars.stream().map(var -> var.name()).toArray());  
+        String.format(fmtString, vars.stream().map(var -> var.name()).toArray());
     }
 
     protected void parseFragments(String[] s) {
@@ -257,11 +252,11 @@ public abstract class GeneralFragments {
             vars.add(GeneralFragmentVariable.valueOf(content.toUpperCase()));
         }
         matcher.appendTail(fmtString);
-        
+
         addFragment(key, fmtString.toString(), vars);
 
     }
-    
+
     public synchronized void updateFragmentByFeedback(GeneralErrorHandler handler) {
         // Iterate the fragments and remove the ones that are not useful
         for (String key : fragments.keySet()) {
@@ -289,11 +284,11 @@ public abstract class GeneralFragments {
         }
         // printFragments();
     }
-    
+
     protected String getSystemPrompt() {
         return "This GPT is an expert in SQL dialects. It helps users generate correct SQL statements for different DBMSs. Users specify a DBMS and provide a SQL template with SQL keywords and placeholders. The GPT fills placeholders with concrete string alternatives unless the user specifies variables. The response is a CSV file with two columns: one for placeholders (without brackets) and one for alternatives, without a header. Each alternative is split into separate rows. Provide as many and detailed answers as possible for each placeholder. Be rare and complex. Avoid explanations.";
     }
-    
+
     public void printFragments() {
         System.out.println(String.format("Fragments for %s", getStatementType()));
         for (String key : fragments.keySet()) {
@@ -307,7 +302,8 @@ public abstract class GeneralFragments {
     public void dumpFragments(GeneralGlobalState globalState) {
         System.out.println(String.format("Dumping fragments for %s", getStatementType()));
         File dir = globalState.getLogger().getLearnerFileDir();
-        try (FileWriter writer = new FileWriter(new File(dir, String.format("%s-%s-config.txt", globalState.getDatabaseName(), getStatementType())))) {
+        try (FileWriter writer = new FileWriter(
+                new File(dir, String.format("%s-%s-config.txt", globalState.getDatabaseName(), getStatementType())))) {
             for (String key : fragments.keySet()) {
                 for (GeneralFragmentChoice choice : fragments.get(key)) {
                     writer.write(String.format("%s,%s\n", key, choice.getFragmentName()));
@@ -328,7 +324,7 @@ public abstract class GeneralFragments {
         }
         return sb.toString();
     }
-    
+
     // TODO: load the examples from the configs
     protected String getExamples() {
         return "";

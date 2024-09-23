@@ -45,8 +45,12 @@ public final class GeneralExpressionGenerator
     }
 
     private enum Expression {
-        UNARY_POSTFIX(GeneralUnaryPostfixOperator.values().length), UNARY_PREFIX(GeneralUnaryPrefixOperator.values().length), BINARY_COMPARISON(GeneralBinaryComparisonOperator.values().length), BINARY_LOGICAL(GeneralBinaryLogicalOperator.values().length), BINARY_ARITHMETIC(GeneralBinaryArithmeticOperator.values().length), CAST(GeneralCastOperator.values().length), FUNC(GeneralFunction.getNrFunctionsNum() / 10), BETWEEN(1), CASE(1),
-        IN(1);
+        UNARY_POSTFIX(GeneralUnaryPostfixOperator.values().length),
+        UNARY_PREFIX(GeneralUnaryPrefixOperator.values().length),
+        BINARY_COMPARISON(GeneralBinaryComparisonOperator.values().length),
+        BINARY_LOGICAL(GeneralBinaryLogicalOperator.values().length),
+        BINARY_ARITHMETIC(GeneralBinaryArithmeticOperator.values().length), CAST(GeneralCastOperator.values().length),
+        FUNC(GeneralFunction.getNrFunctionsNum() / 10), BETWEEN(1), CASE(1), IN(1);
 
         private int numOptions;
 
@@ -54,9 +58,9 @@ public final class GeneralExpressionGenerator
             this.numOptions = numOptions;
         }
 
-        private static double getTotal(){
+        private static double getTotal() {
             double total = 0;
-            for (Expression e : Expression.values()){
+            for (Expression e : Expression.values()) {
                 total += e.numOptions;
             }
             return total;
@@ -68,10 +72,10 @@ public final class GeneralExpressionGenerator
             double sum = 0;
             for (Expression e : Expression.values()) {
                 sum += e.numOptions / total;
-                if (!handler.getOption(GeneratorNode.valueOf(e.toString()))){
+                if (!handler.getOption(GeneratorNode.valueOf(e.toString()))) {
                     continue;
                 }
-                if (rand < sum){
+                if (rand < sum) {
                     return e;
                 }
             }
@@ -112,8 +116,8 @@ public final class GeneralExpressionGenerator
         case FUNC:
             // GeneralDBFunction func = GeneralDBFunction.getRandomByOptions(handler);
             GeneralFunction func = GeneralFunction.getRandomByOptions(handler);
-            return new NewFunctionNode<GeneralExpression, GeneralFunction>(generateExpressions(func.getNrArgs(), depth + 1),
-                    func);
+            return new NewFunctionNode<GeneralExpression, GeneralFunction>(
+                    generateExpressions(func.getNrArgs(), depth + 1), func);
         case BETWEEN:
             return new NewBetweenOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     generateExpression(depth + 1), generateExpression(depth + 1), Randomly.getBoolean());

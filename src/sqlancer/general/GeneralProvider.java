@@ -96,7 +96,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             return r.getInteger(1, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
         // case VACUUM: // seems to be ignored
         case ANALYZE: // seems to be ignored
-        return r.getInteger(0, 2);
+            return r.getInteger(0, 2);
         // case DELETE:
         // return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumDeletes +
         // 1);
@@ -150,7 +150,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         }
 
         @Override
-        public void updateSchema(){
+        public void updateSchema() {
             if (updateTable != null) {
                 List<GeneralTable> databaseTables = new ArrayList<>(schema.getDatabaseTables());
                 boolean found = false;
@@ -186,7 +186,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
         @Override
         protected GeneralSchema readSchema() throws SQLException {
-            //TODO refactor things here
+            // TODO refactor things here
             return schema;
         }
 
@@ -259,7 +259,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         }
 
         public File getConfigDirectory() {
-            return new File(CONFIG_DIRECTORY, getDbmsSpecificOptions().getDatabaseEngineFactory().toString().toLowerCase());
+            return new File(CONFIG_DIRECTORY,
+                    getDbmsSpecificOptions().getDatabaseEngineFactory().toString().toLowerCase());
         }
 
     }
@@ -269,7 +270,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     protected void checkViewsAreValid(GeneralGlobalState globalState) {
         List<GeneralTable> views = globalState.getSchema().getViews();
         for (GeneralTable view : views) {
-            SQLQueryAdapter q = new SQLQueryAdapter("SELECT * FROM " + view.getName(), new ExpectedErrors(), false,globalState.getOptions().canonicalizeSqlString());
+            SQLQueryAdapter q = new SQLQueryAdapter("SELECT * FROM " + view.getName(), new ExpectedErrors(), false,
+                    globalState.getOptions().canonicalizeSqlString());
             try {
                 if (!q.execute(globalState)) {
                     dropView(globalState, view.getName());
@@ -288,7 +290,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             }
         }
         // check if query result is larger than 1000 rows
-        SQLQueryAdapter q2 = new SQLQueryAdapter(sb, new ExpectedErrors(), false,globalState.getOptions().canonicalizeSqlString());
+        SQLQueryAdapter q2 = new SQLQueryAdapter(sb, new ExpectedErrors(), false,
+                globalState.getOptions().canonicalizeSqlString());
         SQLancerResultSet resultSet;
         try {
             resultSet = q2.executeAndGet(globalState);
@@ -304,11 +307,11 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                         dropView(globalState, view.getName());
                     }
                 }
-            } 
+            }
         } catch (Throwable t) {
             throw new AssertionError(t);
         }
-        if (globalState.getOptions().debugLogs()){
+        if (globalState.getOptions().debugLogs()) {
             globalState.getSchema().printTables();
         }
     }
@@ -333,7 +336,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
     public boolean checkTableIsValid(GeneralGlobalState globalState, String tableName) {
         globalState.getLogger().writeCurrent("SELECT * FROM " + tableName);
-        SQLQueryAdapter q = new SQLQueryAdapter("SELECT * FROM " + tableName, new ExpectedErrors(), false,globalState.getOptions().canonicalizeSqlString());
+        SQLQueryAdapter q = new SQLQueryAdapter("SELECT * FROM " + tableName, new ExpectedErrors(), false,
+                globalState.getOptions().canonicalizeSqlString());
         try {
             if (!q.execute(globalState)) {
                 dropTable(globalState, tableName);
@@ -391,8 +395,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         if (globalState.getSchema().getDatabaseTables().isEmpty()) {
             throw new AssertionError("Failed to create any table"); // TODO
         }
-        StatementExecutor<GeneralGlobalState, Action> se = new StatementExecutor<>(globalState, Action.getAvailableActions(globalState.getHandler()),
-                GeneralProvider::mapActions, (q) -> {
+        StatementExecutor<GeneralGlobalState, Action> se = new StatementExecutor<>(globalState,
+                Action.getAvailableActions(globalState.getHandler()), GeneralProvider::mapActions, (q) -> {
                     if (globalState.getSchema().getDatabaseTables().isEmpty()) {
                         throw new IgnoreMeException();
                     }

@@ -217,7 +217,8 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
                 s.execute("SET CLUSTER SETTING diagnostics.reporting.enabled    = false;");
                 globalState.getState().logStatement("SET CLUSTER SETTING diagnostics.reporting.enabled    = false;");
                 s.execute("SET CLUSTER SETTING diagnostics.reporting.send_crash_reports = false;");
-                globalState.getState().logStatement("SET CLUSTER SETTING diagnostics.reporting.send_crash_reports = false;");
+                globalState.getState()
+                        .logStatement("SET CLUSTER SETTING diagnostics.reporting.send_crash_reports = false;");
                 return conn;
             }
         },
@@ -377,7 +378,8 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             }
 
             @Override
-            public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName) throws SQLException {
+            public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
+                    throws SQLException {
                 Connection conn = DriverManager.getConnection(getJDBCString(globalState));
                 for (int i = 0; i < 100; i++) {
                     try (Statement s = conn.createStatement()) {
@@ -403,8 +405,7 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
                 }
                 return conn;
             }
-        },
-        ;
+        },;
 
         private boolean isNewSchema = true;
 

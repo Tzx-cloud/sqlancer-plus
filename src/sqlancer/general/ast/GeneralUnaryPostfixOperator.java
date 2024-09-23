@@ -42,7 +42,9 @@ public enum GeneralUnaryPostfixOperator implements Operator {
         do {
             op = Randomly.fromOptions(values());
             node = GeneratorNode.valueOf(op.toString());
-        } while (!handler.getOption(node) || !handler.getCompositeOption(node.toString(), type.getPrimitiveDataType().toString())|| !Randomly.getBooleanWithSmallProbability());
+        } while (!handler.getOption(node)
+                || !handler.getCompositeOption(node.toString(), type.getPrimitiveDataType().toString())
+                || !Randomly.getBooleanWithSmallProbability());
         handler.addScore(node);
         handler.addScore(node.toString() + "-" + type.getPrimitiveDataType().toString());
         return op;

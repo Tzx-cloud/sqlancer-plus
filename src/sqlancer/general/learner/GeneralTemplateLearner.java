@@ -18,7 +18,6 @@ public class GeneralTemplateLearner implements FeatureLearner {
     private final String chat_url = "https://api.openai.com/v1/chat/completions";
     private final String apiKey = System.getenv("OPENAI_API_KEY");
 
-    
     private String raw_fragments = "";
     private GeneralGlobalState globalState;
     private String stmt_type;
@@ -41,7 +40,8 @@ public class GeneralTemplateLearner implements FeatureLearner {
         raw_fragments = process(response);
     }
 
-    public GeneralTemplateLearner(GeneralGlobalState globalState, String stmt_type, String template, String variables, String system_prompt) {
+    public GeneralTemplateLearner(GeneralGlobalState globalState, String stmt_type, String template, String variables,
+            String system_prompt) {
         this.globalState = globalState;
         this.stmt_type = stmt_type;
         this.template = template;
@@ -93,9 +93,7 @@ public class GeneralTemplateLearner implements FeatureLearner {
         String system = system_prompt;
         String user = String.format("DBMS: %s\n" + //
                 "Reference: %s\n" + //
-                "Template: %s\n",
-                globalState.getDbmsSpecificOptions().getDatabaseEngineFactory().toString(),
-                url,
+                "Template: %s\n", globalState.getDbmsSpecificOptions().getDatabaseEngineFactory().toString(), url,
                 template);
         if (variables != "") {
             user += "Available variables and their descriptions:\n" + variables;
@@ -146,12 +144,8 @@ public class GeneralTemplateLearner implements FeatureLearner {
 
         RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json; charset=utf-8"));
 
-        Request request = new Request.Builder()
-                .url(chat_url)
-                .post(body)
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", "Bearer " + apiKey)
-                .build();
+        Request request = new Request.Builder().url(chat_url).post(body).addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", "Bearer " + apiKey).build();
         Response response = client.newCall(request).execute();
         return response.body().string();
     }

@@ -2,7 +2,7 @@ package sqlancer.general.learner;
 
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 
-public class GeneralStringBuilder <E extends GeneralFragments>{
+public class GeneralStringBuilder<E extends GeneralFragments> {
 
     private StringBuilder sb;
     private E fragments;

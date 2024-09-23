@@ -62,12 +62,13 @@ public class GeneralInsertGenerator extends AbstractInsertGenerator<GeneralColum
 
     @Override
     protected void insertValue(GeneralColumn columnGeneral) {
-        if (globalState.getHandler().getOption(GeneratorNode.UNTYPE_EXPR) || Randomly.getBooleanWithSmallProbability()) {
+        if (globalState.getHandler().getOption(GeneratorNode.UNTYPE_EXPR)
+                || Randomly.getBooleanWithSmallProbability()) {
             sb.append(GeneralToStringVisitor.asString(new GeneralExpressionGenerator(globalState).generateConstant()));
         } else {
             GeneralCompositeDataType columnType = columnGeneral.getType();
-            sb.append(GeneralToStringVisitor.asString(
-                    new GeneralTypedExpressionGenerator(globalState).generateConstant(columnType)));
+            sb.append(GeneralToStringVisitor
+                    .asString(new GeneralTypedExpressionGenerator(globalState).generateConstant(columnType)));
         }
     }
 

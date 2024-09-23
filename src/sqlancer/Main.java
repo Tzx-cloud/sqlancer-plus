@@ -501,8 +501,8 @@ public final class Main {
                             + reproducer.getErrorMessage());
                 } else {
                     if (reproducer != null) {
-                        throw new AssertionError("Found a potential bug, please check log for detail.\n"
-                                + reproducer.getErrorMessage());
+                        throw new AssertionError(
+                                "Found a potential bug, please check log for detail.\n" + reproducer.getErrorMessage());
                     }
                 }
             }
@@ -662,7 +662,8 @@ public final class Main {
                         // run without a limit if maxNrDbs == -1
                         for (int i = 0; i < maxNrDbs || maxNrDbs == -1; i++) {
                             String postfix = options.keepLogs() ? "_" + i : "";
-                            Boolean continueRunning = run(options, execService, executorFactory, r, databaseName + postfix);
+                            Boolean continueRunning = run(options, execService, executorFactory, r,
+                                    databaseName + postfix);
                             if (!continueRunning) {
                                 someOneFails.set(true);
                                 break;

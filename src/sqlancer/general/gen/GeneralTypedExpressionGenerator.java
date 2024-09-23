@@ -68,7 +68,8 @@ public class GeneralTypedExpressionGenerator
 
     @Override
     public List<Node<GeneralExpression>> generateOrderBys() {
-        HashMap<String, Integer> tmpCompositeScore = new HashMap<>(globalState.getHandler().getGeneratorInfo().getCompositeGeneratorScore());
+        HashMap<String, Integer> tmpCompositeScore = new HashMap<>(
+                globalState.getHandler().getGeneratorInfo().getCompositeGeneratorScore());
         // globalState.getLogger().writeCurrent("-- " + tmpCompositeScore);
         List<Node<GeneralExpression>> expr = super.generateOrderBys();
         List<Node<GeneralExpression>> orderingTerms = new ArrayList<>(expr.size());
@@ -79,21 +80,23 @@ public class GeneralTypedExpressionGenerator
             orderingTerms.add(curExpr);
         }
         globalState.getHandler().loadCompositeScore(tmpCompositeScore);
-        // globalState.getLogger().writeCurrent("-- " + globalState.getHandler().getGeneratorInfo().getCompositeGeneratorScore());
+        // globalState.getLogger().writeCurrent("-- " +
+        // globalState.getHandler().getGeneratorInfo().getCompositeGeneratorScore());
         return orderingTerms;
     }
 
     // public List<GeneralDBFunction> getFunctionsCompatibleWith(GeneralCompositeDataType returnType) {
-    //     return Stream.of(GeneralDBFunction.values())
-    //             .filter(f -> globalState.getHandler().getCompositeOption(f.toString(), returnType.toString()))
-    //             .collect(Collectors.toList());
+    // return Stream.of(GeneralDBFunction.values())
+    // .filter(f -> globalState.getHandler().getCompositeOption(f.toString(), returnType.toString()))
+    // .collect(Collectors.toList());
     // }
 
     public List<GeneralFunction> getFunctionsCompatibleWith(GeneralCompositeDataType returnType) {
         return GeneralFunction.getRandomCompatibleFunctions(globalState.getHandler(), returnType);
     }
 
-    private List<Node<GeneralExpression>> generateFunctionExpressions(GeneralFunction function, int depth, GeneralErrorHandler handler) {
+    private List<Node<GeneralExpression>> generateFunctionExpressions(GeneralFunction function, int depth,
+            GeneralErrorHandler handler) {
         List<Node<GeneralExpression>> args = new ArrayList<>();
         for (int i = 0; i < function.getNrArgs(); i++) {
             final int ind = i;
@@ -105,7 +108,7 @@ public class GeneralTypedExpressionGenerator
             nullFlag = false;
             Node<GeneralExpression> newExpr = generateExpression(type, depth);
             args.add(newExpr);
-            // check if newExpr is a 
+            // check if newExpr is a
             if (!nullFlag) {
                 String key = function.toString() + "-" + ind + type.toString();
                 handler.addScore(key);
@@ -174,7 +177,9 @@ public class GeneralTypedExpressionGenerator
                             generateExpression(GeneralDataType.INT.get(), depth + 1),
                             GeneralBinaryArithmeticOperator.getRandomByOptions(globalState.getHandler()));
                 } else {
-                    return new NewUnaryPrefixOperatorNode<GeneralExpression>(generateExpression(GeneralDataType.INT.get(), depth + 1), GeneralUnaryPrefixOperator.getRandomByOptions(globalState.getHandler(), GeneralDataType.INT.get()));
+                    return new NewUnaryPrefixOperatorNode<GeneralExpression>(
+                            generateExpression(GeneralDataType.INT.get(), depth + 1), GeneralUnaryPrefixOperator
+                                    .getRandomByOptions(globalState.getHandler(), GeneralDataType.INT.get()));
                 }
             case STRING:
                 // case BYTES: // TODO split
@@ -213,7 +218,10 @@ public class GeneralTypedExpressionGenerator
 
     private enum BooleanExpression {
         // NOT, COMPARISON, AND_OR_CHAIN, REGEX, IS_NULL, IS_NAN, IN, BETWEEN, MULTI_VALUED_COMPARISON
-        UNARY_PREFIX(GeneralUnaryPrefixOperator.values().length), BINARY_COMPARISON(GeneralBinaryComparisonOperator.values().length), BINARY_LOGICAL(GeneralBinaryLogicalOperator.values().length), UNARY_POSTFIX(GeneralUnaryPostfixOperator.values().length), IN(1), BETWEEN(1);
+        UNARY_PREFIX(GeneralUnaryPrefixOperator.values().length),
+        BINARY_COMPARISON(GeneralBinaryComparisonOperator.values().length),
+        BINARY_LOGICAL(GeneralBinaryLogicalOperator.values().length),
+        UNARY_POSTFIX(GeneralUnaryPostfixOperator.values().length), IN(1), BETWEEN(1);
 
         private final int proportion;
 

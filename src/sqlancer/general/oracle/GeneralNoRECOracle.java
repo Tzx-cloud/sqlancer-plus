@@ -99,8 +99,7 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
                 }
                 if (firstCount != secondCount) {
                     throw new AssertionError(
-                            firstQueryString + "; -- " + firstCount + "\n" + secondQueryString + " -- "
-                                    + secondCount);
+                            firstQueryString + "; -- " + firstCount + "\n" + secondQueryString + " -- " + secondCount);
                 }
             } catch (AssertionError triggeredError) {
                 this.errorMessage = triggeredError.getMessage();
@@ -140,8 +139,7 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
             state.getHandler().appendScoreToTable(true, true);
             String errorMessage = optimizedQueryString + "; -- " + firstCount + "\n" + unoptimizedQueryString + " -- "
                     + secondCount;
-            reproducer = new GeneralNoRECReproducer(unoptimizedQueryString, optimizedQueryString,
-                    errorMessage);
+            reproducer = new GeneralNoRECReproducer(unoptimizedQueryString, optimizedQueryString, errorMessage);
             throw new AssertionError(errorMessage);
         }
         state.getHandler().appendScoreToTable(true, true);
@@ -154,7 +152,7 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
         // GeneralExpression isTrue =
         // GeneralPostfixOperation.create(randomWhereCondition,
         // PostfixOperator.IS_TRUE);
-        Node<GeneralExpression> asText = new NewPostfixTextNode<GeneralExpression>(randomWhereCondition," IS TRUE ");
+        Node<GeneralExpression> asText = new NewPostfixTextNode<GeneralExpression>(randomWhereCondition, " IS TRUE ");
         select.setFetchColumns(Arrays.asList(asText));
         select.setFromList(tableList);
         // select.setSelectType(SelectType.ALL);

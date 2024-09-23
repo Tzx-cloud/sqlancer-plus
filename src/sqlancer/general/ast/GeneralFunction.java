@@ -61,7 +61,8 @@ public class GeneralFunction {
                         functions.keySet().stream().filter(f -> functions.get(f) == ind).collect(Collectors.toList()));
                 sb.append(String.format("%d,%s\n", i, funcName));
             }
-            sb.append("Note: DO NOT include functions that may generate data according to arguments. For example, REPEAT, LPAD, RPAD, etc.\n");
+            sb.append(
+                    "Note: DO NOT include functions that may generate data according to arguments. For example, REPEAT, LPAD, RPAD, etc.\n");
             return sb.toString();
         }
 

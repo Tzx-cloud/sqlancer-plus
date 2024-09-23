@@ -8,8 +8,8 @@ import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 
 public enum GeneralBinaryComparisonOperator implements Operator {
     EQUALS("="), GREATER(">"), GREATER_EQUALS(">="), SMALLER("<"), SMALLER_EQUALS("<="), NOT_EQUALS("!="),
-    NOT_EQUALS2("<>"), DISTINCT("IS DISTINCT FROM"), NOT_DISTINCT("IS NOT DISTINCT FROM"),
-    LIKE("LIKE"), NOT_LIKE("NOT LIKE"),
+    NOT_EQUALS2("<>"), DISTINCT("IS DISTINCT FROM"), NOT_DISTINCT("IS NOT DISTINCT FROM"), LIKE("LIKE"),
+    NOT_LIKE("NOT LIKE"),
     // MYSQL
     IS("IS"), IS_NOT("IS NOT"), EQUALS2("<=>");
     // SIMILAR_TO("SIMILAR TO"),
@@ -43,7 +43,9 @@ public enum GeneralBinaryComparisonOperator implements Operator {
         do {
             op = Randomly.fromOptions(values());
             node = GeneratorNode.valueOf(op.toString());
-        } while (!handler.getOption(node) || !handler.getCompositeOption(node.toString(), type.getPrimitiveDataType().toString())|| !Randomly.getBooleanWithSmallProbability());
+        } while (!handler.getOption(node)
+                || !handler.getCompositeOption(node.toString(), type.getPrimitiveDataType().toString())
+                || !Randomly.getBooleanWithSmallProbability());
         handler.addScore(node);
         handler.addScore(node.toString() + "-" + type.getPrimitiveDataType().toString());
         return op;

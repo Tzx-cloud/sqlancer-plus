@@ -56,8 +56,7 @@ public class GeneralTableGenerator {
             tableName = globalState.getSchema().getFreeTableName();
         } else {
             tableName = String.format("%s%s%s", globalState.getDatabaseName(),
-                    globalState.getDbmsSpecificOptions().dbTableDelim,
-                    globalState.getSchema().getFreeTableName());
+                    globalState.getDbmsSpecificOptions().dbTableDelim, globalState.getSchema().getFreeTableName());
         }
         GeneralStringBuilder<GeneralTableFragments> sb = new GeneralStringBuilder<GeneralTableFragments>(globalState,
                 fragments);
@@ -75,7 +74,7 @@ public class GeneralTableGenerator {
             }
             sb.append(columns.get(i).getName());
             sb.append(" ");
-            sb.append(String.format("%s ",columns.get(i).getType()), 1);
+            sb.append(String.format("%s ", columns.get(i).getType()), 1);
         }
         List<GeneralColumn> columnsToAdd = new ArrayList<>();
         if (globalState.getDbmsSpecificOptions().testIndexes && !Randomly.getBooleanWithRatherLowProbability()) {
@@ -112,8 +111,7 @@ public class GeneralTableGenerator {
             globalState.getHandler().addScore(GeneratorNode.COLUMN_NUM);
             GeneralCompositeDataType columnType = GeneralCompositeDataType.getRandomWithoutNull();
             // TODO Handle IllegalArgumentExeption?
-            globalState.getHandler()
-                    .addScore("COLUMN-" + columnType.toString());
+            globalState.getHandler().addScore("COLUMN-" + columnType.toString());
             columns.add(new GeneralColumn(columnName, columnType, false, false));
         }
         return columns;

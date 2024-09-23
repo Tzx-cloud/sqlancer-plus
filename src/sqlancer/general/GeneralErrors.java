@@ -13,7 +13,6 @@ public final class GeneralErrors {
         errors.addRegex(Pattern.compile(".*", Pattern.DOTALL));
     }
 
-
     public static void addInsertErrors(ExpectedErrors errors) {
         errors.addRegex(Pattern.compile(".*", Pattern.DOTALL));
     }

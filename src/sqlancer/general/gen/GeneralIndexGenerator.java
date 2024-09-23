@@ -27,7 +27,6 @@ public final class GeneralIndexGenerator {
     private static final String CONFIG_NAME = "indexgenerator.txt";
     private static final String STATEMENT = "CREATE_INDEX";
 
-
     private final static class GeneralIndexFragments extends GeneralFragments {
         public GeneralIndexFragments() {
             super();
@@ -84,7 +83,7 @@ public final class GeneralIndexGenerator {
             sb.append(columns.get(i).getName());
             sb.append(" ", 1);
             // if (Randomly.getBooleanWithRatherLowProbability()) {
-            //     sb.append(Randomly.fromOptions("ASC", "DESC"));
+            // sb.append(Randomly.fromOptions("ASC", "DESC"));
             // }
         }
         sb.append(")", 2);

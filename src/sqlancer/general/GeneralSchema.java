@@ -65,10 +65,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
 
         @Override
         protected String getExamples() {
-            return "INT,<RANDOM_INT>\n"
-                    + "VARCHAR,'<RANDOM_STRING>'\n"
-                    + "BOOLEAN,TRUE\n"
-                    + "DATE,'<RANDOM_DATE>'\n"
+            return "INT,<RANDOM_INT>\n" + "VARCHAR,'<RANDOM_STRING>'\n" + "BOOLEAN,TRUE\n" + "DATE,'<RANDOM_DATE>'\n"
                     + "DATE,'2021-01-01'\n";
         }
 
@@ -135,7 +132,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                     typeAvailabilityMap.put(key, true);
                 }
             }
-            
+
         }
 
         @Override
@@ -263,29 +260,29 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             GeneralDataType type = GeneralDataType.getRandomWithProb();
             int typeID = -1;
             switch (type) {
-                case INT:
-                    typeID = Randomly.fromOptions(1, 2, 4, 8);
-                    break;
-                // case FLOAT:
-                // size = Randomly.fromOptions(4, 8);
-                // break;
-                case BOOLEAN:
-                case STRING:
-                    // case DATE:
-                    // case TIMESTAMP:
-                    if (Randomly.getBoolean()) {
-                        typeID = 500; // As MySQL Generator here is 500
-                    } else {
-                        typeID = 0;
-                    }
-                    break;
-                case VARTYPE:
-                    // pick a random type id from the typeMap
-                    // TODO an exception here
-                    typeID = Randomly.fromList(List.copyOf(typeMap.keySet()));
-                    break;
-                default:
-                    throw new AssertionError(type);
+            case INT:
+                typeID = Randomly.fromOptions(1, 2, 4, 8);
+                break;
+            // case FLOAT:
+            // size = Randomly.fromOptions(4, 8);
+            // break;
+            case BOOLEAN:
+            case STRING:
+                // case DATE:
+                // case TIMESTAMP:
+                if (Randomly.getBoolean()) {
+                    typeID = 500; // As MySQL Generator here is 500
+                } else {
+                    typeID = 0;
+                }
+                break;
+            case VARTYPE:
+                // pick a random type id from the typeMap
+                // TODO an exception here
+                typeID = Randomly.fromList(List.copyOf(typeMap.keySet()));
+                break;
+            default:
+                throw new AssertionError(type);
             }
 
             return new GeneralCompositeDataType(type, typeID);
@@ -294,23 +291,23 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         @Override
         public String toString() {
             switch (getPrimitiveDataType()) {
-                case INT:
-                    return Randomly.fromOptions("INT");
-                case STRING:
-                    if (id == 0) {
-                        return "VARCHAR";
-                    } else {
-                        return "VARCHAR(" + id + ")";
-                    }
-                case BOOLEAN:
-                    return Randomly.fromOptions("BOOLEAN");
-                case NULL:
-                    return Randomly.fromOptions("NULL");
-                case VARTYPE:
-                    // TODO catch exception here
-                    return typeMap.get(id).toUpperCase();
-                default:
-                    throw new AssertionError(getPrimitiveDataType());
+            case INT:
+                return Randomly.fromOptions("INT");
+            case STRING:
+                if (id == 0) {
+                    return "VARCHAR";
+                } else {
+                    return "VARCHAR(" + id + ")";
+                }
+            case BOOLEAN:
+                return Randomly.fromOptions("BOOLEAN");
+            case NULL:
+                return Randomly.fromOptions("NULL");
+            case VARTYPE:
+                // TODO catch exception here
+                return typeMap.get(id).toUpperCase();
+            default:
+                throw new AssertionError(getPrimitiveDataType());
             }
         }
 

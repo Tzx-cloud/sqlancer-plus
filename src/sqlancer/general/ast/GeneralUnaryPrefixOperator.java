@@ -10,8 +10,7 @@ public enum GeneralUnaryPrefixOperator implements Operator {
 
     NOT("NOT"), PLUS("+"), MINUS("-"),
     // PostgreSQL
-    SQT_ROOT("|/"), ABS_VAL("@"), BIT_NOT("~"), CUBE_ROOT("||/"),
-    ;
+    SQT_ROOT("|/"), ABS_VAL("@"), BIT_NOT("~"), CUBE_ROOT("||/"),;
 
     private String textRepr;
 
@@ -39,13 +38,16 @@ public enum GeneralUnaryPrefixOperator implements Operator {
         return op;
     }
 
-    public static GeneralUnaryPrefixOperator getRandomByOptions(GeneralErrorHandler handler, GeneralCompositeDataType type) {
+    public static GeneralUnaryPrefixOperator getRandomByOptions(GeneralErrorHandler handler,
+            GeneralCompositeDataType type) {
         GeneralUnaryPrefixOperator op;
         GeneratorNode node;
         do {
             op = Randomly.fromOptions(values());
             node = GeneratorNode.valueOf("U" + op.toString());
-        } while (!handler.getOption(node) || !handler.getCompositeOption(node.toString(), type.getPrimitiveDataType().toString())|| !Randomly.getBooleanWithSmallProbability());
+        } while (!handler.getOption(node)
+                || !handler.getCompositeOption(node.toString(), type.getPrimitiveDataType().toString())
+                || !Randomly.getBooleanWithSmallProbability());
         handler.addScore(node);
         handler.addScore(node.toString() + "-" + type.getPrimitiveDataType().toString());
         return op;

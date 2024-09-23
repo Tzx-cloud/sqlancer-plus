@@ -107,7 +107,8 @@ public class GeneralJoin implements Node<GeneralExpression> {
             List<GeneralColumn> columns = new ArrayList<>(leftTable.getTable().getColumns());
             columns.addAll(rightTable.getTable().getColumns());
             ExpressionGenerator<Node<GeneralExpression>> joinGen;
-            if(globalState.getHandler().getOption(GeneratorNode.UNTYPE_EXPR) || Randomly.getBooleanWithSmallProbability()) {
+            if (globalState.getHandler().getOption(GeneratorNode.UNTYPE_EXPR)
+                    || Randomly.getBooleanWithSmallProbability()) {
                 joinGen = new GeneralExpressionGenerator(globalState).setColumns(columns);
             } else {
                 joinGen = new GeneralTypedExpressionGenerator(globalState).setColumns(columns);

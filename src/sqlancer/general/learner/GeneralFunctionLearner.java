@@ -8,7 +8,7 @@ import sqlancer.general.ast.GeneralFunction;
 public class GeneralFunctionLearner implements FeatureLearner {
     private static HashMap<String, Integer> functions = new HashMap<>();
 
-    @Override 
+    @Override
     public void learn() {
     }
 
