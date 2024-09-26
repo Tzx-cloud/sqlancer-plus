@@ -21,7 +21,7 @@ public final class GeneralDeleteGenerator {
         if (Randomly.getBoolean()) {
             sb.append(" WHERE ");
             sb.append(GeneralToStringVisitor.asString(
-                    new GeneralExpressionGenerator(globalState).setColumns(table.getColumns()).generateExpression()));
+                    GeneralRandomQuerySynthesizer.getExpressionGenerator(globalState, table.getColumns()).generateExpression()));
         }
         GeneralErrors.addExpressionErrors(errors);
         return new SQLQueryAdapter(sb.toString(), errors);

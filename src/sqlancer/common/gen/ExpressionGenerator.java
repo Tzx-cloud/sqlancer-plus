@@ -38,4 +38,6 @@ public interface ExpressionGenerator<E> {
     E generateHavingClause();
 
     List<E> generateExpressions(int nr);
+
+    E generateConstant();
 }

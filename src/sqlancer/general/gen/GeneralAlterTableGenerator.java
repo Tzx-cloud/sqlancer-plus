@@ -1,10 +1,15 @@
 package sqlancer.general.gen;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import sqlancer.Randomly;
 import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.SQLQueryAdapter;
+import sqlancer.common.schema.TableIndex;
 import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
+import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralToStringVisitor;
@@ -20,10 +25,12 @@ public final class GeneralAlterTableGenerator {
 
     public static SQLQueryAdapter getQuery(GeneralGlobalState globalState) {
         ExpectedErrors errors = new ExpectedErrors();
-        errors.add(" does not have a column with name \"rowid\"");
-        errors.add("Table does not contain column rowid referenced in alter statement");
+        GeneralErrors.addExpressionErrors(errors);
+        boolean couldAffectSchema = true;
         StringBuilder sb = new StringBuilder("ALTER TABLE ");
         GeneralTable table = globalState.getSchema().getRandomTable(t -> !t.isView());
+        List<GeneralColumn> columnsToChange = new ArrayList<>(table.getColumns());
+        List<TableIndex> indexes = new ArrayList<>(table.getIndexes());
         GeneralExpressionGenerator gen = new GeneralExpressionGenerator(globalState).setColumns(table.getColumns());
         sb.append(table.getName());
         sb.append(" ");
@@ -34,37 +41,36 @@ public final class GeneralAlterTableGenerator {
             String columnName = table.getFreeColumnName();
             sb.append(columnName);
             sb.append(" ");
-            sb.append(GeneralCompositeDataType.getRandomWithoutNull().toString());
+            GeneralCompositeDataType columnType = GeneralCompositeDataType.getRandomWithoutNull();
+            sb.append(columnType.toString());
+            columnsToChange.add(new GeneralColumn(columnName, columnType, false, false));
             break;
         case ALTER_COLUMN:
             sb.append("ALTER COLUMN ");
-            sb.append(table.getRandomColumn().getName());
+            String columnNameChange = table.getRandomColumn().getName();
+            sb.append(columnNameChange);
             sb.append(" SET DATA TYPE ");
             sb.append(GeneralCompositeDataType.getRandomWithoutNull().toString());
             if (Randomly.getBoolean()) {
                 sb.append(" USING ");
-                GeneralErrors.addExpressionErrors(errors);
                 sb.append(GeneralToStringVisitor.asString(gen.generateExpression()));
             }
-            errors.add("Cannot change the type of this column: an index depends on it!");
-            errors.add("Cannot change the type of a column that has a UNIQUE or PRIMARY KEY constraint specified");
-            errors.add("Unimplemented type for cast");
-            errors.add("Conversion:");
-            errors.add("Cannot change the type of a column that has a CHECK constraint specified");
+            // no need to change the schema
+            couldAffectSchema = false;
             break;
         case DROP_COLUMN:
             sb.append("DROP COLUMN ");
-            sb.append(table.getRandomColumn().getName());
-            errors.add("named in key does not exist"); // TODO
-            errors.add("Cannot drop this column:");
-            errors.add("Cannot drop column: table only has one column remaining!");
-            errors.add("because there is a CHECK constraint that depends on it");
-            errors.add("because there is a UNIQUE constraint that depends on it");
+            String columnNameDrop = table.getRandomColumn().getName();
+            sb.append(columnNameDrop);
+            columnsToChange.removeIf(c -> c.getName().contentEquals(columnNameDrop));
             break;
         default:
             throw new AssertionError(action);
         }
-        return new SQLQueryAdapter(sb.toString(), errors, true);
+        GeneralTable newTable = new GeneralTable(table.getName(), columnsToChange, indexes, false);
+        newTable.getColumns().forEach(c -> c.setTable(newTable));
+        globalState.setUpdateTable(newTable);
+        return new SQLQueryAdapter(sb.toString(), errors, couldAffectSchema);
     }
 
 }

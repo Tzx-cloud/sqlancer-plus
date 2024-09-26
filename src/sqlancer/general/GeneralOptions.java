@@ -370,6 +370,33 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:mysql://localhost:10027/?user=root");
             }
+
+            @Override
+            public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
+                    throws SQLException {
+                Connection conn = DriverManager.getConnection(getJDBCString(globalState));
+                setIsNewSchema(false);
+                // since vitess create database requires a lot of time
+                try (Statement s = conn.createStatement()) {
+                    s.execute("CREATE DATABASE IF NOT EXISTS " + databaseName);
+                    globalState.getState().logStatement("CREATE DATABASE IF NOT EXISTS " + databaseName);
+                    s.execute("USE " + databaseName);
+                    globalState.getState().logStatement("USE " + databaseName);
+                } catch (Exception e) {
+                    // TODO: handle exception
+                }
+                for (int i = 0; i < 100; i++) {
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP TABLE %s_t%d CASCADE", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP VIEW %s_v%d CASCADE", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
+                }
+                return conn;
+            }
         },
         PRESTO {
             @Override

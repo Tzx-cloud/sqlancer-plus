@@ -367,6 +367,11 @@ public class GeneralTypedExpressionGenerator
             throw new AssertionError(type);
         }
     }
+    
+    @Override
+    public Node<GeneralExpression> generateConstant() {
+        return generateConstant(GeneralCompositeDataType.getRandomWithoutNull());
+    }
 
     private Node<GeneralExpression> generateVartypeConstant(GeneralCompositeDataType type) {
         return GeneralConstant.createVartypeConstant(GeneralSchema.getFragments().get(type.getId(), globalState));

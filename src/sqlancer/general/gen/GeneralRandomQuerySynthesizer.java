@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 import sqlancer.Randomly;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.ast.newast.TableReferenceNode;
+import sqlancer.common.gen.ExpressionGenerator;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
@@ -47,7 +49,7 @@ public final class GeneralRandomQuerySynthesizer {
         select.setJoinList(joins.stream().collect(Collectors.toList()));
         select.setFromList(tableList.stream().collect(Collectors.toList()));
         if (Randomly.getBoolean()) {
-            select.setWhereClause(gen.generateExpression());
+            select.setWhereClause(getExpressionGenerator(globalState, columns).generateExpression());
         }
         if (Randomly.getBoolean()) {
             select.setOrderByExpressions(gen.generateOrderBys());
@@ -68,6 +70,17 @@ public final class GeneralRandomQuerySynthesizer {
             select.setHavingClause(gen.generateHavingClause());
         }
         return select;
+    }
+
+    public static ExpressionGenerator<Node<GeneralExpression>> getExpressionGenerator(GeneralGlobalState globalState, List<GeneralColumn> columns) {
+        ExpressionGenerator<Node<GeneralExpression>> gen;
+        if (globalState.getHandler().getOption(GeneratorNode.UNTYPE_EXPR) || Randomly.getBooleanWithSmallProbability()) {
+            gen = new GeneralExpressionGenerator(globalState).setColumns(columns);
+            globalState.getHandler().addScore(GeneratorNode.UNTYPE_EXPR);
+        } else {
+            gen = new GeneralTypedExpressionGenerator(globalState).setColumns(columns);
+        }
+        return gen;
     }
 
 }

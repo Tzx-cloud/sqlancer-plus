@@ -27,9 +27,12 @@ import sqlancer.common.query.SQLancerResultSet;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.ast.GeneralFunction;
+import sqlancer.general.gen.GeneralAlterTableGenerator;
+import sqlancer.general.gen.GeneralDeleteGenerator;
 import sqlancer.general.gen.GeneralIndexGenerator;
 import sqlancer.general.gen.GeneralInsertGenerator;
 import sqlancer.general.gen.GeneralTableGenerator;
+import sqlancer.general.gen.GeneralUpdateGenerator;
 import sqlancer.general.gen.GeneralViewGenerator;
 import sqlancer.general.learner.GeneralFragments;
 
@@ -44,15 +47,20 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
         INSERT(GeneralInsertGenerator::getQuery), //
         CREATE_INDEX(GeneralIndexGenerator::getQuery), //
-        // VACUUM((g) -> new SQLQueryAdapter("VACUUM;")), //
-        ANALYZE((g) -> {
+        VACUUM((g) -> {
+            ExpectedErrors errors = new ExpectedErrors();
+            GeneralErrors.addExpressionErrors(errors);
+            g.handler.addScore(GeneratorNode.VACUUM);
+            return new SQLQueryAdapter("VACUUM;", errors);
+        }), ANALYZE((g) -> {
             ExpectedErrors errors = new ExpectedErrors();
             GeneralErrors.addExpressionErrors(errors);
             g.handler.addScore(GeneratorNode.ANALYZE);
             return new SQLQueryAdapter("ANALYZE;", errors);
         }), //
-        // DELETE(GeneralDeleteGenerator::generate), //
-        // UPDATE(GeneralUpdateGenerator::getQuery), //
+        DELETE(GeneralDeleteGenerator::generate),
+        UPDATE(GeneralUpdateGenerator::getQuery),
+        ALTER_TABLE(GeneralAlterTableGenerator::getQuery), //
         CREATE_VIEW(GeneralViewGenerator::generate); //
         // EXPLAIN((g) -> {
         // ExpectedErrors errors = new ExpectedErrors();
@@ -94,12 +102,13 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             }
             // fall through
             return r.getInteger(1, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
-        // case VACUUM: // seems to be ignored
+        case VACUUM: // seems to be ignored
         case ANALYZE: // seems to be ignored
             return r.getInteger(0, 2);
-        // case DELETE:
-        // return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumDeletes +
-        // 1);
+        case UPDATE:
+            return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
+        case DELETE:
+        case ALTER_TABLE:
         case CREATE_VIEW:
             return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumViews + 1);
         default:

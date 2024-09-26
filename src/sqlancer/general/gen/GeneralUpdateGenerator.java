@@ -5,18 +5,20 @@ import java.util.List;
 import sqlancer.Randomly;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.gen.AbstractUpdateGenerator;
+import sqlancer.common.gen.ExpressionGenerator;
 import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralToStringVisitor;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.ast.GeneralExpression;
 
 public final class GeneralUpdateGenerator extends AbstractUpdateGenerator<GeneralColumn> {
 
     private final GeneralGlobalState globalState;
-    private GeneralExpressionGenerator gen;
+    private ExpressionGenerator<Node<GeneralExpression>> gen;
 
     private GeneralUpdateGenerator(GeneralGlobalState globalState) {
         this.globalState = globalState;
@@ -29,23 +31,39 @@ public final class GeneralUpdateGenerator extends AbstractUpdateGenerator<Genera
     private SQLQueryAdapter generate() {
         GeneralTable table = globalState.getSchema().getRandomTable(t -> !t.isView());
         List<GeneralColumn> columns = table.getRandomNonEmptyColumnSubset();
-        gen = new GeneralExpressionGenerator(globalState).setColumns(table.getColumns());
+        gen = GeneralRandomQuerySynthesizer.getExpressionGenerator(globalState, columns);
+        GeneralErrors.addInsertErrors(errors);
         sb.append("UPDATE ");
         sb.append(table.getName());
         sb.append(" SET ");
         updateColumns(columns);
-        GeneralErrors.addInsertErrors(errors);
+        if (globalState.getHandler().getOption(GeneratorNode.UPDATE_WHERE) && Randomly.getBoolean()) {
+            sb.append(" WHERE ");
+            sb.append(GeneralToStringVisitor.asString(gen.generateExpression()));
+            globalState.getHandler().addScore(GeneratorNode.UPDATE_WHERE);
+        }
+
         return new SQLQueryAdapter(sb.toString(), errors);
     }
 
     @Override
     protected void updateValue(GeneralColumn column) {
         Node<GeneralExpression> expr;
-        if (Randomly.getBooleanWithSmallProbability()) {
-            expr = gen.generateExpression();
-            GeneralErrors.addExpressionErrors(errors);
+        if (gen instanceof GeneralTypedExpressionGenerator) {
+            GeneralTypedExpressionGenerator typedGen = (GeneralTypedExpressionGenerator) gen;
+            if (Randomly.getBooleanWithRatherLowProbability()) {
+                expr = typedGen.generateExpression(column.getType());
+                GeneralErrors.addExpressionErrors(errors);
+            } else {
+                expr = typedGen.generateConstant(column.getType());
+            }
         } else {
-            expr = gen.generateConstant();
+            if (Randomly.getBooleanWithRatherLowProbability()) {
+                expr = gen.generateExpression();
+                GeneralErrors.addExpressionErrors(errors);
+            } else {
+                expr = gen.generateConstant();
+            }
         }
         sb.append(GeneralToStringVisitor.asString(expr));
     }

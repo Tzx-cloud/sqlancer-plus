@@ -15,15 +15,13 @@ import sqlancer.common.oracle.TestOracle;
 import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema;
-import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralSchema.GeneralTables;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralJoin;
 import sqlancer.general.ast.GeneralSelect;
-import sqlancer.general.gen.GeneralExpressionGenerator;
-import sqlancer.general.gen.GeneralTypedExpressionGenerator;
+import sqlancer.general.gen.GeneralRandomQuerySynthesizer;
 
 public class GeneralQueryPartitioningBase
         extends TernaryLogicPartitioningOracleBase<Node<GeneralExpression>, GeneralGlobalState>
@@ -43,12 +41,7 @@ public class GeneralQueryPartitioningBase
     public void check() throws SQLException {
         s = state.getSchema();
         targetTables = s.getRandomTableNonEmptyTables();
-        if (state.getHandler().getOption(GeneratorNode.UNTYPE_EXPR) || Randomly.getBooleanWithSmallProbability()) {
-            gen = new GeneralExpressionGenerator(state).setColumns(targetTables.getColumns());
-            state.getHandler().addScore(GeneratorNode.UNTYPE_EXPR);
-        } else {
-            gen = new GeneralTypedExpressionGenerator(state).setColumns(targetTables.getColumns());
-        }
+        gen = GeneralRandomQuerySynthesizer.getExpressionGenerator(state, targetTables.getColumns());
         // gen = new
         // GeneralExpressionGenerator(state).setColumns(targetTables.getColumns());
         initializeTernaryPredicateVariants();
