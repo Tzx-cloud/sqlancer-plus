@@ -73,7 +73,7 @@ public class GeneralTemplateLearner implements FeatureLearner {
         String model = "gpt-4o-mini";
         String system = "This GPT acts as a web crawler and assistant to help users find the correct URL or specific documentation related to Database Management Systems (DBMS). It should efficiently search the web and provide accurate, relevant URLs based on the user's query. The assistant will maintain a professional and formal tone, ensuring that users receive the most pertinent information. If the initial query is too broad or unclear, the assistant will ask for further clarification to narrow down the search. The responses should be concise, returning only the URL without any explanation.";
         String user = String.format("URL for %s %s",
-                globalState.getDbmsSpecificOptions().getDatabaseEngineFactory().toString(), stmt_type);
+                globalState.getDbmsNameForLearning(), stmt_type);
         try {
             doc_url = getChatGPTResponse(model, system, user);
         } catch (IOException e) {
@@ -93,7 +93,7 @@ public class GeneralTemplateLearner implements FeatureLearner {
         String system = system_prompt;
         String user = String.format("DBMS: %s\n" + //
                 "Reference: %s\n" + //
-                "Template: %s\n", globalState.getDbmsSpecificOptions().getDatabaseEngineFactory().toString(), url,
+                "Template: %s\n", globalState.getDbmsNameForLearning(), url,
                 template);
         if (variables != "") {
             user += "Available variables and their descriptions:\n" + variables;

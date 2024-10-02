@@ -275,6 +275,16 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                     getDbmsSpecificOptions().getDatabaseEngineFactory().toString().toLowerCase());
         }
 
+        public String getDbmsNameForLearning() {
+            GeneralOptions options = getDbmsSpecificOptions();
+            if (options.compatibleWith != "") {
+                return String.format("%s (compatible with %s)", options.getDatabaseEngineFactory().toString(),
+                        options.compatibleWith);
+            } else {
+                return options.getDatabaseEngineFactory().toString();
+            }
+        }
+
     }
 
     // TODO: we might need another method to check if there's any data in the table
@@ -458,9 +468,10 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
     @Override
     public void initializeFeatures(GeneralGlobalState globalState) {
+        GeneralSchema.getFragments().loadFragmentsFromFile(globalState);
+        GeneralSchema.GeneralDataType.calcWeight();
         GeneralTableGenerator.getFragments().loadFragmentsFromFile(globalState);
         GeneralIndexGenerator.getFragments().loadFragmentsFromFile(globalState);
-        GeneralSchema.getFragments().loadFragmentsFromFile(globalState);
         GeneralFunction.loadFunctionsFromFile(globalState);
 
         if (globalState.getOptions().enableLearning()) {

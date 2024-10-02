@@ -63,6 +63,9 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
     @Parameter(names = "--use-deduplicator", description = "Use the deduplicator")
     public boolean useDeduplicator = false;
 
+    @Parameter(names = "--compatible-with", description = "The popupar DBMS to be compatible with")
+    public String compatibleWith = "";
+
     public enum GeneralOracleFactory implements OracleFactory<GeneralGlobalState> {
         NOREC {
 
