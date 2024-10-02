@@ -219,12 +219,12 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         public void updateHandler(boolean status) {
             // status means whether the execution is stopped by bug or not
             String databaseName = getDatabaseName();
-            if (getDbmsSpecificOptions().enableLearning) {
+            if (getOptions().enableLearning()) {
                 GeneralTableGenerator.getFragments().dumpFragments(this);
                 GeneralIndexGenerator.getFragments().dumpFragments(this);
                 GeneralSchema.getFragments().dumpFragments(this);
                 if (status && Randomly.getBooleanWithRatherLowProbability()) {
-                    // randomly pick one of the fragment to update
+                    // randomly pick one of the fragment to update by LLM
                     GeneralFragments f = Randomly.fromOptions(GeneralTableGenerator.getFragments(),
                             GeneralIndexGenerator.getFragments(), GeneralSchema.getFragments());
                     f.updateFragmentsFromLearner(this);
@@ -241,6 +241,9 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                     handler.calcAverageScore();
                     if (getDbmsSpecificOptions().enableFeedback) {
                         handler.updateGeneratorOptions();
+                        if (getOptions().enableExtraFeatures()) {
+                            handler.updateFragments();
+                        }
                     }
                     if (getDbmsSpecificOptions().untypeExpr) {
                         handler.setOption(GeneratorNode.UNTYPE_EXPR, true);
@@ -455,21 +458,17 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
     @Override
     public void initializeFeatures(GeneralGlobalState globalState) {
-        // do nothing
-        GeneralFunction.loadFunctionsFromFile(globalState);
-        GeneralSchema.getFragments().updateFragmentsFromLearner(globalState);
-        GeneralFunction.getFragments().updateFragmentsFromLearner(globalState);
-        // GeneralTableGenerator.getFragments().genLearnStatement(globalState);
         GeneralTableGenerator.getFragments().loadFragmentsFromFile(globalState);
-
-        // GeneralIndexGenerator.getFragments().genLearnStatement(globalState);
         GeneralIndexGenerator.getFragments().loadFragmentsFromFile(globalState);
+        GeneralSchema.getFragments().loadFragmentsFromFile(globalState);
+        GeneralFunction.loadFunctionsFromFile(globalState);
 
-        // GeneralTableGenerator.getFragments().updateFragmentsFromLearner(globalState);
-        // GeneralIndexGenerator.getFragments().updateFragmentsFromLearner(globalState);
-        // GeneralTableGenerator.getTemplateQuery(globalState);
-        // GeneralTableGenerator.initializeFragments(globalState);
-        // GeneralSchema.GeneralDataType.calcWeight();
+        if (globalState.getOptions().enableLearning()) {
+            GeneralSchema.getFragments().updateFragmentsFromLearner(globalState);
+            GeneralFunction.getFragments().updateFragmentsFromLearner(globalState);
+            GeneralIndexGenerator.getFragments().updateFragmentsFromLearner(globalState);
+            GeneralTableGenerator.getFragments().updateFragmentsFromLearner(globalState);
+        }
 
     }
 

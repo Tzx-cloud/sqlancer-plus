@@ -287,15 +287,10 @@ public class GeneralErrorHandler implements ErrorHandler {
 
     }
 
-    private synchronized void updateFragments() {
+    public synchronized void updateFragments() {
         GeneralTableGenerator.getFragments().updateFragmentByFeedback(this);
         GeneralIndexGenerator.getFragments().updateFragmentByFeedback(this);
         GeneralSchema.getFragments().updateFragmentByFeedback(this);
-
-        GeneralIndexGenerator.getFragments().printFragments();
-        GeneralTableGenerator.getFragments().printFragments();
-        // GeneralSchema.getFragments().printFragments();
-
     }
 
     public void calcAverageScore() {
@@ -318,8 +313,6 @@ public class GeneralErrorHandler implements ErrorHandler {
         updateByLeastOnce(generatorAverage, generatorOptions);
         updateByLeastOnce(compositeAverage, compositeGeneratorOptions);
         updateByLeastOnce(fragmentAverage, fragmentOptions);
-
-        updateFragments();
 
         // Special handling for the untype_expr option
         if (generatorOptions.get(GeneratorNode.UNTYPE_EXPR)) {

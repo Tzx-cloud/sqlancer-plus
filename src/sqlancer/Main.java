@@ -111,7 +111,7 @@ public final class Main {
                 this.reduceFile = new File(reduceFileDir, databaseName + "-reduce.log");
 
             }
-            useLearner = options.enableExtraFeatures();
+            useLearner = options.enableLearning();
             if (useLearner) {
                 learnerFileDir = new File(dir, "learner");
                 if (!learnerFileDir.exists()) {

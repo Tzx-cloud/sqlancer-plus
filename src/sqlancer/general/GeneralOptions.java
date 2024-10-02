@@ -54,9 +54,6 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
     @Parameter(names = "--enable-feedback", description = "Enable feedback for generator", arity = 1)
     public boolean enableFeedback = true;
 
-    @Parameter(names = "--enable-learning", description = "Enable learning for generator", arity = 1)
-    public boolean enableLearning = true;
-
     @Parameter(names = "--untype-expr", description = "Allow untyped expressions", arity = 1)
     public boolean untypeExpr = false;
 
