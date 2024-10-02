@@ -129,9 +129,13 @@ public class GeneralFunction {
         return initFunctions;
     }
 
-    public List<String> getFuncNames() {
+    public static List<String> getFuncNames() {
         // return all the keys in functions
         return List.copyOf(functions.keySet());
+    }
+
+    public static HashMap<String, Integer> getFunctions() {
+        return functions;
     }
 
     public static GeneralFunction getRandomByOptions(GeneralErrorHandler handler) {
@@ -154,7 +158,7 @@ public class GeneralFunction {
     public static List<GeneralFunction> getRandomCompatibleFunctions(GeneralErrorHandler handler,
             GeneralCompositeDataType returnType) {
         List<String> funcNames = functions.keySet().stream()
-                // .filter(f -> handler.getCompositeOption("FUNCTION" + "-" + f))
+                .filter(f -> handler.getCompositeOption("FUNCTION", f))
                 .filter(f -> handler.getCompositeOption(returnType.toString(), f)).collect(Collectors.toList());
 
         return funcNames.stream().map(f -> new GeneralFunction(functions.get(f), f)).collect(Collectors.toList());

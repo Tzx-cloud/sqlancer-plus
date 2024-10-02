@@ -4,8 +4,12 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -13,6 +17,7 @@ import java.io.FileReader;
 import sqlancer.ErrorHandler;
 import sqlancer.IgnoreMeException;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
+import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.ast.GeneralBinaryArithmeticOperator;
 import sqlancer.general.ast.GeneralBinaryComparisonOperator;
 import sqlancer.general.ast.GeneralCast;
@@ -312,12 +317,28 @@ public class GeneralErrorHandler implements ErrorHandler {
         // if not zero then the option is true
         updateByLeastOnce(generatorAverage, generatorOptions);
         updateByLeastOnce(compositeAverage, compositeGeneratorOptions);
+        postUpdateFunctionOptions();
         updateByLeastOnce(fragmentAverage, fragmentOptions);
 
         // Special handling for the untype_expr option
         if (generatorOptions.get(GeneratorNode.UNTYPE_EXPR)) {
             // TODO make it super parameter
             generatorOptions.put(GeneratorNode.UNTYPE_EXPR, generatorAverage.get(GeneratorNode.UNTYPE_EXPR) > 0.5);
+        }
+    }
+
+    private synchronized void postUpdateFunctionOptions() {
+        // iterate funtions 
+        for (Map.Entry<String, Integer> entry : GeneralFunction.getFunctions().entrySet()) {
+            String funcName = entry.getKey();
+            for (int i = 0; i < entry.getValue(); i++) {
+                final int ind = i;
+                List<GeneralCompositeDataType> availTypes = GeneralCompositeDataType.getSupportedTypes().stream()
+                        .filter(t -> getCompositeOption(funcName, ind + t.toString())).collect(Collectors.toList());
+                if (availTypes.size() == 0) {
+                    setCompositeOption("FUNCTION-" + funcName, false);
+                }
+            }
         }
     }
 
@@ -343,6 +364,7 @@ public class GeneralErrorHandler implements ErrorHandler {
                     System.out.println("Option " + option + " not found");
                 }
             }
+            postUpdateFunctionOptions();
         } catch (Exception e) {
             System.out.println("Error reading file: " + fileName);
             System.out.println(e.getMessage());
