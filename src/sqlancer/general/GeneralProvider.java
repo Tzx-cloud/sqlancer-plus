@@ -31,6 +31,7 @@ import sqlancer.general.gen.GeneralAlterTableGenerator;
 import sqlancer.general.gen.GeneralDeleteGenerator;
 import sqlancer.general.gen.GeneralIndexGenerator;
 import sqlancer.general.gen.GeneralInsertGenerator;
+import sqlancer.general.gen.GeneralStatementGenerator;
 import sqlancer.general.gen.GeneralTableGenerator;
 import sqlancer.general.gen.GeneralUpdateGenerator;
 import sqlancer.general.gen.GeneralViewGenerator;
@@ -61,7 +62,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         DELETE(GeneralDeleteGenerator::generate),
         UPDATE(GeneralUpdateGenerator::getQuery),
         ALTER_TABLE(GeneralAlterTableGenerator::getQuery), //
-        CREATE_VIEW(GeneralViewGenerator::generate); //
+        CREATE_VIEW(GeneralViewGenerator::generate), //
+        GENERAL_COMMAND(GeneralStatementGenerator::getQuery);
         // EXPLAIN((g) -> {
         // ExpectedErrors errors = new ExpectedErrors();
         // GeneralErrors.addExpressionErrors(errors);
@@ -105,10 +107,14 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         case VACUUM: // seems to be ignored
         case ANALYZE: // seems to be ignored
             return r.getInteger(0, 2);
+        case GENERAL_COMMAND:
+            if (!globalState.getDbmsSpecificOptions().testRandomCommands) {
+                return 0;
+            }
         case UPDATE:
             return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
         case DELETE:
-        case ALTER_TABLE:
+        // case ALTER_TABLE:
         case CREATE_VIEW:
             return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumViews + 1);
         default:
@@ -223,6 +229,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 GeneralTableGenerator.getFragments().dumpFragments(this);
                 GeneralIndexGenerator.getFragments().dumpFragments(this);
                 GeneralSchema.getFragments().dumpFragments(this);
+                GeneralStatementGenerator.getFragments().dumpFragments(this);
                 if (status && Randomly.getBooleanWithRatherLowProbability()) {
                     // randomly pick one of the fragment to update by LLM
                     GeneralFragments f = Randomly.fromOptions(GeneralTableGenerator.getFragments(),
@@ -479,6 +486,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             GeneralFunction.getFragments().updateFragmentsFromLearner(globalState);
             GeneralIndexGenerator.getFragments().updateFragmentsFromLearner(globalState);
             GeneralTableGenerator.getFragments().updateFragmentsFromLearner(globalState);
+            GeneralStatementGenerator.getFragments().updateFragmentsFromLearner(globalState);
         }
 
     }

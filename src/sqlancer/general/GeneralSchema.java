@@ -1,8 +1,5 @@
 package sqlancer.general;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -135,30 +132,30 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
 
         }
 
-        @Override
-        protected void loadFragmentsFromCSV(Reader configReader) {
-            // get file lines by the reader
-            try (BufferedReader reader = new BufferedReader(configReader)) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (!line.contains(",")) {
-                        continue;
-                    }
-                    String typeName = line.substring(0, line.indexOf(","));
-                    String typeFormat = line.substring(line.indexOf(",") + 1);
-                    String[] s = { typeName, typeFormat };
-                    try {
-                        parseFragments(s);
-                    } catch (Exception e) {
-                        System.out.println(String.format("Error parsing %s for statement %s", String.join(" ", s),
-                                getStatementType()));
-                        System.err.println(e.getMessage());
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        // @Override
+        // protected void loadFragmentsFromCSV(Reader configReader) {
+        //     // get file lines by the reader
+        //     try (BufferedReader reader = new BufferedReader(configReader)) {
+        //         String line;
+        //         while ((line = reader.readLine()) != null) {
+        //             if (!line.contains(",")) {
+        //                 continue;
+        //             }
+        //             String typeName = line.substring(0, line.indexOf(","));
+        //             String typeFormat = line.substring(line.indexOf(",") + 1);
+        //             String[] s = { typeName, typeFormat };
+        //             try {
+        //                 parseFragments(s);
+        //             } catch (Exception e) {
+        //                 System.out.println(String.format("Error parsing %s for statement %s", String.join(" ", s),
+        //                         getStatementType()));
+        //                 System.err.println(e.getMessage());
+        //             }
+        //         }
+        //     } catch (IOException e) {
+        //         e.printStackTrace();
+        //     }
+        // }
     }
 
     public static SQLQueryAdapter getQuery(GeneralGlobalState globalState) {

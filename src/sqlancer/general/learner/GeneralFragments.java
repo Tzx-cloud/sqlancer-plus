@@ -1,8 +1,10 @@
 package sqlancer.general.learner;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.sql.Timestamp;
@@ -13,11 +15,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.opencsv.CSVReader;
 
 import sqlancer.Randomly;
 import sqlancer.common.ast.newast.ColumnReferenceNode;
 import sqlancer.common.ast.newast.Node;
+import sqlancer.common.gen.ExpressionGenerator;
 import sqlancer.general.GeneralErrorHandler;
 import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
@@ -25,32 +27,60 @@ import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.ast.GeneralConstant;
 import sqlancer.general.ast.GeneralExpression;
+import sqlancer.general.gen.GeneralRandomQuerySynthesizer;
 
 public abstract class GeneralFragments {
 
     protected enum GeneralFragmentVariable {
         RANDOM_INT((g) -> {
             return GeneralConstant.createIntConstant(g.getRandomly().getInteger());
-        }, "Get a random integer. e.g., 42"), RANDOM_STRING((g) -> {
+        }, "Get a random integer. e.g., 42"),
+        RANDOM_STRING((g) -> {
             return GeneralConstant.createVartypeConstant(g.getRandomly().getString());
-        }, "Get a random string without quotes. e.g., hello"), RANDOM_COLUMN((g) -> {
+        }, "Get a random string without quotes. e.g., hello"),
+        RANDOM_COLUMN((g) -> {
             if (g.getUpdateTable() != null) {
                 return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(g.getUpdateTable().getRandomColumn());
             } else {
                 GeneralTable table = g.getSchema().getRandomTable(t -> !t.isView());
                 return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(table.getRandomColumn());
             }
-        }, "Random column"), RANDOM_POSITIVE_INT((g) -> {
+        }, "Random column"),
+        RANDOM_TABLE((g) -> {
+            if (g.getUpdateTable() != null) {
+                return GeneralConstant.createVartypeConstant(g.getUpdateTable().getName());
+            } else {
+                GeneralTable table = g.getSchema().getRandomTable(t -> !t.isView());
+                return GeneralConstant.createVartypeConstant(table.getName());
+            }
+        }, "Random table"),
+        RANDOM_EXPRESSION((g) -> {
+            ExpressionGenerator<Node<GeneralExpression>> gen;
+            List<GeneralColumn> columns;
+            if (g.getUpdateTable() != null) {
+                columns = g.getUpdateTable().getColumns();
+                gen = GeneralRandomQuerySynthesizer.getExpressionGenerator(g, columns);
+            } else {
+                GeneralTable table = g.getSchema().getRandomTable();
+                columns = table.getColumns();
+                gen = GeneralRandomQuerySynthesizer.getExpressionGenerator(g, columns);
+            }
+            return gen.generateExpression();
+        }, "Random expression based on current or random table"),
+        RANDOM_POSITIVE_INT((g) -> {
             return GeneralConstant.createIntConstant(g.getRandomly().getPositiveIntegerInt());
-        }, "Random positive integer"), RANDOM_DATE((g) -> {
+        }, "Random positive integer"),
+        RANDOM_DATE((g) -> {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             Timestamp timestamp = new Timestamp(g.getRandomly().getInteger());
             return GeneralConstant.createVartypeConstant(dateFormat.format(timestamp));
-        }, "Get a random date. e.g., 2021-01-01"), RANDOM_TIMESTAMP((g) -> {
+        }, "Get a random date. e.g., 2021-01-01"),
+        RANDOM_TIMESTAMP((g) -> {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             Timestamp timestamp = new Timestamp(g.getRandomly().getInteger());
             return GeneralConstant.createVartypeConstant(dateFormat.format(timestamp));
-        }, "Get a random timestamp. e.g., 2021-01-01 00:00:00"), NULL((g) -> {
+        }, "Get a random timestamp. e.g., 2021-01-01 00:00:00"),
+        NULL((g) -> {
             return null;
         }) {
             @Override
@@ -152,7 +182,7 @@ public abstract class GeneralFragments {
             validateFragment(fmtString, vars);
         } catch (Exception e) {
             System.err.println(String.format("Invalid format string %s", fmtString));
-            e.printStackTrace();
+            System.err.println(e.getMessage());
             throw e;
         }
         fragments.get(key).add(new GeneralFragmentChoice(fmtString, vars, key));
@@ -198,30 +228,54 @@ public abstract class GeneralFragments {
         // printFragments();
     }
 
+    // protected void loadFragmentsFromCSV(Reader configReader) {
+    //     try (CSVReader reader = new CSVReader(configReader)) {
+    //         List<String[]> r = reader.readAll();
+    //         // GeneralElementChoice choice;
+    //         for (String[] s : r) {
+    //             // parseElements(s);
+    //             try {
+    //                 parseFragments(s);
+    //             } catch (Exception e) {
+    //                 // e.printStackTrace();
+    //                 // Index 1 our of bounds for length 1
+    //                 System.out.println(String.format("Error parsing %s for statement %s", String.join(" ", s),
+    //                         getStatementType()));
+    //                 System.err.println(e.getMessage());
+    //             }
+    //         }
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //     }
+    //     // add empty choices for each index of the fragments
+    //     for (String key : fragments.keySet()) {
+    //         addFragment(key, "", List.of());
+    //     }
+    // }
+
     protected void loadFragmentsFromCSV(Reader configReader) {
-        try (CSVReader reader = new CSVReader(configReader)) {
-            List<String[]> r = reader.readAll();
-            // GeneralElementChoice choice;
-            for (String[] s : r) {
-                // parseElements(s);
-                try {
-                    parseFragments(s);
-                } catch (Exception e) {
-                    // e.printStackTrace();
-                    // Index 1 our of bounds for length 1
-                    System.out.println(String.format("Error parsing %s for statement %s", String.join(" ", s),
-                            getStatementType()));
-                    System.err.println(e.getMessage());
+            // get file lines by the reader
+            try (BufferedReader reader = new BufferedReader(configReader)) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (!line.contains(",")) {
+                        continue;
+                    }
+                    String fragmentKey = line.substring(0, line.indexOf(","));
+                    String fragmentContent = line.substring(line.indexOf(",") + 1);
+                    String[] s = { fragmentKey, fragmentContent };
+                    try {
+                        parseFragments(s);
+                    } catch (Exception e) {
+                        System.out.println(String.format("Error parsing %s for statement %s", String.join(" ", s),
+                                getStatementType()));
+                        System.err.println(e.getMessage());
+                    }
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-        // add empty choices for each index of the fragments
-        for (String key : fragments.keySet()) {
-            addFragment(key, "", List.of());
-        }
-    }
 
     protected void validateFragment(String fmtString, List<GeneralFragmentVariable> vars) {
         String.format(fmtString, vars.stream().map(var -> var.name()).toArray());
@@ -238,13 +292,12 @@ public abstract class GeneralFragments {
         }
         String key = s[0];
 
+        StringBuffer fmtString = new StringBuffer();
+        List<GeneralFragmentVariable> vars = new ArrayList<>();
         Pattern pattern = Pattern.compile("<([^>]*)>");
         Matcher matcher = pattern.matcher(s[1]);
 
         String content = "";
-        StringBuffer fmtString = new StringBuffer();
-
-        List<GeneralFragmentVariable> vars = new ArrayList<>();
 
         while (matcher.find()) {
             content = matcher.group(1);
@@ -255,6 +308,23 @@ public abstract class GeneralFragments {
 
         addFragment(key, fmtString.toString(), vars);
 
+    }
+
+    protected String parseVariable(String s, List<GeneralFragmentVariable> vars) {
+        StringBuffer fmtString = new StringBuffer();
+        Pattern pattern = Pattern.compile("<([^>]*)>");
+        Matcher matcher = pattern.matcher(s);
+
+        String content = "";
+
+        while (matcher.find()) {
+            content = matcher.group(1);
+            matcher.appendReplacement(fmtString, "%s");
+            vars.add(GeneralFragmentVariable.valueOf(content.toUpperCase()));
+        }
+        matcher.appendTail(fmtString);
+
+        return fmtString.toString();
     }
 
     public synchronized void updateFragmentByFeedback(GeneralErrorHandler handler) {
@@ -322,6 +392,7 @@ public abstract class GeneralFragments {
             }
             sb.append(String.format("<%s>: %s\n", var.name(), var.getDescription()));
         }
+        sb.append("Note: Please DO NOT include other variables or identifiers.\n");
         return sb.toString();
     }
 

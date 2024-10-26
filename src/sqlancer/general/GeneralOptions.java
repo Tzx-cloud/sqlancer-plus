@@ -39,11 +39,15 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
     @Parameter(names = "--test-indexes", description = "Allow explicit (i.e. CREATE INDEX) and implicit (i.e., UNIQUE and PRIMARY KEY) indexes", arity = 1)
     public boolean testIndexes = true;
 
+    @Parameter(names = "--test-random-commands", description = "The maximum number of random commands that are issued for a database", arity = 1)
+    public boolean testRandomCommands = false;
+
     @Parameter(names = "--max-num-views", description = "The maximum number of views that can be generated for a database", arity = 1)
     public int maxNumViews = 1;
 
     @Parameter(names = "--max-num-updates", description = "The maximum number of UPDATE statements that are issued for a database", arity = 1)
     public int maxNumUpdates = 5;
+
 
     @Parameter(names = "--enable-error-handling", description = "Enable error handling", arity = 1)
     public boolean enableErrorHandling = true;
