@@ -15,6 +15,7 @@ import sqlancer.common.oracle.TestOracle;
 import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralSchema.GeneralTables;
@@ -50,7 +51,12 @@ public class GeneralQueryPartitioningBase
         List<GeneralTable> tables = targetTables.getTables();
         List<TableReferenceNode<GeneralExpression, GeneralTable>> tableList = tables.stream()
                 .map(t -> new TableReferenceNode<GeneralExpression, GeneralTable>(t)).collect(Collectors.toList());
-        List<Node<GeneralExpression>> joins = GeneralJoin.getJoins(tableList, state);
+        List<Node<GeneralExpression>> joins;
+        if (Randomly.getBoolean() || !state.getHandler().getOption(GeneratorNode.SUBQUERY)) {
+            joins = GeneralJoin.getJoins(tableList, state);
+        } else {
+            joins = GeneralJoin.getJoinsWithSubquery(tableList, state);
+        }
         select.setJoinList(joins.stream().collect(Collectors.toList()));
         select.setFromList(tableList.stream().collect(Collectors.toList()));
         select.setWhereClause(null);

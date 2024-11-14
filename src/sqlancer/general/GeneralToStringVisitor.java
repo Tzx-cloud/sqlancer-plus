@@ -8,6 +8,7 @@ import sqlancer.general.ast.GeneralConstant;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralJoin;
 import sqlancer.general.ast.GeneralSelect;
+import sqlancer.general.ast.GeneralSelect.GeneralSubquery;
 
 public class GeneralToStringVisitor extends NewToStringVisitor<GeneralExpression> {
 
@@ -23,6 +24,8 @@ public class GeneralToStringVisitor extends NewToStringVisitor<GeneralExpression
             visit((GeneralColumnReference) expr);
         } else if (expr instanceof GeneralCast) {
             visit((GeneralCast) expr);
+        } else if (expr instanceof GeneralSubquery) {
+            visit((GeneralSubquery) expr);
         } else {
             throw new AssertionError(expr.getClass());
         }
@@ -110,6 +113,15 @@ public class GeneralToStringVisitor extends NewToStringVisitor<GeneralExpression
             sb.append("::");
             sb.append(cast.getType());
         }
+    }
+
+    private void visit(GeneralSubquery subquery) {
+        sb.append(" (");
+        visit(subquery.getSelect());
+        sb.append(")");
+        sb.append(" AS ");
+        sb.append(subquery.getName());
+        sb.append(" ");
     }
 
     public static String asString(Node<GeneralExpression> expr) {

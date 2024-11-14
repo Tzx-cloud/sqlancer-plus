@@ -25,7 +25,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
     private static final String STATEMENT = "TYPE";
 
     private static int typeCounter = 0;
-    private static HashMap<Integer, String> typeMap = new HashMap<>();
+    private volatile static HashMap<Integer, String> typeMap = new HashMap<>();
     private static HashMap<String, Boolean> typeAvailabilityMap = new HashMap<>();
 
     private final static class GeneralTypeFragments extends GeneralFragments {

@@ -50,6 +50,14 @@ public class GeneralTypedExpressionGenerator
         return generateExpression(GeneralDataType.BOOLEAN.get());
     }
 
+    public Node<GeneralExpression> generateExpression(boolean isTyped) {
+        if (isTyped) {
+            return generateExpression(GeneralDataType.BOOLEAN.get());
+        } else {
+            return generateExpression(GeneralCompositeDataType.getRandomWithoutNull());
+        }
+    }
+
     @Override
     public Node<GeneralExpression> generateExpression(GeneralCompositeDataType dataType) {
         return generateExpression(dataType, 0); // To make sure the start not so cold

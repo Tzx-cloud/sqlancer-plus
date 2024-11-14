@@ -218,6 +218,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         // Clause level nodes
         UNIQUE_INDEX, UPDATE_WHERE, PRIMARY_KEY, COLUMN_NUM, COLUMN_INT, COLUMN_BOOLEAN, COLUMN_STRING, JOIN, INNER_JOIN, LEFT_JOIN,
         RIGHT_JOIN, NATURAL_JOIN, LEFT_NATURAL_JOIN, RIGHT_NATURAL_JOIN, FULL_NATURAL_JOIN,
+        SUBQUERY,
         // Expression level nodes
         UNARY_POSTFIX, UNARY_PREFIX, BINARY_COMPARISON, BINARY_LOGICAL, BINARY_ARITHMETIC, CAST, FUNC, BETWEEN, CASE,
         IN, COLLATE, LIKE_ESCAPE, UNTYPE_FUNC, CAST_FUNC, CAST_COLON, IS_NULL, IS_NOT_NULL, IS_TRUE, IS_FALSE,
@@ -231,7 +232,10 @@ public class GeneralErrorHandler implements ErrorHandler {
         OPADD, OPSUB, OPMULT, OPDIV, OPMOD, OPCONCAT, OPAND, OPOR, OPLSHIFT, OPRSHIFT, OPDIV_STR, OPMOD_STR,
         OPBITWISE_XOR,
         // Logical Operator nodes
-        LOPAND, LOPOR;
+        LOPAND, LOPOR,
+        // Oracles
+        WHERE, NOREC, HAVING, 
+        ;
     }
 
     public double getNodeNum() {
@@ -336,6 +340,7 @@ public class GeneralErrorHandler implements ErrorHandler {
                 List<GeneralCompositeDataType> availTypes = GeneralCompositeDataType.getSupportedTypes().stream()
                         .filter(t -> getCompositeOption(funcName, ind + t.toString())).collect(Collectors.toList());
                 if (availTypes.size() == 0) {
+                    System.out.println("Function " + funcName + " with " + i + " arguments is not available");
                     setCompositeOption("FUNCTION-" + funcName, false);
                 }
             }
@@ -584,6 +589,9 @@ public class GeneralErrorHandler implements ErrorHandler {
     }
 
     public boolean getCompositeOption(String option) {
+        // TODO: make it simplifier
+        // Boolean value = compositeGeneratorOptions.get(option);
+        // return value != null ? value : true;
         if (compositeGeneratorOptions.containsKey(option)) {
             return compositeGeneratorOptions.get(option);
         } else {

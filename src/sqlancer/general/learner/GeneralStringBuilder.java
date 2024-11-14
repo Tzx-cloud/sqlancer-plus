@@ -1,5 +1,6 @@
 package sqlancer.general.learner;
 
+import sqlancer.Randomly;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 
 public class GeneralStringBuilder<E extends GeneralFragments> {
@@ -24,7 +25,9 @@ public class GeneralStringBuilder<E extends GeneralFragments> {
 
     public void append(Object obj, int index) {
         sb.append(obj);
-        sb.append(fragments.get(index, state));
+        if (fragments.getLearn() || Randomly.getBoolean()) {
+            sb.append(fragments.get(index, state));
+        }
     }
 
     public String toString() {

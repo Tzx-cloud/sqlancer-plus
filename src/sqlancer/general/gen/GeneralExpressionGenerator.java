@@ -44,6 +44,10 @@ public final class GeneralExpressionGenerator
         this.globalState = globalState;
     }
 
+    public Node<GeneralExpression> generateExpression(boolean isTyped) {
+        return generateExpression(0);
+    }
+
     private enum Expression {
         UNARY_POSTFIX(GeneralUnaryPostfixOperator.values().length),
         UNARY_PREFIX(GeneralUnaryPrefixOperator.values().length),

@@ -114,7 +114,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         case UPDATE:
             return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
         case DELETE:
-        // case ALTER_TABLE:
+        case ALTER_TABLE:
         case CREATE_VIEW:
             return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumViews + 1);
         default:
@@ -419,7 +419,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 if (success) {
                     success = checkTableIsValid(globalState, updateTable.getName());
                 }
-            } while (!success && nrTries++ < 200);
+            } while (!success && nrTries++ < 500);
         }
         if (globalState.getSchema().getDatabaseTables().isEmpty()) {
             throw new AssertionError("Failed to create any table"); // TODO

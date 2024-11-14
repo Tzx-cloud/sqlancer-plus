@@ -35,6 +35,8 @@ public interface ExpressionGenerator<E> {
 
     E generateExpression();
 
+    E generateExpression(boolean isTyped);
+
     E generateHavingClause();
 
     List<E> generateExpressions(int nr);
