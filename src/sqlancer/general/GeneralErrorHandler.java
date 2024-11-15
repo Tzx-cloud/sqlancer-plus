@@ -206,6 +206,10 @@ public class GeneralErrorHandler implements ErrorHandler {
     private static volatile HashMap<String, Double> compositeAverage = new HashMap<>();
     private static volatile HashMap<GeneralFragmentChoice, Double> fragmentAverage = new HashMap<>();
 
+    private static volatile HashMap<GeneratorNode, String> generatorExample = new HashMap<>();
+    private static volatile HashMap<String, String> compositeExample = new HashMap<>();
+    private static volatile HashMap<GeneralFragmentChoice, String> fragmentExample = new HashMap<>();
+
     private double nodeNum = GeneratorNode.values().length;
 
     public enum GeneratorNode {
@@ -309,7 +313,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         // generatorTable.calcAverageCompositeScore();
         generatorTable.calcCompositeSuccess();
         compositeAverage = generatorTable.calcAverageScore(generatorTable.compositeSuccess,
-                generatorTable.compositeCount, allCompositeSuccess, allCompositeCount, 500, false);
+                generatorTable.compositeCount, allCompositeSuccess, allCompositeCount, 100, false);
 
         generatorTable.calcFragmentSuccess();
         fragmentAverage = generatorTable.calcAverageScore(generatorTable.fragmentSuccess, generatorTable.fragmentCount,
@@ -443,6 +447,13 @@ public class GeneralErrorHandler implements ErrorHandler {
         return generatorTable.getLastGeneratorScore();
     }
 
+    public void appendScoreToTable(boolean status, boolean isQuery, String sql) {
+        if (status) {
+            setExample(generatorInfo, sql);
+        }
+        appendScoreToTable(status, isQuery);
+    }
+
     public void appendScoreToTable(boolean status, boolean isQuery) {
         setExecutionStatus(status);
         generatorInfo.setQuery(isQuery);
@@ -525,15 +536,20 @@ public class GeneralErrorHandler implements ErrorHandler {
     public synchronized void saveStatistics(GeneralGlobalState globalState) {
         // TODO It is a quite ugly function
         try (FileWriter file = new FileWriter(
-                "logs/" + globalState.getDbmsSpecificOptions().getDatabaseEngineFactory().toString() + "Options.txt")) {
+                "logs/" + globalState.getDbmsSpecificOptions().getDatabaseEngineFactory().toString() + "Options.csv")) {
+            String delim = ";";
+            file.write("Option" + delim + "Value" + delim + "Success" + delim + "Count" + delim + "Example" + "\n");
             for (Map.Entry<GeneratorNode, Boolean> entry : generatorOptions.entrySet()) {
-                file.write(entry.getKey() + " : " + entry.getValue() + "\n");
+                file.write(String.format("\"%s\";%s;%s;%s;\"%s\"\n", entry.getKey(), entry.getValue(), 
+                        allNodeSuccess.get(entry.getKey()), allNodeCount.get(entry.getKey()), generatorExample.get(entry.getKey())));
             }
             for (Map.Entry<String, Boolean> entry : compositeGeneratorOptions.entrySet()) {
-                file.write(entry.getKey() + " : " + entry.getValue() + "\n");
+                file.write(String.format("\"%s\";%s;%s;%s;\"%s\"\n", entry.getKey(), entry.getValue(), 
+                        allCompositeSuccess.get(entry.getKey()), allCompositeCount.get(entry.getKey()), compositeExample.get(entry.getKey())));
             }
             for (Map.Entry<GeneralFragmentChoice, Boolean> entry : fragmentOptions.entrySet()) {
-                file.write(entry.getKey() + " : " + entry.getValue() + "\n");
+                file.write(String.format("\"%s\";%s;%s;%s;\"%s\"\n", entry.getKey(), entry.getValue(), 
+                        allFragmentSuccess.get(entry.getKey()), allFragmentCount.get(entry.getKey()), fragmentExample.get(entry.getKey())));
             }
         } catch (Exception e) {
             // TODO: handle exception
@@ -577,34 +593,51 @@ public class GeneralErrorHandler implements ErrorHandler {
 
     public boolean getOption(GeneratorNode option) {
         Boolean value = generatorOptions.get(option);
-        if (value != null) {
-            return value;
-        } else {
-            return true;
-        }
+        return value != null ? value : true;
     }
 
     public void setCompositeOption(String option, boolean value) {
         compositeGeneratorOptions.put(option, value);
     }
 
-    public boolean getCompositeOption(String option) {
-        // TODO: make it simplifier
-        // Boolean value = compositeGeneratorOptions.get(option);
-        // return value != null ? value : true;
-        if (compositeGeneratorOptions.containsKey(option)) {
-            return compositeGeneratorOptions.get(option);
-        } else {
-            return true;
+    public void setExample(GeneratorInfo info, String sql) {
+        for (Map.Entry<GeneratorNode, Integer> entry : info.getGeneratorScore().entrySet()) {
+            if (!generatorExample.containsKey(entry.getKey())) {
+                generatorExample.put(entry.getKey(), sql);
+            }
+        }
+        for (Map.Entry<String, Integer> entry : info.getCompositeGeneratorScore().entrySet()) {
+            // compositeExample.put(entry.getKey(), sql);
+            if (!compositeExample.containsKey(entry.getKey())) {
+                compositeExample.put(entry.getKey(), sql);
+            }
+        }
+        for (Map.Entry<GeneralFragmentChoice, Integer> entry : info.getFragmentScore().entrySet()) {
+            if (!fragmentExample.containsKey(entry.getKey())) {
+                fragmentExample.put(entry.getKey(), sql);
+            }
         }
     }
 
+    public boolean getCompositeOption(String option) {
+        // TODO: make it simplifier
+        Boolean value = compositeGeneratorOptions.get(option);
+        return value != null ? value : true;
+        // if (compositeGeneratorOptions.containsKey(option)) {
+        //     return compositeGeneratorOptions.get(option);
+        // } else {
+        //     return true;
+        // }
+    }
+
     public boolean getFragmentOption(GeneralFragmentChoice option) {
-        if (fragmentOptions.containsKey(option)) {
-            return fragmentOptions.get(option);
-        } else {
-            return true;
-        }
+        Boolean value = fragmentOptions.get(option);
+        return value != null ? value : true;
+        // if (fragmentOptions.containsKey(option)) {
+        //     return fragmentOptions.get(option);
+        // } else {
+        //     return true;
+        // }
     }
 
     public boolean getCompositeOption(String option1, String option2) {

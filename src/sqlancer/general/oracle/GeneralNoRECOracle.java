@@ -136,13 +136,13 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
             throw new IgnoreMeException();
         }
         if (firstCount != secondCount) {
-            state.getHandler().appendScoreToTable(true, true);
+            state.getHandler().appendScoreToTable(true, true, unoptimizedQueryString);
             String errorMessage = optimizedQueryString + "; -- " + firstCount + "\n" + unoptimizedQueryString + " -- "
                     + secondCount;
             reproducer = new GeneralNoRECReproducer(unoptimizedQueryString, optimizedQueryString, errorMessage);
             throw new AssertionError(errorMessage);
         }
-        state.getHandler().appendScoreToTable(true, true);
+        state.getHandler().appendScoreToTable(true, true, optimizedQueryString);
     }
 
     private int getSecondQuery(List<Node<GeneralExpression>> tableList, Node<GeneralExpression> randomWhereCondition,

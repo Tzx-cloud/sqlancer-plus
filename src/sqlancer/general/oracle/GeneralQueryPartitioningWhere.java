@@ -108,12 +108,12 @@ public class GeneralQueryPartitioningWhere extends GeneralQueryPartitioningBase 
         } catch (AssertionError e) {
             // TODO we need to give some information to the handler here
             // state.getHandler().printStatistics();
-            state.getHandler().appendScoreToTable(true, true);
+            state.getHandler().appendScoreToTable(true, true, firstQueryString);
             reproducer = new GeneralQueryPartitioningWhereReproducer(firstQueryString, secondQueryString,
                     thirdQueryString, originalQueryString, orderBy, e.getMessage());
             throw e;
         }
-        state.getHandler().appendScoreToTable(true, true);
+        state.getHandler().appendScoreToTable(true, true, firstQueryString);
     }
 
     @Override

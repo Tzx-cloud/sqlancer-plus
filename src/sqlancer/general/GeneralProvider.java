@@ -217,7 +217,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 throw e;
             }
             // I guess we want to make sure if the syntax is correct
-            handler.appendScoreToTable(success, false);
+            handler.appendScoreToTable(success, false, q.getUnterminatedQueryString());
             return success;
         }
 
