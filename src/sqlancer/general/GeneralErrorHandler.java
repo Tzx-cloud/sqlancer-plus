@@ -313,7 +313,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         // generatorTable.calcAverageCompositeScore();
         generatorTable.calcCompositeSuccess();
         compositeAverage = generatorTable.calcAverageScore(generatorTable.compositeSuccess,
-                generatorTable.compositeCount, allCompositeSuccess, allCompositeCount, 100, false);
+                generatorTable.compositeCount, allCompositeSuccess, allCompositeCount, 50, false);
 
         generatorTable.calcFragmentSuccess();
         fragmentAverage = generatorTable.calcAverageScore(generatorTable.fragmentSuccess, generatorTable.fragmentCount,

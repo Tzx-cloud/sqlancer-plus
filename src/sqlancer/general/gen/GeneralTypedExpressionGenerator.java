@@ -1,6 +1,7 @@
 package sqlancer.general.gen;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -99,10 +100,6 @@ public class GeneralTypedExpressionGenerator
     // .collect(Collectors.toList());
     // }
 
-    public List<GeneralFunction> getFunctionsCompatibleWith(GeneralCompositeDataType returnType) {
-        return GeneralFunction.getRandomCompatibleFunctions(globalState.getHandler(), returnType);
-    }
-
     private List<Node<GeneralExpression>> generateFunctionExpressions(GeneralFunction function, int depth,
             GeneralErrorHandler handler) {
         List<Node<GeneralExpression>> args = new ArrayList<>();
@@ -113,7 +110,7 @@ public class GeneralTypedExpressionGenerator
                     .filter(t -> handler.getCompositeOption(function.toString(), ind + t.toString()))
                     .collect(Collectors.toList());
             GeneralCompositeDataType type = Randomly.fromList(availTypes);
-            nullFlag = false;
+            // nullFlag = false;
             Node<GeneralExpression> newExpr = generateExpression(type, depth);
             args.add(newExpr);
             // check if newExpr is a
@@ -121,7 +118,7 @@ public class GeneralTypedExpressionGenerator
                 String key = function.toString() + "-" + ind + type.toString();
                 handler.addScore(key);
             }
-            nullFlag = false;
+            // nullFlag = false;
         }
         return args;
     }
@@ -139,13 +136,25 @@ public class GeneralTypedExpressionGenerator
         } else {
             if (Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.FUNC)) {
                 handler.addScore(GeneratorNode.FUNC);
-                List<GeneralFunction> applicableFunctions = getFunctionsCompatibleWith(type);
+                List<GeneralFunction> applicableFunctions = new ArrayList<>();
+                try {
+                    applicableFunctions = GeneralFunction.getRandomCompatibleFunctions(handler, type);
+                } catch (Exception e) {
+                    // TODO: handle exception
+                    System.out.println(e);
+                    System.out.println("Error in getting compatible functions for type: " + type);
+                }
                 if (!applicableFunctions.isEmpty()) {
                     GeneralFunction function = Randomly.fromList(applicableFunctions);
+                    nullFlag = false;
+                    NewFunctionNode<GeneralExpression, GeneralFunction> functionNode = new NewFunctionNode<>(
+                        generateFunctionExpressions(function, depth + 1, handler), function);
                     handler.addScore("FUNCTION-" + function.toString());
-                    handler.addScore(type.toString() + "-" + function.toString());
-                    return new NewFunctionNode<GeneralExpression, GeneralFunction>(
-                            generateFunctionExpressions(function, depth + 1, handler), function);
+                    if (!nullFlag) {
+                        handler.addScore(type.toString() + "-" + function.toString());
+                    }
+                    nullFlag = false;
+                    return functionNode;
                 }
             }
             if (Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.CAST)) {
@@ -360,6 +369,12 @@ public class GeneralTypedExpressionGenerator
     public Node<GeneralExpression> generateConstant(GeneralCompositeDataType type) {
         if (Randomly.getBooleanWithRatherLowProbability()) {
             nullFlag = true;
+            if (Randomly.getBooleanWithSmallProbability()) {
+                // generate a function with all-NULL arguments
+                GeneralFunction function = GeneralFunction.getRandomByOptions(globalState.getHandler());
+                return new NewFunctionNode<>(
+                        Collections.nCopies(function.getNrArgs(), GeneralConstant.createNullConstant()), function);
+            }
             return GeneralConstant.createNullConstant();
         }
         switch (type.getPrimitiveDataType()) {
@@ -382,7 +397,11 @@ public class GeneralTypedExpressionGenerator
     }
 
     private Node<GeneralExpression> generateVartypeConstant(GeneralCompositeDataType type) {
-        return GeneralConstant.createVartypeConstant(GeneralSchema.getFragments().get(type.getId(), globalState));
+        String varString = GeneralSchema.getFragments().get(type.getId(), globalState);
+        if (varString == "NULL") {
+            nullFlag = true;
+        }
+        return GeneralConstant.createVartypeConstant(varString);
     }
 
     public GeneralGlobalState getGlobalState() {

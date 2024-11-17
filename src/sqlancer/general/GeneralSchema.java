@@ -27,6 +27,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
     private static int typeCounter = 0;
     private volatile static HashMap<Integer, String> typeMap = new HashMap<>();
     private static HashMap<String, Boolean> typeAvailabilityMap = new HashMap<>();
+    private static HashMap<String, List<String>> typeToFunction = new HashMap<>();
 
     private final static class GeneralTypeFragments extends GeneralFragments {
         public GeneralTypeFragments() {
@@ -90,6 +91,8 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             // if key is not in the typeMap, add it
             if (!typeMap.containsValue(key)) {
                 typeMap.put(typeCounter, key);
+                // TODO change uppercase
+                updateTypeToFunction(key.toUpperCase(), new ArrayList<>(), false);
                 typeAvailabilityMap.put(key, true);
                 typeCounter++;
             }
@@ -168,6 +171,18 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         sb.append(")");
 
         return new SQLQueryAdapter(sb.toString());
+    }
+
+    public static List<String> getAvailFunctions(String type) {
+        return typeToFunction.get(type);
+    }
+
+    public static void updateTypeToFunction(String type, List<String> functions, boolean overwrite) {
+        if (!typeToFunction.containsKey(type) || overwrite) {
+            typeToFunction.put(type, functions);
+        } else {
+            typeToFunction.get(type).addAll(functions);
+        }
     }
 
     public enum GeneralDataType {
@@ -289,7 +304,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         public String toString() {
             switch (getPrimitiveDataType()) {
             case INT:
-                return Randomly.fromOptions("INT");
+                return "INT";
             case STRING:
                 if (id == 0) {
                     return "VARCHAR";
@@ -297,9 +312,9 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                     return "VARCHAR(" + id + ")";
                 }
             case BOOLEAN:
-                return Randomly.fromOptions("BOOLEAN");
+                return "BOOLEAN";
             case NULL:
-                return Randomly.fromOptions("NULL");
+                return "NULL";
             case VARTYPE:
                 // TODO catch exception here
                 return typeMap.get(id).toUpperCase();
