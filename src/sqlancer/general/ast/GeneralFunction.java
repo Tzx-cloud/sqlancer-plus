@@ -11,6 +11,7 @@ import sqlancer.Randomly;
 import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.general.GeneralErrorHandler;
 import sqlancer.general.GeneralSchema;
+import sqlancer.general.GeneralLearningManager.SQLFeature;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.learner.GeneralFragments;
@@ -19,6 +20,7 @@ import sqlancer.general.learner.GeneralFragments.GeneralFragmentChoice;
 
 public class GeneralFunction {
     private static final String CONFIG_NAME = "functions.txt";
+    private static final SQLFeature FEATURE = SQLFeature.FUNCTION;
 
     private int nrArgs;
     private boolean isVariadic;
@@ -54,6 +56,11 @@ public class GeneralFunction {
             return "";
         }
 
+        @Override
+        public SQLFeature getFeature() {
+            return FEATURE;
+        }
+
         protected String getExamples() {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 3; i++) {
@@ -62,8 +69,8 @@ public class GeneralFunction {
                         functions.keySet().stream().filter(f -> functions.get(f) == ind).collect(Collectors.toList()));
                 sb.append(String.format("%d,%s\n", i, funcName));
             }
-            sb.append(
-                    "Note: DO NOT include functions that may generate data according to arguments. For example, REPEAT, LPAD, RPAD, etc.\n");
+            // sb.append(
+                    // "Note: DO NOT include functions that may generate data according to arguments. For example, REPEAT, LPAD, RPAD, etc.\n");
             return sb.toString();
         }
 
@@ -179,7 +186,7 @@ public class GeneralFunction {
                 .filter(f -> handler.getCompositeOption("FUNCTION", f))
                 // only get the functions that are compatible with the return type 
                 // this is manually maintained 
-                .filter(f -> (GeneralSchema.getAvailFunctions(returnType.toString()).contains(f)))
+                // .filter(f -> (GeneralSchema.getAvailFunctions(returnType.toString()).contains(f)))
                 .filter(f -> handler.getCompositeOption(returnType.toString(), f))
                 .collect(Collectors.toList());
 
@@ -224,7 +231,12 @@ public class GeneralFunction {
                 }
             }
         }
-        mergeFunctions(newFuncs);
+        // make new funcs key uppercase
+        HashMap<String, Integer> newFuncsUpper = new HashMap<>();
+        for (String key : newFuncs.keySet()) {
+            newFuncsUpper.put(key.toUpperCase(), newFuncs.get(key));
+        }
+        mergeFunctions(newFuncsUpper);
     }
 
     public static void mergeFunctions(HashMap<String, Integer> newFunctions) {

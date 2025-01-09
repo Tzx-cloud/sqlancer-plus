@@ -250,6 +250,10 @@ public class GeneralErrorHandler implements ErrorHandler {
         execDatabaseNum++;
     }
 
+    public int getExecDatabaseNum() {
+        return execDatabaseNum;
+    }
+
     public GeneralErrorHandler() {
         this.generatorTable = new GeneratorInfoTable();
         this.generatorInfo = new GeneratorInfo();
@@ -271,6 +275,11 @@ public class GeneralErrorHandler implements ErrorHandler {
             // We currently don't explicitly initiate the depth of the database
             return 1;
         }
+    }
+
+    public void setCurDepth(String databaseName, int depth) {
+        databaseName = databaseName.split("_")[0];
+        curDepth.put(databaseName, depth);
     }
 
     public void incrementCurDepth(String databaseName) {
@@ -313,7 +322,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         // generatorTable.calcAverageCompositeScore();
         generatorTable.calcCompositeSuccess();
         compositeAverage = generatorTable.calcAverageScore(generatorTable.compositeSuccess,
-                generatorTable.compositeCount, allCompositeSuccess, allCompositeCount, 50, false);
+                generatorTable.compositeCount, allCompositeSuccess, allCompositeCount, 200, false);
 
         generatorTable.calcFragmentSuccess();
         fragmentAverage = generatorTable.calcAverageScore(generatorTable.fragmentSuccess, generatorTable.fragmentCount,
@@ -357,7 +366,11 @@ public class GeneralErrorHandler implements ErrorHandler {
 
         // Read file disabled_options.txt line by line and set the option to false
         // if the option is not in the file then it is true
-        String fileName = "logs/disabled_options.txt";
+        String fileName = "dbconfigs/disabled_options.txt";
+        disableOptions(fileName);
+    }
+
+    public void disableOptions(String fileName) {
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -535,6 +548,7 @@ public class GeneralErrorHandler implements ErrorHandler {
 
     public synchronized void saveStatistics(GeneralGlobalState globalState) {
         // TODO It is a quite ugly function
+        // TODO make it thread safe
         try (FileWriter file = new FileWriter(
                 "logs/" + globalState.getDbmsSpecificOptions().getDatabaseEngineFactory().toString() + "Options.csv")) {
             String delim = ";";
@@ -628,6 +642,11 @@ public class GeneralErrorHandler implements ErrorHandler {
         // } else {
         //     return true;
         // }
+    }
+
+    public boolean getCompositeOptionNullAsFalse(String option) {
+        Boolean value = compositeGeneratorOptions.get(option);
+        return value != null ? value : false;
     }
 
     public boolean getFragmentOption(GeneralFragmentChoice option) {

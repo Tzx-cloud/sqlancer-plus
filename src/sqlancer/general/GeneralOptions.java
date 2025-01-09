@@ -48,7 +48,6 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
     @Parameter(names = "--max-num-updates", description = "The maximum number of UPDATE statements that are issued for a database", arity = 1)
     public int maxNumUpdates = 5;
 
-
     @Parameter(names = "--enable-error-handling", description = "Enable error handling", arity = 1)
     public boolean enableErrorHandling = true;
 
@@ -196,6 +195,28 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             @Override
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:postgresql://localhost:10010/?user=postgres&password=postgres");
+            };
+
+            @Override
+            public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
+                    throws SQLException {
+                Connection conn = DriverManager.getConnection(getJDBCString(globalState));
+                setIsNewSchema(false);
+                for (int i = 0; i < 100; i++) {
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP TABLE %s_t%d", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP VIEW %s_v%d", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
+                }
+                try (Statement s = conn.createStatement()) {
+                    s.execute("set statement_timeout to 5000;");
+                    globalState.getState().logStatement("set statement_timeout to 5000;");
+                }
+                return conn;
             }
         },
         COCKROACHDB {
@@ -436,7 +457,35 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
                 }
                 return conn;
             }
-        },;
+        },
+        CEDARDB {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:postgresql://localhost:10029/?user=postgres&password=postgres");
+            }
+
+            @Override
+            public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
+                    throws SQLException {
+                Connection conn = DriverManager.getConnection(getJDBCString(globalState));
+                setIsNewSchema(false);
+                for (int i = 0; i < 100; i++) {
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP TABLE %s_t%d CASCADE", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
+                    try (Statement s = conn.createStatement()) {
+                        s.execute(String.format("DROP VIEW %s_v%d CASCADE", databaseName, i));
+                    } catch (SQLException e1) {
+                    }
+                }
+                try (Statement s = conn.createStatement()) {
+                    s.execute("SET implicit_cross_products = ON;");
+                    globalState.getState().logStatement("SET implicit_cross_products = ON;");
+                }
+                return conn;
+            }
+        };
 
         private boolean isNewSchema = true;
 

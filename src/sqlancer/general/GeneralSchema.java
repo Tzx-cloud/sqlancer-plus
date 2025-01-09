@@ -1,5 +1,6 @@
 package sqlancer.general;
 
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,15 +15,19 @@ import sqlancer.common.schema.AbstractSchema;
 import sqlancer.common.schema.AbstractTableColumn;
 import sqlancer.common.schema.AbstractTables;
 import sqlancer.common.schema.TableIndex;
+import sqlancer.general.GeneralLearningManager.SQLFeature;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralTable;
+import sqlancer.general.ast.GeneralFunction;
 import sqlancer.general.learner.GeneralFragments;
 import sqlancer.general.learner.GeneralStringBuilder;
+import sqlancer.general.learner.GeneralTemplateLearner;
 
 public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTable> {
     private static GeneralTypeFragments fragments = new GeneralTypeFragments();
     private static final String CONFIG_NAME = "typegenerator.txt";
-    private static final String STATEMENT = "TYPE";
+    private static final String STATEMENT = "DATATYPE";
+    private static final SQLFeature FEATURE = SQLFeature.DATATYPE;
 
     private static int typeCounter = 0;
     private volatile static HashMap<Integer, String> typeMap = new HashMap<>();
@@ -55,10 +60,15 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         }
 
         @Override
+        public SQLFeature getFeature() {
+            return FEATURE;
+        }
+
+        @Override
         // rare keywords
         // use options
         protected String getSystemPrompt() {
-            return "This GPT is an expert in SQL dialects. It helps users generate correct SQL statements for different DBMSs. Users specify a DBMS, provide a SQL template with SQL keywords and placeholders, and give random variable generators. The GPT fills placeholders with data types ({0}) and the format of the data types ({1}), consists of concrete strings or random variable generators user provided. You should check whether the format The response is a CSV file with two columns: one for data type names and one for the format, without a header. Each data type is split into separate rows. Provide at least 20 different answers. Be rare and complex. Avoid explanations.";
+            return "This GPT is an expert in SQL dialects. It helps users generate correct SQL statements for different DBMSs based on the reference user provided. Users specify a DBMS, provide a SQL template with SQL keywords and placeholders, and give random variable generators. The GPT fills placeholders with data types ({0}) and the format of the data types ({1}), consists of concrete strings or random variable generators user provided. You should check whether the format The response is a CSV file with two columns separated by semicolon \";\": one for data type names and one for the format, without a header. Provide at least 3 example values or syntax for one data type. Each data type is split into separate rows. Provide as many different answers. Be rare and complex. Avoid explanations. Avoid random functions in DBMS. Avoid functions let the server sleep.";
         }
 
         @Override
@@ -103,8 +113,11 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             if (getLearn()) {
                 return super.get(index, state);
             }
-
             String key = typeMap.get(index);
+            return get(key, state);
+        }
+
+        public String get(String key, GeneralGlobalState state) {
             // actually, if typeMap contains the key, then fragments must contain the key
             if (getFragments().containsKey(key) && typeAvailabilityMap.get(key)) {
                 GeneralFragmentChoice choice = Randomly.fromList(getFragments().get(key));
@@ -135,30 +148,115 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
 
         }
 
-        // @Override
-        // protected void loadFragmentsFromCSV(Reader configReader) {
-        //     // get file lines by the reader
-        //     try (BufferedReader reader = new BufferedReader(configReader)) {
-        //         String line;
-        //         while ((line = reader.readLine()) != null) {
-        //             if (!line.contains(",")) {
-        //                 continue;
-        //             }
-        //             String typeName = line.substring(0, line.indexOf(","));
-        //             String typeFormat = line.substring(line.indexOf(",") + 1);
-        //             String[] s = { typeName, typeFormat };
-        //             try {
-        //                 parseFragments(s);
-        //             } catch (Exception e) {
-        //                 System.out.println(String.format("Error parsing %s for statement %s", String.join(" ", s),
-        //                         getStatementType()));
-        //                 System.err.println(e.getMessage());
-        //             }
-        //         }
-        //     } catch (IOException e) {
-        //         e.printStackTrace();
-        //     }
-        // }
+        public void learnSpecificTopicFromLearner(GeneralGlobalState globalState, String type) {
+            StringBuilder templateBuilder = new StringBuilder();
+            templateBuilder.append(String.format("CREATE TABLE test (c0 %s);\n", type));
+            templateBuilder
+                    .append(String.format("INSERT INTO test VALUES (%s);\n", fragments.get(type, globalState)));
+            templateBuilder.append(String.format(
+                    "INSERT INTO test VALUES ({0}); -- Placeholder {0}: %s value or expression to insert\n", type));
+            templateBuilder.append(String.format(
+                    "INSERT INTO test VALUES ({1}()); -- Placeholder {1}: Deterministic function that returns a %s value with no parameters\n",
+                    type));
+            templateBuilder.append(String.format(
+                    "INSERT INTO test VALUES ({2}(NULL)); -- Placeholder {2}: Deterministic function with one parameter that returns a %s value\n",
+                    type));
+            templateBuilder.append(String.format(
+                    "INSERT INTO test VALUES ({3}(NULL, NULL)); -- Placeholder {2}: Deterministic function with two parameters that returns a %s value\n",
+                    type));
+            // templateBuilder.append(String.format(
+            //         "SELECT {4}(test.c0); -- Placeholder {4}: Deterministic function that use one %s parameter\n",
+            //         type));
+            // templateBuilder.append(String.format(
+            // "SELECT test.c0 {4} test.c0; -- Placeholder {4}: Comparison operator for %s
+            // values\n", type
+            // ));
+            String template = templateBuilder.toString();
+            String variables = getVariables();
+            // get the prompt of the general fragments but not the schema one
+            String systemPrompt = super.getSystemPrompt();
+            GeneralTemplateLearner learner = new GeneralTemplateLearner(globalState, FEATURE, template, variables, systemPrompt, String.format("%s function", type));
+            StringBuilder exampleBuilder = new StringBuilder();
+            exampleBuilder.append(String.format("0,%s\n", fragments.get(type, globalState)));
+            exampleBuilder.append(String.format("1,EXAMPLE_FUNCTION_NAME\n"));
+            exampleBuilder.append(String.format("2,EXAMPLE_FUNCTION_NAME\n"));
+            exampleBuilder.append(String.format("3,EXAMPLE_FUNCTION_NAME\n"));
+            // exampleBuilder.append(String.format("4,EXAMPLE_FUNCTION_NAME\n"));
+            String examples = exampleBuilder.toString();
+            learner.setExamples(examples);
+            System.out.println("Updating fragments from learner for type " + type);
+            learner.learn();
+            System.out.println("Processing and loading fragments from learner for type " + type);
+            String fragmentsString = learner.getFragments();
+
+            if (fragmentsString.isEmpty()) {
+                System.out.println("No fragments learned for type " + type);
+                return;
+            }
+
+            loadFragmentsFromCSV(new StringReader(fragmentsString), globalState, true);
+
+        }
+
+        @Override
+        protected void parseSpecificFragments(String[] s, GeneralGlobalState globalState) {
+            // TODO Auto-generated method stub
+            String type = globalState.getLearningManager().getTopic();
+            try {
+                Integer.parseInt(s[0]);
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid fragment key");
+                return;
+            }
+            String key = s[0];
+
+            StringBuffer fmtString = new StringBuffer();
+            List<GeneralFragmentVariable> vars = new ArrayList<>();
+            Pattern pattern = Pattern.compile("<([^>]*)>");
+            Matcher matcher = pattern.matcher(s[1]);
+
+            String content = "";
+
+            while (matcher.find()) {
+                content = matcher.group(1);
+                matcher.appendReplacement(fmtString, "%s");
+                vars.add(GeneralFragmentVariable.valueOf(content.toUpperCase()));
+            }
+            matcher.appendTail(fmtString);
+            GeneralFragments typeFragments = GeneralSchema.getFragments();
+            GeneralFragments funcFragments = GeneralFunction.getFragments();
+
+            switch (key) {
+                case "0":
+                    typeFragments.addFragment(type, fmtString.toString(), vars);
+                    break;
+                case "1":
+                    funcFragments.addFragment("0", fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
+                    // TODO: not sure if the function fragments could have variables
+                    // typeToFunction.get(type).add(fmtString.toString())
+                    try {
+                        updateTypeToFunction(type, new ArrayList<>(List.of(fmtString.toString())), false);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                case "2":
+                    // add more cases here
+                    funcFragments.addFragment("1", fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
+                    try {
+                        updateTypeToFunction(type, new ArrayList<>(List.of(fmtString.toString())), false);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                case "3":
+                    funcFragments.addFragment("1", fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
+                    break;
+                default:
+                    break;
+            }
+        }
+
     }
 
     public static SQLQueryAdapter getQuery(GeneralGlobalState globalState) {
@@ -251,6 +349,22 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             return id;
         }
 
+        public static GeneralCompositeDataType getByName(String type) {
+            // match the name of the type to the typeMap
+            if (type == null) {
+                return null;
+            }
+            int firstKey = -1;
+            for (int key : typeMap.keySet()) {
+                if (typeMap.get(key).equals(type)) {
+                    firstKey = key;
+                    return new GeneralCompositeDataType(GeneralDataType.VARTYPE, firstKey);
+                }
+            }
+            System.err.println("Type not found");
+            return null;
+        }
+
         public static List<GeneralCompositeDataType> getSupportedTypes() {
             List<GeneralCompositeDataType> types = new ArrayList<>();
             for (GeneralDataType dt : GeneralDataType.values()) {
@@ -266,6 +380,17 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                 types.add(new GeneralCompositeDataType(dt, 0));
             }
             return types;
+        }
+
+        public static GeneralCompositeDataType getRandomWithoutNull(GeneralGlobalState globalState) {
+            String topic = globalState.getLearningManager().getTopic();
+            if (Randomly.getBooleanWithRatherLowProbability()) {
+                GeneralCompositeDataType type = getByName(topic);
+                if (type != null) {
+                    return type;
+                }
+            }
+            return getRandomWithoutNull();
         }
 
         public static GeneralCompositeDataType getRandomWithoutNull() {
@@ -300,29 +425,34 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             return new GeneralCompositeDataType(type, typeID);
         }
 
+
         @Override
         public String toString() {
             switch (getPrimitiveDataType()) {
-            case INT:
-                return "INT";
-            case STRING:
-                if (id == 0) {
-                    return "VARCHAR";
-                } else {
-                    return "VARCHAR(" + id + ")";
-                }
-            case BOOLEAN:
-                return "BOOLEAN";
-            case NULL:
-                return "NULL";
-            case VARTYPE:
-                // TODO catch exception here
-                return typeMap.get(id).toUpperCase();
-            default:
-                throw new AssertionError(getPrimitiveDataType());
+                case INT:
+                    return "INT";
+                case STRING:
+                    if (id == 0) {
+                        return "VARCHAR";
+                    } else {
+                        return "VARCHAR(" + id + ")";
+                    }
+                case BOOLEAN:
+                    return "BOOLEAN";
+                case NULL:
+                    return "NULL";
+                case VARTYPE:
+                    // TODO catch exception here
+                    return typeMap.get(id).toUpperCase();
+                default:
+                    throw new AssertionError(getPrimitiveDataType());
             }
         }
 
+    }
+
+    public static void setTypeAvailability(String type, boolean availability) {
+        typeAvailabilityMap.put(type, availability);
     }
 
     public static class GeneralColumn extends AbstractTableColumn<GeneralTable, GeneralCompositeDataType> {

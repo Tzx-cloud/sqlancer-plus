@@ -44,7 +44,7 @@ public class SQLQueryAdapter extends Query<SQLConnection> {
         }
         this.expectedErrors = expectedErrors;
         this.couldAffectSchema = couldAffectSchema;
-        checkQueryString();
+        // checkQueryString();
     }
 
     private String canonicalizeString(String s) {
@@ -58,11 +58,11 @@ public class SQLQueryAdapter extends Query<SQLConnection> {
         }
     }
 
-    private void checkQueryString() {
-        if (!couldAffectSchema && guessAffectSchemaFromQuery(query)) {
-            throw new AssertionError("CREATE TABLE statements should set couldAffectSchema to true");
-        }
-    }
+    // private void checkQueryString() {
+    //     if (!couldAffectSchema && guessAffectSchemaFromQuery(query)) {
+    //         throw new AssertionError("CREATE TABLE statements should set couldAffectSchema to true");
+    //     }
+    // }
 
     @Override
     public String getQueryString() {

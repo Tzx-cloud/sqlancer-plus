@@ -15,13 +15,13 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 import sqlancer.Randomly;
 import sqlancer.common.ast.newast.ColumnReferenceNode;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.gen.ExpressionGenerator;
 import sqlancer.general.GeneralErrorHandler;
 import sqlancer.general.GeneralToStringVisitor;
+import sqlancer.general.GeneralLearningManager.SQLFeature;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
@@ -171,6 +171,8 @@ public abstract class GeneralFragments {
         if (!fragments.containsKey(key)) {
             fragments.put(key, new ArrayList<>());
         }
+        // remove trailing spaces
+        fmtString = fmtString.trim();
         // avoid duplicate:
         for (GeneralFragmentChoice choice : fragments.get(key)) {
             if (choice.fmtString.equals(fmtString)) {
@@ -185,6 +187,7 @@ public abstract class GeneralFragments {
             System.err.println(e.getMessage());
             throw e;
         }
+        System.out.println(String.format("Adding fragment %s", fmtString));
         fragments.get(key).add(new GeneralFragmentChoice(fmtString, vars, key));
     }
 
@@ -218,7 +221,7 @@ public abstract class GeneralFragments {
             System.out.println(String.format("Loading fragments from file %s.", getConfigName()));
             try {
                 fileReader = new FileReader(configFile);
-                loadFragmentsFromCSV(fileReader);
+                loadFragmentsFromCSV(fileReader,globalState, false);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -228,57 +231,45 @@ public abstract class GeneralFragments {
         // printFragments();
     }
 
-    // protected void loadFragmentsFromCSV(Reader configReader) {
-    //     try (CSVReader reader = new CSVReader(configReader)) {
-    //         List<String[]> r = reader.readAll();
-    //         // GeneralElementChoice choice;
-    //         for (String[] s : r) {
-    //             // parseElements(s);
-    //             try {
-    //                 parseFragments(s);
-    //             } catch (Exception e) {
-    //                 // e.printStackTrace();
-    //                 // Index 1 our of bounds for length 1
-    //                 System.out.println(String.format("Error parsing %s for statement %s", String.join(" ", s),
-    //                         getStatementType()));
-    //                 System.err.println(e.getMessage());
-    //             }
-    //         }
-    //     } catch (Exception e) {
-    //         e.printStackTrace();
-    //     }
-    //     // add empty choices for each index of the fragments
-    //     for (String key : fragments.keySet()) {
-    //         addFragment(key, "", List.of());
-    //     }
-    // }
+    protected String preprocessingLine(String line) {
+        return line;
+    }
 
-    protected void loadFragmentsFromCSV(Reader configReader) {
-            // get file lines by the reader
-            try (BufferedReader reader = new BufferedReader(configReader)) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (!line.contains(",")) {
-                        continue;
-                    }
-                    String fragmentKey = line.substring(0, line.indexOf(","));
-                    String fragmentContent = line.substring(line.indexOf(",") + 1);
-                    String[] s = { fragmentKey, fragmentContent };
-                    try {
-                        parseFragments(s);
-                    } catch (Exception e) {
-                        System.out.println(String.format("Error parsing %s for statement %s", String.join(" ", s),
-                                getStatementType()));
-                        System.err.println(e.getMessage());
-                    }
+    protected void loadFragmentsFromCSV(Reader configReader, GeneralGlobalState globalState,  boolean isSpecific) {
+        // get file lines by the reader
+        try (BufferedReader reader = new BufferedReader(configReader)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.contains(";")) {
+                    continue;
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
+                line = preprocessingLine(line);
+                String fragmentKey = line.substring(0, line.indexOf(";"));
+                String fragmentContent = line.substring(line.indexOf(";") + 1);
+                String[] s = { fragmentKey, fragmentContent };
+                try {
+                    if (isSpecific) {
+                        parseSpecificFragments(s, globalState);
+                    } else {
+                        parseFragments(s);
+                    }
+                } catch (Exception e) {
+                    System.out.println(String.format("Error parsing %s for statement %s", String.join(" ", s),
+                            getStatementType()));
+                    System.err.println(e.getMessage());
+                }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+    }
 
     protected void validateFragment(String fmtString, List<GeneralFragmentVariable> vars) {
         String.format(fmtString, vars.stream().map(var -> var.name()).toArray());
+    }
+
+    protected void parseSpecificFragments(String[] s, GeneralGlobalState globalState) {
+        parseFragments(s);
     }
 
     protected void parseFragments(String[] s) {
@@ -340,15 +331,15 @@ public abstract class GeneralFragments {
         String variables = getVariables();
         String systemPrompt = getSystemPrompt();
         String examples = getExamples();
-        GeneralTemplateLearner learner = new GeneralTemplateLearner(globalState, getStatementType(), template,
-                variables, systemPrompt);
+        String topic = getFeature().isSubFeature() ? getStatementType() : "overview";
+        GeneralTemplateLearner learner = new GeneralTemplateLearner(globalState, getFeature(), template, variables, systemPrompt, topic);
         learner.setExamples(examples);
         System.out.println("Updating fragments from learner");
         learner.learn();
         System.out.println("Processing and loading fragments from learner");
         String fragments = learner.getFragments();
         if (fragments != "") {
-            loadFragmentsFromCSV(new StringReader(fragments));
+            loadFragmentsFromCSV(new StringReader(fragments), globalState, false);
         } else {
             System.err.println("No fragments returned from learner");
         }
@@ -356,7 +347,7 @@ public abstract class GeneralFragments {
     }
 
     protected String getSystemPrompt() {
-        return "This GPT is an expert in SQL dialects. It helps users generate correct SQL statements for different DBMSs. Users specify a DBMS and provide a SQL template with SQL keywords and placeholders. The GPT fills placeholders with concrete string alternatives unless the user specifies variables. The response is a CSV file with two columns: one for placeholders (without brackets) and one for alternatives, without a header. Each alternative is split into separate rows. Provide as many and detailed answers as possible for each placeholder. Be rare and complex. Avoid explanations.";
+        return "This GPT is an expert in SQL dialects. It helps users generate correct SQL statements for different DBMSs based on the reference user provided. Users specify a DBMS and provide a SQL template with SQL keywords and placeholders. The GPT fills placeholders with concrete string alternatives unless the user specifies variables. The response is a CSV file with two columns separated by semicolon \";\": one for placeholders (without brackets) and one for alternatives, without a header. Each alternative is split into separate rows. Provide as many and detailed answers as possible for each placeholder. Be rare and complex. Avoid explanations. Avoid random functions in DBMS. Function calls should be deterministic. Avoid commands writing to OS. ";
     }
 
     public void printFragments() {
@@ -405,6 +396,12 @@ public abstract class GeneralFragments {
 
     public abstract String getStatementType();
 
+    public abstract SQLFeature getFeature();
+
     public abstract String genLearnStatement(GeneralGlobalState globalState);
+
+    public void learnSpecificTopicFromLearner(GeneralGlobalState globalState, String topic) {
+        throw new UnsupportedOperationException();
+    };
 
 }

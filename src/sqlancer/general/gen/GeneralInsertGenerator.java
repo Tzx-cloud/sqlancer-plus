@@ -29,6 +29,7 @@ public class GeneralInsertGenerator extends AbstractInsertGenerator<GeneralColum
     }
 
     private SQLQueryAdapter generate() {
+        globalState.setCreatingDatabase(true);
         sb.append("INSERT INTO ");
         globalState.getHandler().addScore(GeneratorNode.INSERT);
         GeneralTable table = globalState.getSchema().getRandomTable(t -> !t.isView());
@@ -40,6 +41,7 @@ public class GeneralInsertGenerator extends AbstractInsertGenerator<GeneralColum
         sb.append(" VALUES ");
         insertColumns(columns);
         GeneralErrors.addInsertErrors(errors);
+        globalState.setCreatingDatabase(false);
         return new SQLQueryAdapter(sb.toString(), errors, false, false);
     }
 

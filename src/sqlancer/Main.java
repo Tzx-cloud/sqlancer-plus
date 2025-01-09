@@ -452,6 +452,8 @@ public final class Main {
                 Reproducer<G> reproducer = null;
                 if (options.enableQPG()) {
                     provider.generateAndTestDatabaseWithQueryPlanGuidance(state);
+                } else if (options.enableLearning()) {
+                    reproducer = provider.generateAndTestDatabaseWithMaskTemplateLearning(state);
                 } else {
                     reproducer = provider.generateAndTestDatabase(state);
                 }

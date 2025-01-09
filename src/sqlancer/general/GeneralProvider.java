@@ -15,6 +15,7 @@ import sqlancer.DatabaseProvider;
 import sqlancer.ExecutionTimer;
 import sqlancer.IgnoreMeException;
 import sqlancer.Randomly;
+import sqlancer.Reproducer;
 import sqlancer.SQLConnection;
 import sqlancer.SQLGlobalState;
 import sqlancer.SQLProviderAdapter;
@@ -61,9 +62,9 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         }), //
         DELETE(GeneralDeleteGenerator::generate),
         UPDATE(GeneralUpdateGenerator::getQuery),
+        // GENERAL_COMMAND(GeneralStatementGenerator::getQuery),
         ALTER_TABLE(GeneralAlterTableGenerator::getQuery), //
-        CREATE_VIEW(GeneralViewGenerator::generate), //
-        GENERAL_COMMAND(GeneralStatementGenerator::getQuery);
+        CREATE_VIEW(GeneralViewGenerator::generate); //
         // EXPLAIN((g) -> {
         // ExpectedErrors errors = new ExpectedErrors();
         // GeneralErrors.addExpressionErrors(errors);
@@ -107,10 +108,6 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         case VACUUM: // seems to be ignored
         case ANALYZE: // seems to be ignored
             return r.getInteger(0, 2);
-        case GENERAL_COMMAND:
-            if (!globalState.getDbmsSpecificOptions().testRandomCommands) {
-                return 0;
-            }
         case UPDATE:
             return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
         case DELETE:
@@ -125,6 +122,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     public static class GeneralGlobalState extends SQLGlobalState<GeneralOptions, GeneralSchema> {
         private GeneralSchema schema = new GeneralSchema(new ArrayList<>());
         private GeneralErrorHandler handler = new GeneralErrorHandler();
+        private GeneralLearningManager manager = new GeneralLearningManager();
         private GeneralTable updateTable;
         private boolean creatingDatabase = false; // is currently creating database
 
@@ -138,6 +136,10 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
 
         public GeneralErrorHandler getHandler() {
             return handler;
+        }
+
+        public GeneralLearningManager getLearningManager() {
+            return manager;
         }
 
         public String getProviderName() {
@@ -233,7 +235,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 if (status && Randomly.getBooleanWithRatherLowProbability()) {
                     // randomly pick one of the fragment to update by LLM
                     GeneralFragments f = Randomly.fromOptions(GeneralTableGenerator.getFragments(),
-                            GeneralIndexGenerator.getFragments(), GeneralSchema.getFragments());
+                            GeneralIndexGenerator.getFragments(), GeneralStatementGenerator.getFragments());
                     f.updateFragmentsFromLearner(this);
                 }
             }
@@ -327,8 +329,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             globalState.getLogger().writeCurrent(sb);
             // check if the result is larger than 100K
             while (resultSet.next()) {
-                // System.out.println("Join table size: " + resultSet.getLong(1));
-                if (resultSet.getLong(1) > 10000) {
+                System.out.println("Join table size: " + resultSet.getLong(1));
+                if (resultSet.getLong(1) > 5000) {
                     // drop all the views
                     globalState.getLogger().writeCurrent("-- size:" + resultSet.getLong(1));
                     System.out.println("Join table size exceeds 10000, dropping all views");
@@ -405,7 +407,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     public void generateDatabase(GeneralGlobalState globalState) throws Exception {
         DatabaseEngineFactory<GeneralGlobalState> databaseEngineFactory = globalState.getDbmsSpecificOptions()
                 .getDatabaseEngineFactory();
-        globalState.setCreatingDatabase(true);
+        // globalState.setCreatingDatabase(true);
         GeneralSchema.GeneralDataType.calcWeight();
         for (int i = 0; i < Randomly.fromOptions(1, 2); i++) {
             boolean success;
@@ -436,7 +438,14 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 });
         se.executeStatements();
         databaseEngineFactory.syncData(globalState);
-        globalState.setCreatingDatabase(false);
+        // execute the general commands
+        if (globalState.getDbmsSpecificOptions().testRandomCommands) {
+            for (int i = 0; i < Randomly.fromOptions(5, 6, 7); i++) {
+                SQLQueryAdapter sg = GeneralStatementGenerator.getQuery(globalState);
+                globalState.executeStatement(sg);
+            }
+        }
+        // globalState.setCreatingDatabase(false);
     }
 
     public void tryDeleteFile(String fname) {
@@ -482,13 +491,22 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         GeneralFunction.loadFunctionsFromFile(globalState);
 
         if (globalState.getOptions().enableLearning()) {
+            GeneralStatementGenerator.getFragments().updateFragmentsFromLearner(globalState);
             GeneralSchema.getFragments().updateFragmentsFromLearner(globalState);
             GeneralFunction.getFragments().updateFragmentsFromLearner(globalState);
             GeneralIndexGenerator.getFragments().updateFragmentsFromLearner(globalState);
             GeneralTableGenerator.getFragments().updateFragmentsFromLearner(globalState);
-            GeneralStatementGenerator.getFragments().updateFragmentsFromLearner(globalState);
         }
 
+    }
+
+    @Override
+    public Reproducer<GeneralGlobalState> generateAndTestDatabaseWithMaskTemplateLearning(
+            GeneralGlobalState globalState) throws Exception {
+        String dbmsName = globalState.getDbmsSpecificOptions().getDatabaseEngineFactory().toString().toLowerCase();
+        globalState.getLearningManager().learnTypeByTopic(globalState);
+        globalState.getHandler().disableOptions(String.format("dbconfigs/%s/disabled_options.txt", dbmsName));
+        return super.generateAndTestDatabase(globalState);
     }
 
 }

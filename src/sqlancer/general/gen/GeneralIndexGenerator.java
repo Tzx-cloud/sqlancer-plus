@@ -14,6 +14,7 @@ import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
+import sqlancer.general.GeneralLearningManager.SQLFeature;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.learner.GeneralFragments;
 import sqlancer.general.learner.GeneralStringBuilder;
@@ -26,6 +27,7 @@ public final class GeneralIndexGenerator {
     private static GeneralIndexFragments fragments = new GeneralIndexFragments();
     private static final String CONFIG_NAME = "indexgenerator.txt";
     private static final String STATEMENT = "CREATE_INDEX";
+    private static final SQLFeature FEATURE = SQLFeature.CLAUSE;
 
     private final static class GeneralIndexFragments extends GeneralFragments {
         public GeneralIndexFragments() {
@@ -52,6 +54,11 @@ public final class GeneralIndexGenerator {
 
         public String getStatementType() {
             return STATEMENT;
+        }
+
+        @Override
+        public SQLFeature getFeature() {
+            return FEATURE;
         }
     }
 

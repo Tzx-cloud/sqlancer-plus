@@ -55,7 +55,7 @@ public class GeneralTypedExpressionGenerator
         if (isTyped) {
             return generateExpression(GeneralDataType.BOOLEAN.get());
         } else {
-            return generateExpression(GeneralCompositeDataType.getRandomWithoutNull());
+            return generateExpression(GeneralCompositeDataType.getRandomWithoutNull(globalState));
         }
     }
 
@@ -107,9 +107,15 @@ public class GeneralTypedExpressionGenerator
             final int ind = i;
             // TODO: looks like we could make this invarian out of the loop. Not sure if stronly needed.
             List<GeneralCompositeDataType> availTypes = GeneralCompositeDataType.getSupportedTypes().stream()
-                    .filter(t -> handler.getCompositeOption(function.toString(), ind + t.toString()))
+                    .filter(t -> handler.getCompositeOptionNullAsFalse(function.toString() + "-" + ind + t.toString()))
                     .collect(Collectors.toList());
-            GeneralCompositeDataType type = Randomly.fromList(availTypes);
+            GeneralCompositeDataType type;
+            // TODO: make it fully controlled by the handler
+            if (availTypes.size() == 0 || Randomly.getBooleanWithRatherLowProbability()) {
+                type = getRandomType();
+            } else {
+                type = Randomly.fromList(availTypes);
+            }
             // nullFlag = false;
             Node<GeneralExpression> newExpr = generateExpression(type, depth);
             args.add(newExpr);
@@ -346,7 +352,7 @@ public class GeneralTypedExpressionGenerator
     @Override
     protected GeneralCompositeDataType getRandomType() {
         if (columns.isEmpty() || Randomly.getBooleanWithRatherLowProbability()) {
-            return GeneralCompositeDataType.getRandomWithoutNull();
+            return GeneralCompositeDataType.getRandomWithoutNull(globalState);
         } else {
             return Randomly.fromList(columns).getType();
         }
@@ -393,7 +399,7 @@ public class GeneralTypedExpressionGenerator
     
     @Override
     public Node<GeneralExpression> generateConstant() {
-        return generateConstant(GeneralCompositeDataType.getRandomWithoutNull());
+        return generateConstant(GeneralCompositeDataType.getRandomWithoutNull(globalState));
     }
 
     private Node<GeneralExpression> generateVartypeConstant(GeneralCompositeDataType type) {
@@ -410,9 +416,11 @@ public class GeneralTypedExpressionGenerator
 
     @Override
     protected Node<GeneralExpression> generateColumn(GeneralCompositeDataType type) {
-        // TODO: how to compare the type of the column if it's VARTYPE?
         GeneralColumn column = Randomly
                 .fromList(columns.stream().filter(c -> c.getType() == type).collect(Collectors.toList()));
+        // if (type.getPrimitiveDataType().equals(GeneralDataType.VARTYPE)) {
+        //     globalState.getLogger().writeCurrent("-- type " + type);
+        // }
         Node<GeneralExpression> columnReference = new GeneralColumnReference(column);
         return columnReference;
     }

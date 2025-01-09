@@ -180,7 +180,7 @@ public class GeneralJoin implements Node<GeneralExpression> {
         }
         List<GeneralTable> tables = new ArrayList<>();
         tables.add(Randomly.fromList(tableList).getTable());
-        for (int i = 0; i < Randomly.smallNumber() + 1; i++) {
+        for (int i = 0; i < Randomly.smallNumber(); i++) {
             if (tableList.size() < 1) {
                 return joinExpressions;
             }

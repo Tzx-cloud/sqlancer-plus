@@ -28,7 +28,7 @@ public class MainOptions {
     private int totalNumberTries = 100; // NOPMD
 
     @Parameter(names = { "--max-num-inserts" }, description = "Specifies how many INSERT statements should be issued")
-    private int maxNumberInserts = 30; // NOPMD
+    private int maxNumberInserts = 20; // NOPMD
 
     @Parameter(names = {
             "--max-expression-depth" }, description = "Specifies the maximum depth of randomly-generated expressions")

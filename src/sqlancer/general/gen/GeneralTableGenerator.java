@@ -15,12 +15,14 @@ import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.learner.GeneralFragments;
 import sqlancer.general.learner.GeneralStringBuilder;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
+import sqlancer.general.GeneralLearningManager.SQLFeature;
 
 public class GeneralTableGenerator {
 
     private static GeneralTableFragments fragments = new GeneralTableFragments();
     private static final String CONFIG_NAME = "tablegenerator.txt";
     private static final String STATEMENT = "CREATE_TABLE";
+    private static final SQLFeature FEATURE = SQLFeature.CLAUSE;
 
     private final static class GeneralTableFragments extends GeneralFragments {
         public GeneralTableFragments() {
@@ -46,11 +48,17 @@ public class GeneralTableGenerator {
         public String getStatementType() {
             return STATEMENT;
         }
+
+        @Override
+        public SQLFeature getFeature() {
+            return FEATURE;
+        }
     }
 
     public static SQLQueryAdapter getQuery(GeneralGlobalState globalState) {
         ExpectedErrors errors = new ExpectedErrors();
         String tableName;
+        globalState.setCreatingDatabase(true);
         // TODO check if this is correct
         if (globalState.getHandler().getOption(GeneratorNode.CREATE_DATABASE)) {
             tableName = globalState.getSchema().getFreeTableName();
@@ -97,6 +105,7 @@ public class GeneralTableGenerator {
         GeneralTable newTable = new GeneralTable(tableName, columnsToAdd, false);
         newTable.getColumns().forEach(c -> c.setTable(newTable));
         globalState.setUpdateTable(newTable);
+        globalState.setCreatingDatabase(false);
         return new SQLQueryAdapter(sb.toString(), errors, true, false);
     }
 
@@ -109,8 +118,11 @@ public class GeneralTableGenerator {
         for (int i = 0; i < Randomly.smallNumber() + 2; i++) {
             String columnName = String.format("c%d", i);
             globalState.getHandler().addScore(GeneratorNode.COLUMN_NUM);
-            GeneralCompositeDataType columnType = GeneralCompositeDataType.getRandomWithoutNull();
-            // TODO Handle IllegalArgumentExeption?
+            GeneralCompositeDataType columnType = globalState.getLearningManager().getTopicType();
+            if (Randomly.getBoolean() || columnType == null) {
+                columnType = GeneralCompositeDataType.getRandomWithoutNull();
+            }
+            // TODO: make this as a feedback for the learner
             globalState.getHandler().addScore("COLUMN-" + columnType.toString());
             columns.add(new GeneralColumn(columnName, columnType, false, false));
         }
