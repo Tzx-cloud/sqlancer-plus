@@ -104,6 +104,7 @@ public class GeneralLearningManager {
                     .collect(Collectors.toList());
             if (topics.isEmpty()) {
                 curTopic = null;
+                System.out.println("All topics are learned");
                 return;
             }
             String topic = Randomly.fromList(topics);

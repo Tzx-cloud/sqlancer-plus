@@ -509,20 +509,26 @@ public class GeneralErrorHandler implements ErrorHandler {
 
         boolean isError = !getLastGeneratorScore().getStatus();
         Set<GeneratorNode> nodes = new HashSet<>(getLastGeneratorScore().getGeneratorScore().keySet());
+        Set<GeneralFragmentChoice> fragments = new HashSet<>(getLastGeneratorScore().getFragmentScore().keySet());
+        Set<String> composites = new HashSet<>(getLastGeneratorScore().getCompositeGeneratorScore().keySet());
+        Set<String> functions = composites.stream().filter(s -> s.startsWith("FUNCTION")).collect(Collectors.toSet());
         ArrayList<GeneratorInfo> history = new ArrayList<>(assertionGeneratorHistory.values());
 
         // remove meta nodes
         nodes.remove(GeneratorNode.UNTYPE_EXPR);
-        System.out.println("Features: " + nodes);
+        // System.out.println("General Features: " + nodes);
+        // System.out.println("General Fragments: " + fragments);
+        // System.out.println("Function Features: " + functions);
         // System.out.println("History: " + history);
 
         for (GeneratorInfo generator : history) {
+            // 0. If the error status is different, then it is not a duplicate bug
             if (isError != (!generator.getStatus())) {
                 continue;
             }
-            // change the generator to set
             Set<GeneratorNode> generatorNodes = new HashSet<>(generator.getGeneratorScore().keySet());
             generatorNodes.remove(GeneratorNode.UNTYPE_EXPR);
+            // 1. if it is empty, then it's a expression with only constant. Probably a String comment false alarm
             if (generatorNodes.size() == 0) {
                 if (nodes.size() == 0) {
                     duplicate = true;
@@ -532,7 +538,31 @@ public class GeneralErrorHandler implements ErrorHandler {
                     continue;
                 }
             }
+            // 2. if the potential bug contain all the nodes in one history bug, then it is a duplicated bug
             if (nodes.containsAll(generatorNodes)) {
+                duplicate = true;
+                System.out.println("Duplicated bug found, ignore it.");
+                if (isError) {
+                    System.out.println("Skip the rest of the current test");
+                    throw new IgnoreMeException();
+                }
+                break;
+            }
+            Set<GeneralFragmentChoice> generatorFragments = new HashSet<>(generator.getFragmentScore().keySet());
+            // 3. if any of the fragments is in the generatorFragments, then it is a duplicated bug
+            // use disjoint to check if the two sets are disjoint
+            if (fragments.stream().anyMatch(generatorFragments::contains)) {
+                duplicate = true;
+                System.out.println("Duplicated bug found, ignore it.");
+                if (isError) {
+                    System.out.println("Skip the rest of the current test");
+                    throw new IgnoreMeException();
+                }
+                break;
+            }
+            Set<String> generatorComposites = new HashSet<>(generator.getCompositeGeneratorScore().keySet());
+            // 4. if any of the composite FUNCTION is in the generatorComposite, then it is a duplicated bug
+            if (functions.stream().anyMatch(generatorComposites::contains)) {
                 duplicate = true;
                 System.out.println("Duplicated bug found, ignore it.");
                 if (isError) {
