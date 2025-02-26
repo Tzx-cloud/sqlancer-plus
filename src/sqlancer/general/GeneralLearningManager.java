@@ -17,6 +17,7 @@ public class GeneralLearningManager {
         DATATYPE("datatype", false), //
         FUNCTION("function", false), //
         CLAUSE("clause", true), //
+        OPERATOR("operator", false), //
         ;
 
         private final String name;
@@ -87,8 +88,8 @@ public class GeneralLearningManager {
             initializeTopicPool(fragments);
         }
         System.out.println(topicPool);
-        // update the fragments if fragments is empty or topicpool are all learned
-        if (fragments.getFragments().isEmpty() || topicPool.values().stream().allMatch(Boolean.TRUE::equals)) {
+        // update the fragments if fragments is empty 
+        if (fragments.getFragments().isEmpty()) {
             fragments.updateFragmentsFromLearner(globalState);
             for (String topic : fragments.getFragments().keySet()) {
                 if (!topicPool.containsKey(topic)) {

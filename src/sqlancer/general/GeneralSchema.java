@@ -68,7 +68,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         // rare keywords
         // use options
         protected String getSystemPrompt() {
-            return "This GPT is an expert in SQL dialects. It helps users generate correct SQL statements for different DBMSs based on the reference user provided. Users specify a DBMS, provide a SQL template with SQL keywords and placeholders, and give random variable generators. The GPT fills placeholders with data types ({0}) and the format of the data types ({1}), consists of concrete strings or random variable generators user provided. You should check whether the format The response is a CSV file with two columns separated by semicolon \";\": one for data type names and one for the format, without a header. Provide at least 3 example values or syntax for one data type. Each data type is split into separate rows. Provide as many different answers. Be rare and complex. Avoid explanations. Avoid random functions in DBMS. Avoid functions let the server sleep.";
+            return "This GPT is an expert in SQL dialects. It helps users generate correct SQL statements for different DBMSs based on the reference user provided. Users specify a DBMS, provide a SQL template with SQL keywords and holes, and give random variable generators. The GPT fills holes with data types ({0}) and the format of the data types ({1}), consists of concrete strings or random variable generators user provided. The response is a CSV file with two columns separated by semicolon \";\": one for data type names and one for the format, without a header. Provide at least 3 example values or syntax for one data type. Each data type is split into separate rows. Provide as many different answers. Be rare and complex. Avoid explanations. Avoid random functions in DBMS. Avoid functions let the server sleep.";
         }
 
         @Override
@@ -162,15 +162,8 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                     "INSERT INTO test VALUES ({2}(NULL)); -- Placeholder {2}: Deterministic function with one parameter that returns a %s value\n",
                     type));
             templateBuilder.append(String.format(
-                    "INSERT INTO test VALUES ({3}(NULL, NULL)); -- Placeholder {2}: Deterministic function with two parameters that returns a %s value\n",
+                    "INSERT INTO test VALUES ({3}(NULL, NULL)); -- Placeholder {3}: Deterministic function with two parameters that returns a %s value\n",
                     type));
-            // templateBuilder.append(String.format(
-            //         "SELECT {4}(test.c0); -- Placeholder {4}: Deterministic function that use one %s parameter\n",
-            //         type));
-            // templateBuilder.append(String.format(
-            // "SELECT test.c0 {4} test.c0; -- Placeholder {4}: Comparison operator for %s
-            // values\n", type
-            // ));
             String template = templateBuilder.toString();
             String variables = getVariables();
             // get the prompt of the general fragments but not the schema one

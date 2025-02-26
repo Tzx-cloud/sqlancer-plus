@@ -153,7 +153,9 @@ if __name__ == "__main__":
 
     # Creating the chain
     llm = ChatOpenAI(model=args.model)
-    prompt = ChatPromptTemplate.from_messages(PROMPTS[prompt_tag])
+    default_prompt = [("system", "Summarize the {DBMS} documentation: \\n\\n {context}.\\n\\n Give me example values and definitions.")]
+    prompts = defaultdict(lambda: default_prompt, PROMPTS)
+    prompt = ChatPromptTemplate.from_messages(prompts[prompt_tag])
     chain = create_stuff_documents_chain(llm, prompt)
 
     # Learning the reference

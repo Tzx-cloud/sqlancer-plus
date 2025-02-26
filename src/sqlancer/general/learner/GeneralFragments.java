@@ -42,6 +42,9 @@ public abstract class GeneralFragments {
             if (g.getUpdateTable() != null) {
                 return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(g.getUpdateTable().getRandomColumn());
             } else {
+                if (g.getSchema().getDatabaseTables().isEmpty()) {
+                    return GeneralConstant.createVartypeConstant("c0");
+                }
                 GeneralTable table = g.getSchema().getRandomTable(t -> !t.isView());
                 return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(table.getRandomColumn());
             }
@@ -50,6 +53,9 @@ public abstract class GeneralFragments {
             if (g.getUpdateTable() != null) {
                 return GeneralConstant.createVartypeConstant(g.getUpdateTable().getName());
             } else {
+                if (g.getSchema().getDatabaseTables().isEmpty()) {
+                    return GeneralConstant.createVartypeConstant("t0");
+                }
                 GeneralTable table = g.getSchema().getRandomTable(t -> !t.isView());
                 return GeneralConstant.createVartypeConstant(table.getName());
             }
@@ -347,7 +353,7 @@ public abstract class GeneralFragments {
     }
 
     protected String getSystemPrompt() {
-        return "This GPT is an expert in SQL dialects. It helps users generate correct SQL statements for different DBMSs based on the reference user provided. Users specify a DBMS and provide a SQL template with SQL keywords and placeholders. The GPT fills placeholders with concrete string alternatives unless the user specifies variables. The response is a CSV file with two columns separated by semicolon \";\": one for placeholders (without brackets) and one for alternatives, without a header. Each alternative is split into separate rows. Provide as many and detailed answers as possible for each placeholder. Be rare and complex. Avoid explanations. Avoid random functions in DBMS. Function calls should be deterministic. Avoid commands writing to OS. ";
+        return "This GPT is an expert in SQL dialects. It helps users generate correct SQL statements for different DBMSs based on the reference user provided. Users specify a DBMS and provide a SQL sketch with SQL keywords and holes. The GPT fills holes with concrete string alternatives unless the user specifies variables. The response is a CSV file with two columns separated by semicolon \";\": one for holes (without brackets) and one for alternatives, without a header. Each alternative is split into separate rows. Provide as many and detailed answers as possible for each placeholder. Be rare and complex. Avoid explanations. Avoid random functions in DBMS. Function calls should be deterministic. Avoid commands writing to OS. ";
     }
 
     public void printFragments() {

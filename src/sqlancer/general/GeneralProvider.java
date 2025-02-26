@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
@@ -62,7 +63,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         }), //
         DELETE(GeneralDeleteGenerator::generate),
         UPDATE(GeneralUpdateGenerator::getQuery),
-        // GENERAL_COMMAND(GeneralStatementGenerator::getQuery),
+        GENERAL_COMMAND(GeneralStatementGenerator::getQuery),
         ALTER_TABLE(GeneralAlterTableGenerator::getQuery), //
         CREATE_VIEW(GeneralViewGenerator::generate); //
         // EXPLAIN((g) -> {
@@ -114,6 +115,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         case ALTER_TABLE:
         case CREATE_VIEW:
             return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumViews + 1);
+        case GENERAL_COMMAND:
+            return r.getInteger(5, 10);
         default:
             throw new AssertionError(a);
         }
@@ -126,12 +129,34 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         private GeneralTable updateTable;
         private boolean creatingDatabase = false; // is currently creating database
 
+
+        private HashMap<String, String> testObjectMap = new HashMap<>();
+
         private static final File CONFIG_DIRECTORY = new File("dbconfigs");
 
         @Override
         public GeneralSchema getSchema() {
             // TODO should we also check here if the saved schema match the jdbc schema?
             return schema;
+        }
+
+        public String replaceTestObject(String key) {
+            if (testObjectMap.isEmpty()) {
+                return key;
+            } else {
+                for (HashMap.Entry<String, String> entry : testObjectMap.entrySet()) {
+                    key = key.replace(entry.getKey(), entry.getValue());
+                }
+                return key;
+            }
+        }
+
+        public void setTestObject(String key, String value) {
+            testObjectMap.put(key, value);
+        }
+
+        public void cleanTestObject() {
+            testObjectMap.clear();
         }
 
         public GeneralErrorHandler getHandler() {

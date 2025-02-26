@@ -79,6 +79,7 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
                         if (reproducer != null) {
                             return reproducer;
                         }
+                        e.printStackTrace();
                         throw e;
                     }
                     localState.executedWithoutError();

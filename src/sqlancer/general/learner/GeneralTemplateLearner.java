@@ -134,7 +134,7 @@ public class GeneralTemplateLearner implements FeatureLearner {
         sb.append("DBMS: ");
         sb.append(globalState.getDbmsNameForLearning());
         sb.append("\n\n");
-        sb.append("Template:\n");
+        sb.append("Sketch:\n");
         sb.append(template);
         if (variables != "") {
             sb.append("\n");

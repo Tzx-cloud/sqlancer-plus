@@ -171,6 +171,7 @@ public class GeneralFunction {
         }
         do {
             // select a random string-integer pair from hashmap functions
+            // TODO: There's a concurrency issue here
             String funcName = Randomly.fromList(List.copyOf(functions.keySet()));
             int funcArgs = functions.get(funcName);
             node = "FUNCTION" + "-" + funcName;

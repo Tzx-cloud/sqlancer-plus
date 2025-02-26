@@ -35,7 +35,9 @@ public class GeneralStringBuilder<E extends GeneralFragments> {
     public void append(Object obj, int index) {
         sb.append(obj);
         if (fragments.getLearn() || !couldRandom || Randomly.getBoolean()) {
-            sb.append(fragments.get(index, state));
+            String fragment = fragments.get(index, state);
+            fragment = state.replaceTestObject(fragment);
+            sb.append(fragment);
         }
     }
 

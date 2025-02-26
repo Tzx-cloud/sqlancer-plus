@@ -66,6 +66,12 @@ public class GeneralTableGenerator {
             tableName = String.format("%s%s%s", globalState.getDatabaseName(),
                     globalState.getDbmsSpecificOptions().dbTableDelim, globalState.getSchema().getFreeTableName());
         }
+        // if the current getQuery is for learning:
+        if (fragments.getLearn()) {
+            tableName = "TEST_TABLE";
+        } else {
+            globalState.setTestObject("TEST_TABLE", tableName);
+        }
         GeneralStringBuilder<GeneralTableFragments> sb = new GeneralStringBuilder<GeneralTableFragments>(globalState,
                 fragments);
         sb.append("CREATE ", 0);
@@ -77,10 +83,17 @@ public class GeneralTableGenerator {
         // this is for rand column generation
         globalState.setUpdateTable(new GeneralTable(tableName, columns, false));
         for (int i = 0; i < columns.size(); i++) {
+            globalState.setTestObject("TEST_COLUMN" + i, columns.get(i).getName());
+        }
+        for (int i = 0; i < columns.size(); i++) {
             if (i != 0) {
                 sb.append(", ");
             }
-            sb.append(columns.get(i).getName());
+            String colName = columns.get(i).getName();
+            if (fragments.getLearn()) {
+                colName = "TEST_COLUMN" + i;
+            }
+            sb.append(colName);
             sb.append(" ");
             sb.append(String.format("%s ", columns.get(i).getType()), 1);
         }
@@ -106,6 +119,7 @@ public class GeneralTableGenerator {
         newTable.getColumns().forEach(c -> c.setTable(newTable));
         globalState.setUpdateTable(newTable);
         globalState.setCreatingDatabase(false);
+        globalState.cleanTestObject();
         return new SQLQueryAdapter(sb.toString(), errors, true, false);
     }
 
