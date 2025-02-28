@@ -9,8 +9,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
+import com.opencsv.CSVReaderHeaderAware;
+import com.opencsv.CSVReaderHeaderAwareBuilder;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 
@@ -194,6 +197,7 @@ public class GeneralErrorHandler implements ErrorHandler {
     private static volatile HashMap<GeneratorNode, Boolean> generatorOptions = new HashMap<>();
     private static volatile HashMap<String, Boolean> compositeGeneratorOptions = new HashMap<>();
     private static volatile HashMap<GeneralFragmentChoice, Boolean> fragmentOptions = new HashMap<>();
+    private static volatile List<String> disabledFragments = new ArrayList<>();
 
     private static volatile HashMap<String, Integer> allCompositeSuccess = new HashMap<>();
     private static volatile HashMap<String, Integer> allCompositeCount = new HashMap<>();
@@ -218,9 +222,10 @@ public class GeneralErrorHandler implements ErrorHandler {
 
         // Statement-level nodes
         CREATE_TABLE, CREATE_INDEX, INSERT, SELECT, UPDATE, DELETE, CREATE_VIEW, EXPLAIN, ANALYZE, VACUUM, ALTER_TABLE,
-        CREATE_DATABASE, GENERAL_COMMAND, 
+        CREATE_DATABASE, GENERAL_COMMAND,
         // Clause level nodes
-        UNIQUE_INDEX, UPDATE_WHERE, PRIMARY_KEY, COLUMN_NUM, COLUMN_INT, COLUMN_BOOLEAN, COLUMN_STRING, JOIN, INNER_JOIN, LEFT_JOIN,
+        UNIQUE_INDEX, UPDATE_WHERE, PRIMARY_KEY, COLUMN_NUM, COLUMN_INT, COLUMN_BOOLEAN, COLUMN_STRING, JOIN,
+        INNER_JOIN, LEFT_JOIN,
         RIGHT_JOIN, NATURAL_JOIN, LEFT_NATURAL_JOIN, RIGHT_NATURAL_JOIN, FULL_NATURAL_JOIN,
         SUBQUERY,
         // Expression level nodes
@@ -238,7 +243,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         // Logical Operator nodes
         LOPAND, LOPOR,
         // Oracles
-        WHERE, NOREC, HAVING, 
+        WHERE, NOREC, HAVING,
         ;
     }
 
@@ -345,7 +350,7 @@ public class GeneralErrorHandler implements ErrorHandler {
     }
 
     private synchronized void postUpdateFunctionOptions() {
-        // iterate funtions 
+        // iterate funtions
         for (Map.Entry<String, Integer> entry : GeneralFunction.getFunctions().entrySet()) {
             String funcName = entry.getKey();
             for (int i = 0; i < entry.getValue(); i++) {
@@ -366,30 +371,43 @@ public class GeneralErrorHandler implements ErrorHandler {
 
         // Read file disabled_options.txt line by line and set the option to false
         // if the option is not in the file then it is true
-        String fileName = "dbconfigs/disabled_options.txt";
+        String fileName = "dbconfigs/disabled_options.csv";
         disableOptions(fileName);
     }
 
+
+    public static boolean checkFragmentAvailability(GeneralFragmentChoice fragment) {
+        return !disabledFragments.contains(fragment.getFragmentName());
+    }
+
     public void disableOptions(String fileName) {
-        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String option = line;
+        CSVParser csvParser = new CSVParserBuilder().withSeparator(';').build();
+        try (CSVReaderHeaderAware csvReader = new CSVReaderHeaderAwareBuilder(new FileReader(fileName)).withCSVParser(csvParser).build()) {
+            // String[] row;
+            Map<String, String> rowValues;
+            while ((rowValues = csvReader.readMap()) != null) {
                 try {
-                    if (option.contains("-")) {
-                        setCompositeOptionIfNonExist(option, false);
-                    } else {
-                        GeneratorNode generatorNode = GeneratorNode.valueOf(option);
+                    String type = rowValues.get("Type");
+                    // String key = rowValues.get("Key");
+                    String name = rowValues.get("Name");
+                    if (type.equals("NODE")) {
+                        GeneratorNode generatorNode = GeneratorNode.valueOf(name);
                         setOptionIfNonExist(generatorNode, false);
+                    } else if (type.equals("COMPOSITE")) {
+                        setCompositeOptionIfNonExist(name, false);
+                    } else {
+                        String disabledFragment = String.format("%s", name);
+                        disabledFragments.add(disabledFragment);
                     }
                 } catch (IllegalArgumentException e) {
-                    System.out.println("Option " + option + " not found");
+                    System.out.println("Parsing row " + rowValues + " failed");
                 }
             }
             postUpdateFunctionOptions();
         } catch (Exception e) {
             System.out.println("Error reading file: " + fileName);
-            System.out.println(e.getMessage());
+            // System.out.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -528,7 +546,8 @@ public class GeneralErrorHandler implements ErrorHandler {
             }
             Set<GeneratorNode> generatorNodes = new HashSet<>(generator.getGeneratorScore().keySet());
             generatorNodes.remove(GeneratorNode.UNTYPE_EXPR);
-            // 1. if it is empty, then it's a expression with only constant. Probably a String comment false alarm
+            // 1. if it is empty, then it's a expression with only constant. Probably a
+            // String comment false alarm
             if (generatorNodes.size() == 0) {
                 if (nodes.size() == 0) {
                     duplicate = true;
@@ -538,7 +557,8 @@ public class GeneralErrorHandler implements ErrorHandler {
                     continue;
                 }
             }
-            // 2. if the potential bug contain all the nodes in one history bug, then it is a duplicated bug
+            // 2. if the potential bug contain all the nodes in one history bug, then it is
+            // a duplicated bug
             if (nodes.containsAll(generatorNodes)) {
                 duplicate = true;
                 System.out.println("Duplicated bug found, ignore it.");
@@ -549,7 +569,8 @@ public class GeneralErrorHandler implements ErrorHandler {
                 break;
             }
             Set<GeneralFragmentChoice> generatorFragments = new HashSet<>(generator.getFragmentScore().keySet());
-            // 3. if any of the fragments is in the generatorFragments, then it is a duplicated bug
+            // 3. if any of the fragments is in the generatorFragments, then it is a
+            // duplicated bug
             // use disjoint to check if the two sets are disjoint
             if (fragments.stream().anyMatch(generatorFragments::contains)) {
                 duplicate = true;
@@ -561,7 +582,8 @@ public class GeneralErrorHandler implements ErrorHandler {
                 break;
             }
             Set<String> generatorComposites = new HashSet<>(generator.getCompositeGeneratorScore().keySet());
-            // 4. if any of the composite FUNCTION is in the generatorComposite, then it is a duplicated bug
+            // 4. if any of the composite FUNCTION is in the generatorComposite, then it is
+            // a duplicated bug
             if (functions.stream().anyMatch(generatorComposites::contains)) {
                 duplicate = true;
                 System.out.println("Duplicated bug found, ignore it.");
@@ -582,18 +604,26 @@ public class GeneralErrorHandler implements ErrorHandler {
         try (FileWriter file = new FileWriter(
                 "logs/" + globalState.getDbmsSpecificOptions().getDatabaseEngineFactory().toString() + "Options.csv")) {
             String delim = ";";
-            file.write("Option" + delim + "Value" + delim + "Success" + delim + "Count" + delim + "Example" + "\n");
+            file.write("Type" + delim + "Key" + delim + "Name" + delim + "Value" + delim + "Success" + delim + "Count"
+                    + delim + "Example" + "\n");
             for (Map.Entry<GeneratorNode, Boolean> entry : generatorOptions.entrySet()) {
-                file.write(String.format("\"%s\";%s;%s;%s;\"%s\"\n", entry.getKey(), entry.getValue(), 
-                        allNodeSuccess.get(entry.getKey()), allNodeCount.get(entry.getKey()), generatorExample.get(entry.getKey())));
+                file.write(String.format(
+                        "NODE;;\"%s\";%s;%s;%s;\"%s\"\n", entry.getKey(), entry.getValue(),
+                        allNodeSuccess.get(entry.getKey()), allNodeCount.get(entry.getKey()),
+                        generatorExample.get(entry.getKey())));
             }
             for (Map.Entry<String, Boolean> entry : compositeGeneratorOptions.entrySet()) {
-                file.write(String.format("\"%s\";%s;%s;%s;\"%s\"\n", entry.getKey(), entry.getValue(), 
-                        allCompositeSuccess.get(entry.getKey()), allCompositeCount.get(entry.getKey()), compositeExample.get(entry.getKey())));
+                file.write(String.format(
+                        "COMPOSITE;;\"%s\";%s;%s;%s;\"%s\"\n", entry.getKey(), entry.getValue(),
+                        allCompositeSuccess.get(entry.getKey()), allCompositeCount.get(entry.getKey()),
+                        compositeExample.get(entry.getKey())));
             }
             for (Map.Entry<GeneralFragmentChoice, Boolean> entry : fragmentOptions.entrySet()) {
-                file.write(String.format("\"%s\";%s;%s;%s;\"%s\"\n", entry.getKey(), entry.getValue(), 
-                        allFragmentSuccess.get(entry.getKey()), allFragmentCount.get(entry.getKey()), fragmentExample.get(entry.getKey())));
+                GeneralFragmentChoice fragmentChoice = entry.getKey();
+                file.write(String.format(
+                        "%s;%s;\"%s\";%s;%s;%s;\"%s\"\n", fragmentChoice.getType(), fragmentChoice.getKey(),fragmentChoice.getFragmentName(), entry.getValue(),
+                        allFragmentSuccess.get(entry.getKey()), allFragmentCount.get(entry.getKey()),
+                        fragmentExample.get(entry.getKey())));
             }
         } catch (Exception e) {
             // TODO: handle exception
@@ -668,9 +698,9 @@ public class GeneralErrorHandler implements ErrorHandler {
         Boolean value = compositeGeneratorOptions.get(option);
         return value != null ? value : true;
         // if (compositeGeneratorOptions.containsKey(option)) {
-        //     return compositeGeneratorOptions.get(option);
+        // return compositeGeneratorOptions.get(option);
         // } else {
-        //     return true;
+        // return true;
         // }
     }
 
@@ -683,9 +713,9 @@ public class GeneralErrorHandler implements ErrorHandler {
         Boolean value = fragmentOptions.get(option);
         return value != null ? value : true;
         // if (fragmentOptions.containsKey(option)) {
-        //     return fragmentOptions.get(option);
+        // return fragmentOptions.get(option);
         // } else {
-        //     return true;
+        // return true;
         // }
     }
 

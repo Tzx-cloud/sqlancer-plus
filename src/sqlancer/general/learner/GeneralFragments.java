@@ -142,9 +142,15 @@ public abstract class GeneralFragments {
 
         @Override
         public String toString() {
-            String fragmentName = String.format(fmtString,
-                    vars.stream().map(var -> String.format("<%s>", var.name())).toArray());
-            return String.format("%s-%s-%s", getStatementType(), key, fragmentName);
+            return String.format("%s-%s-%s", getStatementType(), key, getFragmentName());
+        }
+
+        public String getType() {
+            return getStatementType();
+        }
+
+        public String getKey() {
+            return key;
         }
 
         public String getFragmentName() {
@@ -193,8 +199,14 @@ public abstract class GeneralFragments {
             System.err.println(e.getMessage());
             throw e;
         }
+        GeneralFragmentChoice choice = new GeneralFragmentChoice(fmtString, vars, key);
+        // check if it's disabled by the handler
+        if (!GeneralErrorHandler.checkFragmentAvailability(choice)) {
+            System.out.println(String.format("Fragment %s is disabled", fmtString));
+            return;
+        }
         System.out.println(String.format("Adding fragment %s", fmtString));
-        fragments.get(key).add(new GeneralFragmentChoice(fmtString, vars, key));
+        fragments.get(key).add(choice);
     }
 
     public String get(int index, GeneralGlobalState state) {
@@ -227,7 +239,7 @@ public abstract class GeneralFragments {
             System.out.println(String.format("Loading fragments from file %s.", getConfigName()));
             try {
                 fileReader = new FileReader(configFile);
-                loadFragmentsFromCSV(fileReader,globalState, false);
+                loadFragmentsFromCSV(fileReader, globalState, false);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -241,7 +253,7 @@ public abstract class GeneralFragments {
         return line;
     }
 
-    protected void loadFragmentsFromCSV(Reader configReader, GeneralGlobalState globalState,  boolean isSpecific) {
+    protected void loadFragmentsFromCSV(Reader configReader, GeneralGlobalState globalState, boolean isSpecific) {
         // get file lines by the reader
         try (BufferedReader reader = new BufferedReader(configReader)) {
             String line;
@@ -338,7 +350,8 @@ public abstract class GeneralFragments {
         String systemPrompt = getSystemPrompt();
         String examples = getExamples();
         String topic = getFeature().isSubFeature() ? getStatementType() : "overview";
-        GeneralTemplateLearner learner = new GeneralTemplateLearner(globalState, getFeature(), template, variables, systemPrompt, topic);
+        GeneralTemplateLearner learner = new GeneralTemplateLearner(globalState, getFeature(), template, variables,
+                systemPrompt, topic);
         learner.setExamples(examples);
         System.out.println("Updating fragments from learner");
         learner.learn();

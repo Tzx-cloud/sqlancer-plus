@@ -257,7 +257,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                 GeneralIndexGenerator.getFragments().dumpFragments(this);
                 GeneralSchema.getFragments().dumpFragments(this);
                 GeneralStatementGenerator.getFragments().dumpFragments(this);
-                if (status && Randomly.getBooleanWithRatherLowProbability()) {
+                if (status && Randomly.getBoolean()) {
                     // randomly pick one of the fragment to update by LLM
                     GeneralFragments f = Randomly.fromOptions(GeneralTableGenerator.getFragments(),
                             GeneralIndexGenerator.getFragments(), GeneralStatementGenerator.getFragments());
@@ -529,8 +529,9 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     public Reproducer<GeneralGlobalState> generateAndTestDatabaseWithMaskTemplateLearning(
             GeneralGlobalState globalState) throws Exception {
         String dbmsName = globalState.getDbmsSpecificOptions().getDatabaseEngineFactory().toString().toLowerCase();
+        //TODO not sure whether diable should come before or after the learning
+        globalState.getHandler().disableOptions(String.format("dbconfigs/%s/disabled_options.csv", dbmsName));
         globalState.getLearningManager().learnTypeByTopic(globalState);
-        globalState.getHandler().disableOptions(String.format("dbconfigs/%s/disabled_options.txt", dbmsName));
         return super.generateAndTestDatabase(globalState);
     }
 
