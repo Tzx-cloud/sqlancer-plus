@@ -458,6 +458,12 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
                 return conn;
             }
         },
+        ORACLE {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:oracle:thin:myuser/mypassword@//localhost:10033/FREEPDB1");
+            }
+        },
         CEDARDB {
             @Override
             public String getJDBCString(GeneralGlobalState globalState) {
@@ -485,7 +491,14 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
                 }
                 return conn;
             }
-        };
+        },
+        OCEANBASE {
+            @Override
+            public String getJDBCString(GeneralGlobalState globalState) {
+                return String.format("jdbc:mysql://localhost:10031/?user=root");
+            }
+        }
+        ;
 
         private boolean isNewSchema = true;
 
