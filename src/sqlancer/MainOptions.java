@@ -159,6 +159,11 @@ public class MainOptions {
     @Parameter(names = "--enable-learning", description = "Learn features for testing")
     private boolean enableLearning = false;
 
+
+
+    @Parameter(names = "--reproduce-bugfile", description = "The file that contains the bug to reproduce", arity = 1)
+    private String reproduceBugfile = "";
+
     public int getMaxExpressionDepth() {
         return maxExpressionDepth;
     }
@@ -362,6 +367,10 @@ public class MainOptions {
 
     public boolean enableLearning() {
         return enableLearning;
+    }
+
+    public String getReproduceBugfile() {
+        return reproduceBugfile;
     }
 
 }

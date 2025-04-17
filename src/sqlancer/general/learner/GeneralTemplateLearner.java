@@ -40,13 +40,16 @@ public class GeneralTemplateLearner implements FeatureLearner {
         String reference = "";
 
         // get the documentation reference
-        reference = retrieveSummarization();
+        if (globalState.getDbmsSpecificOptions().useRetrievalAugmentation) {
+            reference = retrieveSummarization();
+        }
         response = getDialectFromReference(reference);
 
         raw_fragments = process(response);
     }
 
-    public GeneralTemplateLearner(GeneralGlobalState globalState, SQLFeature feature, String template, String variables, String system_prompt, String topic) {
+    public GeneralTemplateLearner(GeneralGlobalState globalState, SQLFeature feature, String template, String variables,
+            String system_prompt, String topic) {
         this.globalState = globalState;
         this.feature = feature;
         this.template = template;
@@ -75,22 +78,29 @@ public class GeneralTemplateLearner implements FeatureLearner {
     }
 
     // private String retrieveURL() {
-    //     String doc_url = "";
-    //     String model = "gpt-4o-mini";
-    //     String system = "This GPT acts as a web crawler and assistant to help users find the correct URL or specific documentation related to Database Management Systems (DBMS). It should efficiently search the web and provide accurate, relevant URLs based on the user's query. The assistant will maintain a professional and formal tone, ensuring that users receive the most pertinent information. If the initial query is too broad or unclear, the assistant will ask for further clarification to narrow down the search. The responses should be concise, returning only the URL without any explanation.";
-    //     String user = String.format("URL for %s %s",
-    //             globalState.getDbmsNameForLearning(), stmt_type);
-    //     try {
-    //         doc_url = getChatGPTResponse(model, system, user);
-    //     } catch (IOException e) {
-    //         e.printStackTrace();
-    //     }
-    //     try {
-    //         doc_url = parseAndGetGPTContent(doc_url);
-    //     } catch (Exception e) {
-    //         e.printStackTrace();
-    //     }
-    //     return doc_url;
+    // String doc_url = "";
+    // String model = "gpt-4o-mini";
+    // String system = "This GPT acts as a web crawler and assistant to help users
+    // find the correct URL or specific documentation related to Database Management
+    // Systems (DBMS). It should efficiently search the web and provide accurate,
+    // relevant URLs based on the user's query. The assistant will maintain a
+    // professional and formal tone, ensuring that users receive the most pertinent
+    // information. If the initial query is too broad or unclear, the assistant will
+    // ask for further clarification to narrow down the search. The responses should
+    // be concise, returning only the URL without any explanation.";
+    // String user = String.format("URL for %s %s",
+    // globalState.getDbmsNameForLearning(), stmt_type);
+    // try {
+    // doc_url = getChatGPTResponse(model, system, user);
+    // } catch (IOException e) {
+    // e.printStackTrace();
+    // }
+    // try {
+    // doc_url = parseAndGetGPTContent(doc_url);
+    // } catch (Exception e) {
+    // e.printStackTrace();
+    // }
+    // return doc_url;
     // }
 
     private String retrieveSummarization() {
@@ -150,15 +160,16 @@ public class GeneralTemplateLearner implements FeatureLearner {
         sb.append("Reference: ");
         sb.append(reference);
         // String user = String.format("DBMS: %s\n" + //
-        //         "Template: %s\n", globalState.getDbmsNameForLearning(), template);
+        // "Template: %s\n", globalState.getDbmsNameForLearning(), template);
         // if (variables != "") {
-        //     user += "Available variables and their descriptions:\n" + variables;
+        // user += "Available variables and their descriptions:\n" + variables;
         // }
         // if (examples != "") {
-        //     user += "Examples:\n" + examples;
+        // user += "Examples:\n" + examples;
         // }
         // user += "Reference: " + reference;
-        // user += "Note: Please do not call functions in DBMS that would bring randomness to the query. Function calls should be deterministic.";
+        // user += "Note: Please do not call functions in DBMS that would bring
+        // randomness to the query. Function calls should be deterministic.";
         String user = sb.toString();
         System.out.println(user);
         try {
@@ -179,7 +190,8 @@ public class GeneralTemplateLearner implements FeatureLearner {
             System.err.println("OPENAI_API_KEY environment variable not set");
             return "";
         }
-        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(60, TimeUnit.SECONDS).readTimeout(60, TimeUnit.SECONDS).build();
+        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS).build();
 
         JSONObject json = new JSONObject();
 

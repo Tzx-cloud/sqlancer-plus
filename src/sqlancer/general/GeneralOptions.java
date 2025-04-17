@@ -69,6 +69,10 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
     @Parameter(names = "--compatible-with", description = "The popupar DBMS to be compatible with")
     public String compatibleWith = "";
 
+    @Parameter(names = "--use-retrieval-augmentation", description = "Enable The retrieval augmentation", arity = 1)
+    public boolean useRetrievalAugmentation = true;
+
+    
     public enum GeneralOracleFactory implements OracleFactory<GeneralGlobalState> {
         NOREC {
 

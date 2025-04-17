@@ -59,6 +59,8 @@ public interface DatabaseProvider<G extends GlobalState<O, ?, C>, O extends DBMS
      */
     Reproducer<G> generateAndTestDatabaseWithMaskTemplateLearning(G globalState) throws Exception;
 
+    boolean reproduceBugFromFile(G globalState) throws Exception;
+
     C createDatabase(G globalState) throws Exception;
 
     /**

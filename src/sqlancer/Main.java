@@ -449,6 +449,14 @@ public final class Main {
                 if (options.logEachSelect()) {
                     logger.writeCurrent(state.getState());
                 }
+                // evaluation usage
+                if (options.getReproduceBugfile().length() > 0) {
+                    if (!provider.reproduceBugFromFile(state)) {
+                        throw new AssertionError("Could not reproduce bug from file" + options.getReproduceBugfile());
+                    } else {
+                        throw new AssertionError("Successfully reproduced bug from file" + options.getReproduceBugfile());
+                    }
+                }
                 Reproducer<G> reproducer = null;
                 if (options.enableQPG()) {
                     provider.generateAndTestDatabaseWithQueryPlanGuidance(state);

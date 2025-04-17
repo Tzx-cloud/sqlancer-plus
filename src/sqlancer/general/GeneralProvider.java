@@ -1,8 +1,12 @@
 package sqlancer.general;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -529,10 +533,51 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     public Reproducer<GeneralGlobalState> generateAndTestDatabaseWithMaskTemplateLearning(
             GeneralGlobalState globalState) throws Exception {
         String dbmsName = globalState.getDbmsSpecificOptions().getDatabaseEngineFactory().toString().toLowerCase();
-        //TODO not sure whether diable should come before or after the learning
+        // TODO not sure whether diable should come before or after the learning
         globalState.getHandler().disableOptions(String.format("dbconfigs/%s/disabled_options.csv", dbmsName));
         globalState.getLearningManager().learnTypeByTopic(globalState);
         return super.generateAndTestDatabase(globalState);
+    }
+
+    @Override
+    public boolean reproduceBugFromFile(GeneralGlobalState globalState) throws Exception {
+        String bugFile = globalState.getOptions().getReproduceBugfile();
+        if (bugFile.length() > 0) {
+            // assume the bug is already a executable SQL file separated by ;
+            // open the file and execute the queries
+            Path path = Path.of(bugFile);
+            if (!path.toFile().exists()) {
+                throw new AssertionError("File not found: " + bugFile);
+            }
+            // List<String> lines = Files.readAllLines(path);
+            StringBuilder sb = new StringBuilder();
+            try (BufferedReader reader = Files.newBufferedReader(path)) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                }
+            }
+            String[] rawqueries = sb.toString().split(";");
+            List<String> queries = new ArrayList<>();
+            for (String query : rawqueries) {
+                if (query.trim().length() > 0) {
+                    queries.add(query);
+                }
+            }
+            // List<String> queries = 
+            for (String query : queries) {
+                try (Statement s = globalState.getConnection().createStatement()) {
+                    s.execute(query);
+                    globalState.getState().logStatement(query);
+                } catch (SQLException t) {
+                    System.err.println("Error: " + t.getMessage());
+                    return false;
+                }
+            }
+            return true;
+        }
+        return true;
+        // return super.reproduceBugFromFile(globalState);
     }
 
 }

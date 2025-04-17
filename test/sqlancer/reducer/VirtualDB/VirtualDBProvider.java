@@ -56,4 +56,9 @@ public class VirtualDBProvider extends SQLProviderAdapter<VirtualDBGlobalState, 
     public void initializeFeatures(VirtualDBGlobalState globalState) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public boolean reproduceBugFromFile(VirtualDBGlobalState globalState) throws Exception {
+        throw new UnsupportedOperationException();
+    }
 }
