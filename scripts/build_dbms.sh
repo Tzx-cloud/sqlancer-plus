@@ -92,9 +92,9 @@ if [ "$dbms" == "duckdb" ]; then
 
     # Download the latest jar file with wget
     cd $current_dir/resources
-    rm -rf duckdb
-    mkdir -p duckdb
-    cd duckdb
+    rm -rf duckdb-jar
+    mkdir -p duckdb-jar
+    cd duckdb-jar
 
     wget $FULL_URL
 
@@ -106,17 +106,27 @@ if [ "$dbms" == "duckdb" ]; then
     cd ../..
 
     # Install the jar file
-    mv resources/duckdb/java-linux-amd64/duckdb_jdbc.jar $current_dir/target/duckdb_jdbc.jar
-    mvn install:install-file -Dfile=target/duckdb_jdbc.jar -DgroupId=org.duckdb -DartifactId=duckdb_jdbc -Dversion=0.9.2 -Dpackaging=jar
+    mv resources/duckdb-jar/java-linux-amd64/duckdb_jdbc.jar $current_dir/target/duckdb_jdbc.jar
+    mvn install:install-file -Dfile=target/duckdb_jdbc.jar -DgroupId=org.duckdb -DartifactId=duckdb_jdbc -Dversion=1.0.0 -Dpackaging=jar
     mvn package -DskipTests
 fi
 
 # Install sqlite
 if [ "$dbms" == "sqlite" ]; then
     mvn clean
-    cd $current_dir/resources/sqlite-jdbc
+    cd $current_dir/resources/
+    if [ -d "sqlite" ]; then
+        rm -rf sqlite
+    fi
+    git clone --depth 1 https://github.com/sqlite/sqlite
+    cd sqlite
+    ./configure --enable-debug CC='clang'
+    make
+    cd ../sqlite-jdbc-official
+    JAVA_HOME=    cd $current_dir/resources/sqlite-jdbc
     make clean
-    JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/ make all
+    JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/ make native SQLITE_OBJ=$current_dir/resources/sqlite/libsqlite3.so SQLITE_HEADER=$current_dir/resources/sqlite/sqlite3.h
+    mvn package -DskipTests 
     mv target/sqlite-jdbc*.jar $current_dir/target/sqlite-jdbc.jar
     cd ../../
     mvn install:install-file -Dfile=target/sqlite-jdbc.jar -DgroupId=org.xerial -DartifactId=sqlite-jdbc -Dversion=3.40.0.0 -Dpackaging=jar
@@ -148,3 +158,4 @@ if [ "$dbms" == "h2" ]; then
     mvn install:install-file -Dfile=target/h2.jar -DgroupId=com.h2database -DartifactId=h2 -Dversion=2.1.214 -Dpackaging=jar
     mvn package -DskipTests
 fi
+

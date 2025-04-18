@@ -67,7 +67,7 @@ fi
 if [ "$dbms" == "postgresql" ]; then
     docker stop postgresql-test
     docker rm postgresql-test
-    docker run --name postgresql-test -e POSTGRES_PASSWORD=postgres -p 10010:5432 postgres:latest
+    docker run --name postgresql-test -e POSTGRES_PASSWORD=postgres -p 10010:5432 postgres:17rc1-bullseye
 fi
 # docker stop postgres-test
 # docker rm postgres-test
@@ -182,4 +182,26 @@ if [ "$dbms" == "presto" ]; then
     docker stop presto-test
     docker rm presto-test
     docker run --name presto-test -p 10028:8080 -v $current_dir/scripts/configs/presto/memory.properties:/opt/presto-server/etc/catalog/memory.properties prestodb/presto:latest
+fi
+
+if [ "$dbms" == "opengauss" ]; then
+    docker stop opengauss-test
+    docker rm opengauss-test
+    docker run --name opengauss-test -p 10032:5432 --privileged=true  -e GS_PASSWORD=openGauss@123 enmotech/opengauss:latest
+fi
+
+if [ "$dbms" == "oracle" ]; then
+    docker stop oracle-test
+    docker rm oracle-test
+    docker run -p 10033:1521 --name oracle-test -e APP_USER=myuser -e APP_USER_PASSWORD=mypassword -e ORACLE_PASSWORD=oracle gvenzl/oracle-free
+    # sqlplus myuser/mypassword@//localhost:1521/FREEPDB1
+fi
+
+
+if [ "$dbms" == "oceanbase" ]; then
+    docker stop oceanbase-test
+    docker rm oceanbase-test
+    docker run -p 10031:2881 --name oceanbase-test -e MODE=mini -d oceanbase/oceanbase-ce:4.3.5.1-101000042025031818
+
+
 fi
