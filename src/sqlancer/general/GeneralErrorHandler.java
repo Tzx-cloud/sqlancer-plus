@@ -231,7 +231,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         // Expression level nodes
         UNARY_POSTFIX, UNARY_PREFIX, BINARY_COMPARISON, BINARY_LOGICAL, BINARY_ARITHMETIC, CAST, FUNC, BETWEEN, CASE,
         IN, COLLATE, LIKE_ESCAPE, UNTYPE_FUNC, CAST_FUNC, CAST_COLON, IS_NULL, IS_NOT_NULL, IS_TRUE, IS_FALSE,
-        IS_NOT_UNKNOWN,
+        IS_NOT_UNKNOWN, BINARY_OPERATOR,
         // UnaryPrefix
         UNOT, UPLUS, UMINUS, USQT_ROOT, UABS_VAL, UBIT_NOT, UCUBE_ROOT,
         // Comparison Operator nodes

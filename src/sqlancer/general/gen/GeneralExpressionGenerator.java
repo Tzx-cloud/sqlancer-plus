@@ -27,6 +27,7 @@ import sqlancer.general.GeneralSchema.GeneralDataType;
 import sqlancer.general.ast.GeneralBinaryArithmeticOperator;
 import sqlancer.general.ast.GeneralBinaryComparisonOperator;
 import sqlancer.general.ast.GeneralBinaryLogicalOperator;
+import sqlancer.general.ast.GeneralBinaryOperator;
 import sqlancer.general.ast.GeneralCast;
 import sqlancer.general.ast.GeneralConstant;
 import sqlancer.general.ast.GeneralExpression;
@@ -53,6 +54,7 @@ public final class GeneralExpressionGenerator
         UNARY_PREFIX(GeneralUnaryPrefixOperator.values().length),
         BINARY_COMPARISON(GeneralBinaryComparisonOperator.values().length),
         BINARY_LOGICAL(GeneralBinaryLogicalOperator.values().length),
+        BINARY_OPERATOR(GeneralBinaryOperator.getOperators().size()),
         BINARY_ARITHMETIC(GeneralBinaryArithmeticOperator.values().length), CAST(GeneralCastOperator.values().length),
         FUNC(GeneralFunction.getNrFunctionsNum() / 10), BETWEEN(1), CASE(1), IN(1);
 
@@ -114,6 +116,9 @@ public final class GeneralExpressionGenerator
         case BINARY_ARITHMETIC:
             return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     generateExpression(depth + 1), GeneralBinaryArithmeticOperator.getRandomByOptions(handler));
+        case BINARY_OPERATOR:
+            return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
+                    generateExpression(depth + 1), GeneralBinaryOperator.getRandomByOptions(handler));
         case CAST:
             return new GeneralCast(generateExpression(depth + 1), GeneralCompositeDataType.getRandomWithoutNull(),
                     GeneralCastOperator.getRandomByOptions(handler));

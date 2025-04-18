@@ -18,6 +18,7 @@ import sqlancer.common.schema.TableIndex;
 import sqlancer.general.GeneralLearningManager.SQLFeature;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralTable;
+import sqlancer.general.ast.GeneralBinaryOperator;
 import sqlancer.general.ast.GeneralFunction;
 import sqlancer.general.learner.GeneralFragments;
 import sqlancer.general.learner.GeneralStringBuilder;
@@ -164,6 +165,12 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             templateBuilder.append(String.format(
                     "INSERT INTO test VALUES ({3}(NULL, NULL)); -- Placeholder {3}: Deterministic function with two parameters that returns a %s value\n",
                     type));
+            templateBuilder.append(String.format(
+                    "INSERT INTO test VALUES (NULL {4} NULL); -- Placeholder {4}: Deterministic operator whose return value is %s\n",
+                    type));
+            templateBuilder.append(String.format(
+                    "SELECT * FROM test WHERE c0 {5} c0; -- Placeholder {5}: Deterministic operator whose operands are %s value\n",
+                    type));
             String template = templateBuilder.toString();
             String variables = getVariables();
             // get the prompt of the general fragments but not the schema one
@@ -174,7 +181,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             exampleBuilder.append(String.format("1,EXAMPLE_FUNCTION_NAME\n"));
             exampleBuilder.append(String.format("2,EXAMPLE_FUNCTION_NAME\n"));
             exampleBuilder.append(String.format("3,EXAMPLE_FUNCTION_NAME\n"));
-            // exampleBuilder.append(String.format("4,EXAMPLE_FUNCTION_NAME\n"));
+            exampleBuilder.append(String.format("4,EXAMPLE_OPERATOR\n"));
             String examples = exampleBuilder.toString();
             learner.setExamples(examples);
             System.out.println("Updating fragments from learner for type " + type);
@@ -218,6 +225,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             matcher.appendTail(fmtString);
             GeneralFragments typeFragments = GeneralSchema.getFragments();
             GeneralFragments funcFragments = GeneralFunction.getFragments();
+            GeneralFragments opFragments = GeneralBinaryOperator.getFragments();
 
             switch (key) {
                 case "0":
@@ -225,7 +233,6 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                     break;
                 case "1":
                     funcFragments.addFragment("0", fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
-                    // TODO: not sure if the function fragments could have variables
                     // typeToFunction.get(type).add(fmtString.toString())
                     try {
                         updateTypeToFunction(type, new ArrayList<>(List.of(fmtString.toString())), false);
@@ -243,7 +250,13 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                     }
                     break;
                 case "3":
-                    funcFragments.addFragment("1", fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
+                    funcFragments.addFragment("2", fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
+                    break;
+                case "4":
+                    opFragments.addFragment("BOOLEAN", fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
+                    break;
+                case "5":
+                    opFragments.addFragment(type, fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
                     break;
                 default:
                     break;
@@ -331,6 +344,15 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             this.id = id;
         }
 
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof GeneralCompositeDataType) {
+                GeneralCompositeDataType other = (GeneralCompositeDataType) obj;
+                return dataType == other.dataType && id == other.id;
+            }
+            return false;
+        }
+
         public GeneralDataType getPrimitiveDataType() {
             return dataType;
         }
@@ -346,6 +368,13 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             // match the name of the type to the typeMap
             if (type == null) {
                 return null;
+            }
+            if (type.equals("BOOLEAN")) {
+                return GeneralDataType.BOOLEAN.get();
+            } else if (type.equals("VARCHAR")) {
+                return GeneralDataType.STRING.get();
+            } else if (type.equals("INT")) {
+                return GeneralDataType.INT.get();
             }
             int firstKey = -1;
             for (int key : typeMap.keySet()) {

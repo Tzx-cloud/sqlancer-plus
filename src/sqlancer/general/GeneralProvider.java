@@ -32,6 +32,7 @@ import sqlancer.common.query.SQLQueryProvider;
 import sqlancer.common.query.SQLancerResultSet;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralSchema.GeneralTable;
+import sqlancer.general.ast.GeneralBinaryOperator;
 import sqlancer.general.ast.GeneralFunction;
 import sqlancer.general.gen.GeneralAlterTableGenerator;
 import sqlancer.general.gen.GeneralDeleteGenerator;
@@ -518,6 +519,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         GeneralTableGenerator.getFragments().loadFragmentsFromFile(globalState);
         GeneralIndexGenerator.getFragments().loadFragmentsFromFile(globalState);
         GeneralFunction.loadFunctionsFromFile(globalState);
+        GeneralBinaryOperator.getFragments().loadFragmentsFromFile(globalState);
+        GeneralBinaryOperator.loadOperatorsFromFragments(globalState);
 
         if (globalState.getOptions().enableLearning()) {
             GeneralStatementGenerator.getFragments().updateFragmentsFromLearner(globalState);

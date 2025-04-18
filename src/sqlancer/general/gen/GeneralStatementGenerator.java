@@ -99,7 +99,12 @@ public class GeneralStatementGenerator {
             sb.append("", option);
             sb.append(";");
         }
-        SQLQueryAdapter q = new SQLQueryAdapter(sb.toString(), errors, false, false);
+        String stmt = sb.toString();
+        // if stmt is empty, return null
+        if (stmt.equals(";")) {
+            stmt = "ANALYZE;";
+        }
+        SQLQueryAdapter q = new SQLQueryAdapter(stmt, errors, false, false);
         return q;
     }
 

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import sqlancer.Randomly;
+import sqlancer.common.ast.BinaryOperatorNode.Operator;
 import sqlancer.common.ast.newast.NewBetweenOperatorNode;
 import sqlancer.common.ast.newast.NewBinaryOperatorNode;
 import sqlancer.common.ast.newast.NewCaseOperatorNode;
@@ -28,6 +29,7 @@ import sqlancer.general.GeneralSchema.GeneralDataType;
 import sqlancer.general.ast.GeneralBinaryArithmeticOperator;
 import sqlancer.general.ast.GeneralBinaryComparisonOperator;
 import sqlancer.general.ast.GeneralBinaryLogicalOperator;
+import sqlancer.general.ast.GeneralBinaryOperator;
 import sqlancer.general.ast.GeneralCast;
 import sqlancer.general.ast.GeneralColumnReference;
 import sqlancer.general.ast.GeneralConstant;
@@ -185,6 +187,28 @@ public class GeneralTypedExpressionGenerator
                 return new NewCaseOperatorNode<GeneralExpression>(switchCond, conditions, cases, elseExpr);
 
             }
+            if (Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.BINARY_OPERATOR)) {
+                handler.addScore(GeneratorNode.BINARY_OPERATOR);
+                Operator op = GeneralBinaryOperator.getRandomByType(globalState.getHandler(), type);
+                if (op != null) {
+                    List<GeneralCompositeDataType> availTypes = GeneralCompositeDataType.getSupportedTypes().stream()
+                            .filter(t -> handler.getCompositeOptionNullAsFalse("BINOP" + op.toString() + "-" + t.toString()))
+                            .collect(Collectors.toList());
+                    GeneralCompositeDataType newType;
+                    if (availTypes.size() == 0
+                            || Randomly.getBooleanWithRatherLowProbability()) {
+                        newType = getRandomType();
+                    } else {
+                        newType = Randomly.fromList(availTypes);
+                    }
+                    Node<GeneralExpression> left = generateExpression(newType, depth + 1);
+                    Node<GeneralExpression> right = generateExpression(newType, depth + 1);
+                    if (!nullFlag) {
+                        handler.addScore("BINOP" + op.toString() + "-" + newType.toString());
+                    }
+                    return new NewBinaryOperatorNode<GeneralExpression>(left, right, op);
+                }
+            }
 
             switch (type.getPrimitiveDataType()) {
             case BOOLEAN:
@@ -244,6 +268,7 @@ public class GeneralTypedExpressionGenerator
         UNARY_PREFIX(GeneralUnaryPrefixOperator.values().length),
         BINARY_COMPARISON(GeneralBinaryComparisonOperator.values().length),
         BINARY_LOGICAL(GeneralBinaryLogicalOperator.values().length),
+        BINARY_OPERATOR(GeneralBinaryOperator.getOperators().size()),
         UNARY_POSTFIX(GeneralUnaryPostfixOperator.values().length), IN(1), BETWEEN(1);
 
         private final int proportion;
@@ -310,10 +335,11 @@ public class GeneralTypedExpressionGenerator
         case UNARY_POSTFIX:
             return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(getRandomType(), depth + 1),
                     GeneralUnaryPostfixOperator.getRandomByOptions(handler));
-        // case IS_NAN:
-        // return new CockroachDBUnaryPostfixOperation(generateExpression(GeneralDataType.FLOAT.get(), depth + 1),
-        // Randomly.fromOptions(CockroachDBUnaryPostfixOperator.IS_NAN,
-        // CockroachDBUnaryPostfixOperator.IS_NOT_NAN));
+        case BINARY_OPERATOR:
+            return new NewBinaryOperatorNode<GeneralExpression>(
+                    generateExpression(getRandomType(), depth + 1),
+                    generateExpression(getRandomType(), depth + 1),
+                    GeneralBinaryOperator.getRandomByType(globalState.getHandler(), GeneralDataType.BOOLEAN.get()));
         case IN:
             return getInOperation(depth);
         case BETWEEN:

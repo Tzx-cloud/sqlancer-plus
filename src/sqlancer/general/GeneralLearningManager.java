@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import sqlancer.Randomly;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
+import sqlancer.general.ast.GeneralBinaryOperator;
 import sqlancer.general.ast.GeneralFunction;
 import sqlancer.general.learner.GeneralFragments;
 
@@ -118,7 +119,9 @@ public class GeneralLearningManager {
             // learn the topic
             fragments.learnSpecificTopicFromLearner(globalState, topic);
             GeneralFunction.loadFunctionsFromFragments(globalState);
+            GeneralBinaryOperator.loadOperatorsFromFragments(globalState);
             System.out.println(GeneralFunction.getFuncNames());
+            System.out.println(GeneralBinaryOperator.getOperators());
             // globalState.getHandler().setCurDepth(globalState.getDatabaseName(), 2);
             // topicPool.put(topic, true);
         }
