@@ -3,6 +3,7 @@ package sqlancer.general.ast;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,6 +44,22 @@ public class GeneralFunction {
         }
 
         @Override
+        public List<String> genValStatements(GeneralGlobalState globalState, String key, String choice,
+                String databaseName) {
+            List<String> queries = new ArrayList<>();
+            int args = Integer.parseInt(key);
+            if (args == 0) {
+                queries.add(String.format("SELECT %s();", choice));
+            } else if (args == 1) {
+                queries.add(String.format("SELECT %s(NULL);", choice));
+            } else if (args == 2) {
+                queries.add(String.format("SELECT %s(NULL, NULL);", choice));
+            }
+            // queries.add(String.format("SELECT NULL %s NULL;", choice));
+            return queries;
+        }
+
+        @Override
         public String getConfigName() {
             return CONFIG_NAME;
         }
@@ -70,7 +87,8 @@ public class GeneralFunction {
                 sb.append(String.format("%d,%s\n", i, funcName));
             }
             // sb.append(
-                    // "Note: DO NOT include functions that may generate data according to arguments. For example, REPEAT, LPAD, RPAD, etc.\n");
+            // "Note: DO NOT include functions that may generate data according to
+            // arguments. For example, REPEAT, LPAD, RPAD, etc.\n");
             return sb.toString();
         }
 
@@ -134,17 +152,23 @@ public class GeneralFunction {
         for (GeneralDBFunction func : GeneralDBFunction.values()) {
             initFunctions.put(func.toString(), func.getVarArgs());
         }
-        // complete the typeToFunction 
+        // complete the typeToFunction
         // Boolean type
-        GeneralSchema.updateTypeToFunction("BOOLEAN", GeneralDBFunction.getBooleanFunctions().stream().map(GeneralDBFunction::toString)
-                .collect(Collectors.toList()), true);
+        GeneralSchema.updateTypeToFunction("BOOLEAN",
+                GeneralDBFunction.getBooleanFunctions().stream().map(GeneralDBFunction::toString)
+                        .collect(Collectors.toList()),
+                true);
         // String type
-        GeneralSchema.updateTypeToFunction("VARCHAR", GeneralDBFunction.getStringFunctions().stream().map(GeneralDBFunction::toString)
-                .collect(Collectors.toList()), true);
+        GeneralSchema.updateTypeToFunction("VARCHAR",
+                GeneralDBFunction.getStringFunctions().stream().map(GeneralDBFunction::toString)
+                        .collect(Collectors.toList()),
+                true);
         GeneralSchema.updateTypeToFunction("VARCHAR(500)", GeneralSchema.getAvailFunctions("VARCHAR"), false);
         // Numeric type
-        GeneralSchema.updateTypeToFunction("INT", GeneralDBFunction.getNumericFunctions().stream().map(GeneralDBFunction::toString)
-                .collect(Collectors.toList()), true);
+        GeneralSchema.updateTypeToFunction("INT",
+                GeneralDBFunction.getNumericFunctions().stream().map(GeneralDBFunction::toString)
+                        .collect(Collectors.toList()),
+                true);
         // validate if every function in functions is in typeToFunction
         int funcNum = 0;
         for (String type : List.of("BOOLEAN", "VARCHAR", "INT")) {
@@ -185,9 +209,10 @@ public class GeneralFunction {
             GeneralCompositeDataType returnType) {
         List<String> funcNames = functions.keySet().stream()
                 .filter(f -> handler.getCompositeOption("FUNCTION", f))
-                // only get the functions that are compatible with the return type 
-                // this is manually maintained 
-                // .filter(f -> (GeneralSchema.getAvailFunctions(returnType.toString()).contains(f)))
+                // only get the functions that are compatible with the return type
+                // this is manually maintained
+                // .filter(f ->
+                // (GeneralSchema.getAvailFunctions(returnType.toString()).contains(f)))
                 .filter(f -> handler.getCompositeOption(returnType.toString(), f))
                 .collect(Collectors.toList());
 

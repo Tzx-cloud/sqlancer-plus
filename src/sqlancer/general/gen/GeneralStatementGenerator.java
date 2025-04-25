@@ -1,6 +1,5 @@
 package sqlancer.general.gen;
 
-
 import java.util.List;
 
 import sqlancer.Randomly;
@@ -13,7 +12,7 @@ import sqlancer.general.learner.GeneralFragments;
 import sqlancer.general.learner.GeneralStringBuilder;
 
 public class GeneralStatementGenerator {
-    
+
     private static GeneralStatementFragments fragments = new GeneralStatementFragments();
     private static final String CONFIG_NAME = "dmlgenerator.txt";
     private static final String STATEMENT = "DML";
@@ -34,6 +33,12 @@ public class GeneralStatementGenerator {
                 System.out.println(stmt);
             }
             return stmt;
+        }
+
+        @Override
+        public List<String> genValStatements(GeneralGlobalState globalState, String key, String choice,
+                String databaseName) {
+            return List.of();
         }
 
         @Override
@@ -58,7 +63,8 @@ public class GeneralStatementGenerator {
             sb.append("0,REINDEX\n");
             sb.append("1,VACUUM TEST_TABLE\n");
             sb.append("2,SET some_settings\n");
-            // sb.append("Note: DO NOT include SQL commands that may create files in OS.\n");
+            // sb.append("Note: DO NOT include SQL commands that may create files in
+            // OS.\n");
             return sb.toString();
         }
 
@@ -107,7 +113,6 @@ public class GeneralStatementGenerator {
         SQLQueryAdapter q = new SQLQueryAdapter(stmt, errors, false, false);
         return q;
     }
-
 
     public static GeneralFragments getFragments() {
         return fragments;

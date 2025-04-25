@@ -162,6 +162,8 @@ public abstract class GeneralFragments {
     private boolean learnFlag = false;
     public static final String PLACEHOLDER = "{%d}";
     private HashMap<String, List<GeneralFragmentChoice>> fragments = new HashMap<>();
+    private HashMap<String, List<GeneralFragmentChoice>> newFragments = new HashMap<>();
+    protected String currentSketch = "";
 
     public GeneralFragments() {
         this.fragments = new HashMap<>();
@@ -182,6 +184,9 @@ public abstract class GeneralFragments {
     public void addFragment(String key, String fmtString, List<GeneralFragmentVariable> vars) {
         if (!fragments.containsKey(key)) {
             fragments.put(key, new ArrayList<>());
+        }
+        if (!newFragments.containsKey(key)) {
+            newFragments.put(key, new ArrayList<>());
         }
         // remove trailing spaces
         fmtString = fmtString.trim();
@@ -207,6 +212,7 @@ public abstract class GeneralFragments {
         }
         System.out.println(String.format("Adding fragment %s", fmtString));
         fragments.get(key).add(choice);
+        newFragments.get(key).add(choice);
     }
 
     public String get(int index, GeneralGlobalState state) {
@@ -345,7 +351,9 @@ public abstract class GeneralFragments {
     }
 
     public void updateFragmentsFromLearner(GeneralGlobalState globalState) {
+        newFragments.clear();
         String template = genLearnStatement(globalState);
+        currentSketch = template;
         String variables = getVariables();
         String systemPrompt = getSystemPrompt();
         String examples = getExamples();
@@ -362,7 +370,54 @@ public abstract class GeneralFragments {
         } else {
             System.err.println("No fragments returned from learner");
         }
+        if (globalState.getDbmsSpecificOptions().enableDirectValidation) {
+            validateNewFragments(globalState);
+        }
         // printFragments();
+    }
+
+    private void validateNewFragments(GeneralGlobalState globalState) {
+        for (String key : newFragments.keySet()) {
+            List<GeneralFragmentChoice> choices = newFragments.get(key);
+            List<GeneralFragmentChoice> toRemove = new ArrayList<>();
+            for (GeneralFragmentChoice choice : choices) {
+                // TODO here we should check if the fragment is valid
+                String databaseName = "TEST_FEATURE";
+                String concreteFragment = "";
+                try {
+                    concreteFragment = choice.toString(globalState);
+                } catch (Exception e) {
+                    System.out.println(String.format("No need to test %s", choice.toString()));
+                    // toRemove.add(choice);
+                    continue;
+                }
+                List<String> valStatements = genValStatements(globalState, key, concreteFragment, databaseName);
+                if (valStatements.isEmpty()) {
+                    System.out.println(String.format("No need to test %s", choice.toString()));
+                    // remove the fragment
+                    // choices.remove(choice);
+                    continue;
+                }
+                if (globalState.checkIfQueriesAreValid(globalState, valStatements, databaseName)) {
+                    // TODO here we should check if the fragment is valid
+                    System.out.println(String.format("Fragment %s is supported", choice.toString()));
+                    // print the statements
+                    for (String stmt : valStatements) {
+                        System.out.println(String.format("%s", stmt));
+                    }
+                } else {
+                    System.out.println(String.format("Fragment %s is invalid", choice.toString()));
+                    for (String stmt : valStatements) {
+                        System.out.println(String.format("%s", stmt));
+                    }
+                    // remove the fragment
+                    toRemove.add(choice);
+                }
+            }
+            for (GeneralFragmentChoice choice : toRemove) {
+                choices.remove(choice);
+            }
+        }
     }
 
     protected String getSystemPrompt() {
@@ -418,6 +473,9 @@ public abstract class GeneralFragments {
     public abstract SQLFeature getFeature();
 
     public abstract String genLearnStatement(GeneralGlobalState globalState);
+
+    public abstract List<String> genValStatements(GeneralGlobalState globalState, String key, String choice,
+            String databaseName);
 
     public void learnSpecificTopicFromLearner(GeneralGlobalState globalState, String topic) {
         throw new UnsupportedOperationException();

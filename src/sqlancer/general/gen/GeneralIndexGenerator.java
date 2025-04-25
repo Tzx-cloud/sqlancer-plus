@@ -2,6 +2,7 @@ package sqlancer.general.gen;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import sqlancer.Randomly;
@@ -48,6 +49,32 @@ public final class GeneralIndexGenerator {
         }
 
         @Override
+        public List<String> genValStatements(GeneralGlobalState globalState, String key, String choice,
+                String databaseName) {
+            List<String> queries = new ArrayList<>();
+            String sketchTable;
+            if (currentSketch != null) {
+                sketchTable = currentSketch;
+            } else {
+                sketchTable = genLearnStatement(globalState);
+            }
+            Matcher matcher = Pattern.compile("\\{(\\d+)\\}").matcher(sketchTable);
+            StringBuffer result = new StringBuffer();
+
+            while (matcher.find()) {
+                String index = matcher.group(1);
+                String replacement = "";
+                if (index.equals(key)) {
+                    replacement = choice;
+                }
+                matcher.appendReplacement(result, replacement);
+            }
+            matcher.appendTail(result);
+            queries.add(result.toString());
+            return queries;
+        }
+
+        @Override
         public String getConfigName() {
             return CONFIG_NAME;
         }
@@ -75,25 +102,39 @@ public final class GeneralIndexGenerator {
         }
         sb.append("INDEX ");
         GeneralTable table = globalState.getSchema().getRandomTable(t -> !t.isView());
-        // String indexName = table.getName() + Randomly.fromOptions("i0", "i1", "i2", "i3", "i4");
+        // String indexName = table.getName() + Randomly.fromOptions("i0", "i1", "i2",
+        // "i3", "i4");
         // TODO: make it schema aware
-        String indexName = table.getName() + (table.getIndexes().isEmpty() ? "i0" : "i" + table.getIndexes().size());
+        String tableName = table.getName();
+        if (fragments.getLearn()) {
+            tableName = "TEST_TABLE";
+        } else {
+            globalState.setTestObject("TEST_TABLE", tableName);
+        }
+        String indexName = tableName + (table.getIndexes().isEmpty() ? "i0" : "i" + table.getIndexes().size());
         sb.append(indexName);
         sb.append(" ON ");
-        sb.append(table.getName(), 0);
+        sb.append(tableName + " ", 0);
         sb.append("(");
         List<GeneralColumn> columns = table.getRandomNonEmptyColumnSubset();
+        for (int i = 0; i < columns.size(); i++) {
+            globalState.setTestObject("TEST_COLUMN" + i, columns.get(i).getName());
+        }
         for (int i = 0; i < columns.size(); i++) {
             if (i != 0) {
                 sb.append(", ");
             }
-            sb.append(columns.get(i).getName());
+            String colName = columns.get(i).getName();
+            if (fragments.getLearn()) {
+                colName = "TEST_COLUMN" + i;
+            }
+            sb.append(colName);
             sb.append(" ", 1);
             // if (Randomly.getBooleanWithRatherLowProbability()) {
             // sb.append(Randomly.fromOptions("ASC", "DESC"));
             // }
         }
-        sb.append(")", 2);
+        sb.append(") ", 2);
         if (Randomly.getBooleanWithRatherLowProbability()) {
             sb.append(" WHERE ");
             Node<GeneralExpression> expr = new GeneralExpressionGenerator(globalState).setColumns(table.getColumns())

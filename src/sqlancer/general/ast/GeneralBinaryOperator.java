@@ -41,6 +41,14 @@ public class GeneralBinaryOperator implements Operator {
         }
 
         @Override
+        public List<String> genValStatements(GeneralGlobalState globalState, String key, String choice,
+                String databaseName) {
+            List<String> queries = new ArrayList<>();
+            queries.add(String.format("SELECT NULL %s NULL;", choice));
+            return queries;
+        }
+
+        @Override
         public String getConfigName() {
             return CONFIG_NAME;
         }

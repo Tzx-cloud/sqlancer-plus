@@ -52,6 +52,15 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         }
 
         @Override
+        public List<String> genValStatements(GeneralGlobalState globalState, String key, String choice,
+                String databaseName) {
+            List<String> queries = new ArrayList<>();
+            queries.add(String.format("CREATE TABLE %s (c0 %s);", databaseName, key));
+            queries.add(String.format("INSERT INTO %s VALUES (%s);", databaseName, choice));
+            return queries;
+        }
+
+        @Override
         public String getConfigName() {
             return CONFIG_NAME;
         }

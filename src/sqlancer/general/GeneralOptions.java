@@ -72,6 +72,9 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
     @Parameter(names = "--use-retrieval-augmentation", description = "Enable The retrieval augmentation", arity = 1)
     public boolean useRetrievalAugmentation = true;
 
+    @Parameter(names = "--enable-direct-validation", description = "Enable direct validation", arity = 1)
+    public boolean enableDirectValidation = false;
+
     
     public enum GeneralOracleFactory implements OracleFactory<GeneralGlobalState> {
         NOREC {

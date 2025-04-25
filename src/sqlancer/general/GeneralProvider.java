@@ -5,6 +5,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.common.query.SQLQueryProvider;
 import sqlancer.common.query.SQLancerResultSet;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
+import sqlancer.general.GeneralOptions.GeneralDatabaseEngineFactory;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.ast.GeneralBinaryOperator;
 import sqlancer.general.ast.GeneralFunction;
@@ -103,27 +105,27 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     private static int mapActions(GeneralGlobalState globalState, Action a) {
         Randomly r = globalState.getRandomly();
         switch (a) {
-        case INSERT:
-            return r.getInteger(0, globalState.getOptions().getMaxNumberInserts());
-        case CREATE_INDEX:
-            if (!globalState.getDbmsSpecificOptions().testIndexes) {
-                return 0;
-            }
-            // fall through
-            return r.getInteger(1, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
-        case VACUUM: // seems to be ignored
-        case ANALYZE: // seems to be ignored
-            return r.getInteger(0, 2);
-        case UPDATE:
-            return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
-        case DELETE:
-        case ALTER_TABLE:
-        case CREATE_VIEW:
-            return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumViews + 1);
-        case GENERAL_COMMAND:
-            return r.getInteger(5, 10);
-        default:
-            throw new AssertionError(a);
+            case INSERT:
+                return r.getInteger(0, globalState.getOptions().getMaxNumberInserts());
+            case CREATE_INDEX:
+                if (!globalState.getDbmsSpecificOptions().testIndexes) {
+                    return 0;
+                }
+                // fall through
+                return r.getInteger(1, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
+            case VACUUM: // seems to be ignored
+            case ANALYZE: // seems to be ignored
+                return r.getInteger(0, 2);
+            case UPDATE:
+                return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
+            case DELETE:
+            case ALTER_TABLE:
+            case CREATE_VIEW:
+                return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumViews + 1);
+            case GENERAL_COMMAND:
+                return r.getInteger(5, 10);
+            default:
+                throw new AssertionError(a);
         }
     }
 
@@ -133,7 +135,6 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         private GeneralLearningManager manager = new GeneralLearningManager();
         private GeneralTable updateTable;
         private boolean creatingDatabase = false; // is currently creating database
-
 
         private HashMap<String, String> testObjectMap = new HashMap<>();
 
@@ -322,6 +323,29 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             } else {
                 return options.getDatabaseEngineFactory().toString();
             }
+        }
+
+        public boolean checkIfQueriesAreValid(GeneralGlobalState globalState, List<String> queries,
+                String databaseName) {
+            GeneralDatabaseEngineFactory databaseEngine = globalState.getDbmsSpecificOptions()
+                    .getDatabaseEngineFactory();
+            try (Connection conn = DriverManager.getConnection(databaseEngine.getJDBCString(globalState))) {
+                try (Statement s = conn.createStatement()) {
+                    s.execute("DROP TABLE " + databaseName);
+                } catch (SQLException e) {
+                    // do nothing
+                }
+                Statement stmt = conn.createStatement();
+                for (String query : queries) {
+                    stmt.addBatch(query);
+                }
+                stmt.executeBatch();
+            } catch (SQLException e) {
+                // TODO Auto-generated catch block
+                // System.out.println("Error: " + e.getMessage());
+                return false;
+            }
+            return true;
         }
 
     }
@@ -567,7 +591,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
                     queries.add(query);
                 }
             }
-            // List<String> queries = 
+            // List<String> queries =
             for (String query : queries) {
                 try (Statement s = globalState.getConnection().createStatement()) {
                     s.execute(query);
