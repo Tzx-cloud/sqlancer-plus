@@ -159,8 +159,6 @@ public class MainOptions {
     @Parameter(names = "--enable-learning", description = "Learn features for testing")
     private boolean enableLearning = false;
 
-
-
     @Parameter(names = "--reproduce-bugfile", description = "The file that contains the bug to reproduce", arity = 1)
     private String reproduceBugfile = "";
 

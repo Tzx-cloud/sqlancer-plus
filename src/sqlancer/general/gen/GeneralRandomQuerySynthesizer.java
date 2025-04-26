@@ -88,21 +88,24 @@ public final class GeneralRandomQuerySynthesizer {
         return gen;
     }
 
-    public static GeneralSubquery generateSubquery(GeneralGlobalState globalState, String name, GeneralTables targetTables) {
+    public static GeneralSubquery generateSubquery(GeneralGlobalState globalState, String name,
+            GeneralTables targetTables) {
         List<Node<GeneralExpression>> columns = new ArrayList<>();
         List<GeneralColumn> colRefs = new ArrayList<>();
-        GeneralTypedExpressionGenerator gen = new GeneralTypedExpressionGenerator(globalState).setColumns(targetTables.getColumns());
+        GeneralTypedExpressionGenerator gen = new GeneralTypedExpressionGenerator(globalState)
+                .setColumns(targetTables.getColumns());
         for (int i = 0; i < Randomly.smallNumber() + 1; i++) {
-            GeneralColumn c = new GeneralColumn(String.format("col%d", i), GeneralCompositeDataType.getRandomWithoutNull(),
-                    false, false);
+            GeneralColumn c = new GeneralColumn(String.format("col%d", i),
+                    GeneralCompositeDataType.getRandomWithoutNull(), false, false);
             colRefs.add(c);
             NewAliasNode<GeneralExpression> colExpr = new NewAliasNode<GeneralExpression>(
                     gen.generateExpression(c.getType()), c.getName());
             columns.add(colExpr);
         }
         // for (int i = 0; i < Randomly.smallNumber() + 1; i++) {
-        //     NewAliasNode<GeneralExpression> colExpr = new NewAliasNode<GeneralExpression>(gen.generateExpression(false), String.format("col%d", i));
-        //     columns.add(colExpr);
+        // NewAliasNode<GeneralExpression> colExpr = new NewAliasNode<GeneralExpression>(gen.generateExpression(false),
+        // String.format("col%d", i));
+        // columns.add(colExpr);
         // }
         GeneralSelect select = new GeneralSelect();
         List<TableReferenceNode<GeneralExpression, GeneralTable>> tableList = targetTables.getTables().stream()

@@ -89,7 +89,7 @@ public class GeneralLearningManager {
             initializeTopicPool(fragments);
         }
         System.out.println(topicPool);
-        // update the fragments if fragments is empty 
+        // update the fragments if fragments is empty
         if (fragments.getFragments().isEmpty()) {
             fragments.updateFragmentsFromLearner(globalState);
             for (String topic : fragments.getFragments().keySet()) {
@@ -102,8 +102,8 @@ public class GeneralLearningManager {
         // randomly pick a topic to learn
         if (Randomly.getBooleanWithRatherLowProbability() || globalState.getHandler().getExecDatabaseNum() == 0) {
             // pick one topic that is in the topicPool with false value
-            List<String> topics = topicPool.entrySet().stream().filter(entry -> !entry.getValue()).map(Map.Entry::getKey)
-                    .collect(Collectors.toList());
+            List<String> topics = topicPool.entrySet().stream().filter(entry -> !entry.getValue())
+                    .map(Map.Entry::getKey).collect(Collectors.toList());
             if (topics.isEmpty()) {
                 curTopic = null;
                 System.out.println("All topics are learned");
@@ -127,7 +127,7 @@ public class GeneralLearningManager {
         }
 
         setCurTopic(globalState);
-        System.out.println("Current topic for "+ globalState.getDatabaseName() + "is: " + curTopic);
+        System.out.println("Current topic for " + globalState.getDatabaseName() + "is: " + curTopic);
 
     }
 

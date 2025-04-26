@@ -68,10 +68,8 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             g.handler.addScore(GeneratorNode.ANALYZE);
             return new SQLQueryAdapter("ANALYZE;", errors);
         }), //
-        DELETE(GeneralDeleteGenerator::generate),
-        UPDATE(GeneralUpdateGenerator::getQuery),
-        GENERAL_COMMAND(GeneralStatementGenerator::getQuery),
-        ALTER_TABLE(GeneralAlterTableGenerator::getQuery), //
+        DELETE(GeneralDeleteGenerator::generate), UPDATE(GeneralUpdateGenerator::getQuery),
+        GENERAL_COMMAND(GeneralStatementGenerator::getQuery), ALTER_TABLE(GeneralAlterTableGenerator::getQuery), //
         CREATE_VIEW(GeneralViewGenerator::generate); //
         // EXPLAIN((g) -> {
         // ExpectedErrors errors = new ExpectedErrors();
@@ -105,27 +103,27 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     private static int mapActions(GeneralGlobalState globalState, Action a) {
         Randomly r = globalState.getRandomly();
         switch (a) {
-            case INSERT:
-                return r.getInteger(0, globalState.getOptions().getMaxNumberInserts());
-            case CREATE_INDEX:
-                if (!globalState.getDbmsSpecificOptions().testIndexes) {
-                    return 0;
-                }
-                // fall through
-                return r.getInteger(1, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
-            case VACUUM: // seems to be ignored
-            case ANALYZE: // seems to be ignored
-                return r.getInteger(0, 2);
-            case UPDATE:
-                return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
-            case DELETE:
-            case ALTER_TABLE:
-            case CREATE_VIEW:
-                return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumViews + 1);
-            case GENERAL_COMMAND:
-                return r.getInteger(5, 10);
-            default:
-                throw new AssertionError(a);
+        case INSERT:
+            return r.getInteger(0, globalState.getOptions().getMaxNumberInserts());
+        case CREATE_INDEX:
+            if (!globalState.getDbmsSpecificOptions().testIndexes) {
+                return 0;
+            }
+            // fall through
+            return r.getInteger(1, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
+        case VACUUM: // seems to be ignored
+        case ANALYZE: // seems to be ignored
+            return r.getInteger(0, 2);
+        case UPDATE:
+            return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
+        case DELETE:
+        case ALTER_TABLE:
+        case CREATE_VIEW:
+            return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumViews + 1);
+        case GENERAL_COMMAND:
+            return r.getInteger(5, 10);
+        default:
+            throw new AssertionError(a);
         }
     }
 

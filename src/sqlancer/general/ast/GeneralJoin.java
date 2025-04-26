@@ -87,8 +87,7 @@ public class GeneralJoin implements Node<GeneralExpression> {
     }
 
     public GeneralJoin(TableReferenceNode<GeneralExpression, GeneralTable> leftTable,
-            Node<GeneralExpression> rightTable,
-            JoinType joinType, Node<GeneralExpression> whereCondition) {
+            Node<GeneralExpression> rightTable, JoinType joinType, Node<GeneralExpression> whereCondition) {
         this.leftTable = leftTable;
         this.rightTable = rightTable;
         this.joinType = joinType;
@@ -137,10 +136,8 @@ public class GeneralJoin implements Node<GeneralExpression> {
     }
 
     private static Node<GeneralExpression> getJoinExpression(
-            TableReferenceNode<GeneralExpression, GeneralTable> leftTable,
-            Node<GeneralExpression> rightTable,
-            ExpressionGenerator<Node<GeneralExpression>> joinGen,
-            GeneralGlobalState globalState) {
+            TableReferenceNode<GeneralExpression, GeneralTable> leftTable, Node<GeneralExpression> rightTable,
+            ExpressionGenerator<Node<GeneralExpression>> joinGen, GeneralGlobalState globalState) {
         Node<GeneralExpression> joinExpression = null;
         JoinType joinType;
         if (rightTable instanceof GeneralSubquery) {
@@ -149,28 +146,27 @@ public class GeneralJoin implements Node<GeneralExpression> {
             joinType = JoinType.getRandomByOptions(globalState.getHandler());
         }
         switch (joinType) {
-            case INNER:
-                joinExpression = GeneralJoin.createInnerJoin(leftTable, rightTable, joinGen.generateExpression());
-                break;
-            case NATURAL:
-                joinExpression = GeneralJoin.createNaturalJoin(leftTable, rightTable,
-                        OuterType.getRandomByOptions(globalState.getHandler()));
-                break;
-            case LEFT:
-                joinExpression = GeneralJoin.createLeftOuterJoin(leftTable, rightTable, joinGen.generateExpression());
-                break;
-            case RIGHT:
-                joinExpression = GeneralJoin.createRightOuterJoin(leftTable, rightTable, joinGen.generateExpression());
-                break;
-            default:
-                throw new AssertionError();
+        case INNER:
+            joinExpression = GeneralJoin.createInnerJoin(leftTable, rightTable, joinGen.generateExpression());
+            break;
+        case NATURAL:
+            joinExpression = GeneralJoin.createNaturalJoin(leftTable, rightTable,
+                    OuterType.getRandomByOptions(globalState.getHandler()));
+            break;
+        case LEFT:
+            joinExpression = GeneralJoin.createLeftOuterJoin(leftTable, rightTable, joinGen.generateExpression());
+            break;
+        case RIGHT:
+            joinExpression = GeneralJoin.createRightOuterJoin(leftTable, rightTable, joinGen.generateExpression());
+            break;
+        default:
+            throw new AssertionError();
         }
         return joinExpression;
     }
 
     public static List<Node<GeneralExpression>> getJoinsWithSubquery(
-            List<TableReferenceNode<GeneralExpression, GeneralTable>> tableList,
-            GeneralGlobalState globalState) {
+            List<TableReferenceNode<GeneralExpression, GeneralTable>> tableList, GeneralGlobalState globalState) {
         List<Node<GeneralExpression>> joinExpressions = new ArrayList<>();
         if (Randomly.getBoolean()) {
             joinExpressions = getJoins(tableList, globalState);
@@ -192,8 +188,8 @@ public class GeneralJoin implements Node<GeneralExpression> {
                     subquery.getTable());
             List<GeneralColumn> columns = new ArrayList<>(leftTable.getTable().getColumns());
             columns.addAll(rightTable.getTable().getColumns());
-            joinExpressions.add(getJoinExpression(leftTable, subquery, GeneralRandomQuerySynthesizer
-                    .getExpressionGenerator(globalState, columns), globalState));
+            joinExpressions.add(getJoinExpression(leftTable, subquery,
+                    GeneralRandomQuerySynthesizer.getExpressionGenerator(globalState, columns), globalState));
             globalState.getHandler().addScore(GeneratorNode.SUBQUERY);
         }
 

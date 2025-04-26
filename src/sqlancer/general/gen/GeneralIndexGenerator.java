@@ -135,7 +135,7 @@ public final class GeneralIndexGenerator {
             // }
         }
         sb.append(") ", 2);
-        if (Randomly.getBooleanWithRatherLowProbability()) {
+        if (Randomly.getBooleanWithRatherLowProbability() && !fragments.getLearn()) {
             sb.append(" WHERE ");
             Node<GeneralExpression> expr = new GeneralExpressionGenerator(globalState).setColumns(table.getColumns())
                     .generateExpression();

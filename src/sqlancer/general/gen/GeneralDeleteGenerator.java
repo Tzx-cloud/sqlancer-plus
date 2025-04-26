@@ -20,8 +20,8 @@ public final class GeneralDeleteGenerator {
         sb.append(table.getName());
         if (Randomly.getBoolean()) {
             sb.append(" WHERE ");
-            sb.append(GeneralToStringVisitor.asString(
-                    GeneralRandomQuerySynthesizer.getExpressionGenerator(globalState, table.getColumns()).generateExpression()));
+            sb.append(GeneralToStringVisitor.asString(GeneralRandomQuerySynthesizer
+                    .getExpressionGenerator(globalState, table.getColumns()).generateExpression()));
         }
         GeneralErrors.addExpressionErrors(errors);
         return new SQLQueryAdapter(sb.toString(), errors);

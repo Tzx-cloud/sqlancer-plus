@@ -107,8 +107,7 @@ public class GeneralTemplateLearner implements FeatureLearner {
         try {
             // assume that the python environment is set up
             List<String> command = Arrays.asList("python3", "src/chat.py", "--dbms",
-                    globalState.getDbmsNameForLearning(), "--feature", feature.toString(), "--topic",
-                    topic, "--learn");
+                    globalState.getDbmsNameForLearning(), "--feature", feature.toString(), "--topic", topic, "--learn");
             System.out.println("Execute " + command);
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.redirectErrorStream(true);

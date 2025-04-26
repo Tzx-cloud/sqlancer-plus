@@ -34,11 +34,9 @@ public abstract class GeneralFragments {
     protected enum GeneralFragmentVariable {
         RANDOM_INT((g) -> {
             return GeneralConstant.createIntConstant(g.getRandomly().getInteger());
-        }, "Get a random integer. e.g., 42"),
-        RANDOM_STRING((g) -> {
+        }, "Get a random integer. e.g., 42"), RANDOM_STRING((g) -> {
             return GeneralConstant.createVartypeConstant(g.getRandomly().getString());
-        }, "Get a random string without quotes. e.g., hello"),
-        RANDOM_COLUMN((g) -> {
+        }, "Get a random string without quotes. e.g., hello"), RANDOM_COLUMN((g) -> {
             if (g.getUpdateTable() != null) {
                 return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(g.getUpdateTable().getRandomColumn());
             } else {
@@ -48,8 +46,7 @@ public abstract class GeneralFragments {
                 GeneralTable table = g.getSchema().getRandomTable(t -> !t.isView());
                 return new ColumnReferenceNode<GeneralExpression, GeneralColumn>(table.getRandomColumn());
             }
-        }, "Random column"),
-        RANDOM_TABLE((g) -> {
+        }, "Random column"), RANDOM_TABLE((g) -> {
             if (g.getUpdateTable() != null) {
                 return GeneralConstant.createVartypeConstant(g.getUpdateTable().getName());
             } else {
@@ -59,8 +56,7 @@ public abstract class GeneralFragments {
                 GeneralTable table = g.getSchema().getRandomTable(t -> !t.isView());
                 return GeneralConstant.createVartypeConstant(table.getName());
             }
-        }, "Random table"),
-        RANDOM_EXPRESSION((g) -> {
+        }, "Random table"), RANDOM_EXPRESSION((g) -> {
             ExpressionGenerator<Node<GeneralExpression>> gen;
             List<GeneralColumn> columns;
             if (g.getUpdateTable() != null) {
@@ -72,21 +68,17 @@ public abstract class GeneralFragments {
                 gen = GeneralRandomQuerySynthesizer.getExpressionGenerator(g, columns);
             }
             return gen.generateExpression();
-        }, "Random expression based on current or random table"),
-        RANDOM_POSITIVE_INT((g) -> {
+        }, "Random expression based on current or random table"), RANDOM_POSITIVE_INT((g) -> {
             return GeneralConstant.createIntConstant(g.getRandomly().getPositiveIntegerInt());
-        }, "Random positive integer"),
-        RANDOM_DATE((g) -> {
+        }, "Random positive integer"), RANDOM_DATE((g) -> {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             Timestamp timestamp = new Timestamp(g.getRandomly().getInteger());
             return GeneralConstant.createVartypeConstant(dateFormat.format(timestamp));
-        }, "Get a random date. e.g., 2021-01-01"),
-        RANDOM_TIMESTAMP((g) -> {
+        }, "Get a random date. e.g., 2021-01-01"), RANDOM_TIMESTAMP((g) -> {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             Timestamp timestamp = new Timestamp(g.getRandomly().getInteger());
             return GeneralConstant.createVartypeConstant(dateFormat.format(timestamp));
-        }, "Get a random timestamp. e.g., 2021-01-01 00:00:00"),
-        NULL((g) -> {
+        }, "Get a random timestamp. e.g., 2021-01-01 00:00:00"), NULL((g) -> {
             return null;
         }) {
             @Override
@@ -155,6 +147,18 @@ public abstract class GeneralFragments {
 
         public String getFragmentName() {
             return String.format(fmtString, vars.stream().map(var -> String.format("<%s>", var.name())).toArray());
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            GeneralFragmentChoice other = (GeneralFragmentChoice) obj;
+            return fmtString.equals(other.fmtString) && vars.equals(other.vars) && key.equals(other.key);
         }
 
     }
@@ -415,7 +419,12 @@ public abstract class GeneralFragments {
                 }
             }
             for (GeneralFragmentChoice choice : toRemove) {
-                choices.remove(choice);
+                boolean removed = fragments.get(key).remove(choice);
+                if (removed) {
+                    System.out.println(String.format("Removed fragment %s", choice.toString()));
+                } else {
+                    System.out.println(String.format("Fragment %s not found", choice.toString()));
+                }
             }
         }
     }

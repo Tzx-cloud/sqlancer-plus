@@ -154,21 +154,15 @@ public class GeneralFunction {
         }
         // complete the typeToFunction
         // Boolean type
-        GeneralSchema.updateTypeToFunction("BOOLEAN",
-                GeneralDBFunction.getBooleanFunctions().stream().map(GeneralDBFunction::toString)
-                        .collect(Collectors.toList()),
-                true);
+        GeneralSchema.updateTypeToFunction("BOOLEAN", GeneralDBFunction.getBooleanFunctions().stream()
+                .map(GeneralDBFunction::toString).collect(Collectors.toList()), true);
         // String type
-        GeneralSchema.updateTypeToFunction("VARCHAR",
-                GeneralDBFunction.getStringFunctions().stream().map(GeneralDBFunction::toString)
-                        .collect(Collectors.toList()),
-                true);
+        GeneralSchema.updateTypeToFunction("VARCHAR", GeneralDBFunction.getStringFunctions().stream()
+                .map(GeneralDBFunction::toString).collect(Collectors.toList()), true);
         GeneralSchema.updateTypeToFunction("VARCHAR(500)", GeneralSchema.getAvailFunctions("VARCHAR"), false);
         // Numeric type
-        GeneralSchema.updateTypeToFunction("INT",
-                GeneralDBFunction.getNumericFunctions().stream().map(GeneralDBFunction::toString)
-                        .collect(Collectors.toList()),
-                true);
+        GeneralSchema.updateTypeToFunction("INT", GeneralDBFunction.getNumericFunctions().stream()
+                .map(GeneralDBFunction::toString).collect(Collectors.toList()), true);
         // validate if every function in functions is in typeToFunction
         int funcNum = 0;
         for (String type : List.of("BOOLEAN", "VARCHAR", "INT")) {
@@ -207,14 +201,12 @@ public class GeneralFunction {
 
     public static List<GeneralFunction> getRandomCompatibleFunctions(GeneralErrorHandler handler,
             GeneralCompositeDataType returnType) {
-        List<String> funcNames = functions.keySet().stream()
-                .filter(f -> handler.getCompositeOption("FUNCTION", f))
+        List<String> funcNames = functions.keySet().stream().filter(f -> handler.getCompositeOption("FUNCTION", f))
                 // only get the functions that are compatible with the return type
                 // this is manually maintained
                 // .filter(f ->
                 // (GeneralSchema.getAvailFunctions(returnType.toString()).contains(f)))
-                .filter(f -> handler.getCompositeOption(returnType.toString(), f))
-                .collect(Collectors.toList());
+                .filter(f -> handler.getCompositeOption(returnType.toString(), f)).collect(Collectors.toList());
 
         return funcNames.stream().map(f -> new GeneralFunction(functions.get(f), f)).collect(Collectors.toList());
     }

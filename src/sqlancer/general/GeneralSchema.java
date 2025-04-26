@@ -161,8 +161,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         public void learnSpecificTopicFromLearner(GeneralGlobalState globalState, String type) {
             StringBuilder templateBuilder = new StringBuilder();
             templateBuilder.append(String.format("CREATE TABLE test (c0 %s);\n", type));
-            templateBuilder
-                    .append(String.format("INSERT INTO test VALUES (%s);\n", fragments.get(type, globalState)));
+            templateBuilder.append(String.format("INSERT INTO test VALUES (%s);\n", fragments.get(type, globalState)));
             templateBuilder.append(String.format(
                     "INSERT INTO test VALUES ({0}); -- Placeholder {0}: %s value or expression to insert\n", type));
             templateBuilder.append(String.format(
@@ -184,7 +183,8 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             String variables = getVariables();
             // get the prompt of the general fragments but not the schema one
             String systemPrompt = super.getSystemPrompt();
-            GeneralTemplateLearner learner = new GeneralTemplateLearner(globalState, FEATURE, template, variables, systemPrompt, String.format("%s function", type));
+            GeneralTemplateLearner learner = new GeneralTemplateLearner(globalState, FEATURE, template, variables,
+                    systemPrompt, String.format("%s function", type));
             StringBuilder exampleBuilder = new StringBuilder();
             exampleBuilder.append(String.format("0,%s\n", fragments.get(type, globalState)));
             exampleBuilder.append(String.format("1,EXAMPLE_FUNCTION_NAME\n"));
@@ -237,38 +237,38 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             GeneralFragments opFragments = GeneralBinaryOperator.getFragments();
 
             switch (key) {
-                case "0":
-                    typeFragments.addFragment(type, fmtString.toString(), vars);
-                    break;
-                case "1":
-                    funcFragments.addFragment("0", fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
-                    // typeToFunction.get(type).add(fmtString.toString())
-                    try {
-                        updateTypeToFunction(type, new ArrayList<>(List.of(fmtString.toString())), false);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    break;
-                case "2":
-                    // add more cases here
-                    funcFragments.addFragment("1", fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
-                    try {
-                        updateTypeToFunction(type, new ArrayList<>(List.of(fmtString.toString())), false);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    break;
-                case "3":
-                    funcFragments.addFragment("2", fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
-                    break;
-                case "4":
-                    opFragments.addFragment("BOOLEAN", fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
-                    break;
-                case "5":
-                    opFragments.addFragment(type, fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
-                    break;
-                default:
-                    break;
+            case "0":
+                typeFragments.addFragment(type, fmtString.toString(), vars);
+                break;
+            case "1":
+                funcFragments.addFragment("0", fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
+                // typeToFunction.get(type).add(fmtString.toString())
+                try {
+                    updateTypeToFunction(type, new ArrayList<>(List.of(fmtString.toString())), false);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
+            case "2":
+                // add more cases here
+                funcFragments.addFragment("1", fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
+                try {
+                    updateTypeToFunction(type, new ArrayList<>(List.of(fmtString.toString())), false);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
+            case "3":
+                funcFragments.addFragment("2", fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
+                break;
+            case "4":
+                opFragments.addFragment("BOOLEAN", fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
+                break;
+            case "5":
+                opFragments.addFragment(type, fmtString.toString().replaceAll("^\"+|\"+$", ""), vars);
+                break;
+            default:
+                break;
             }
         }
 
@@ -456,27 +456,26 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             return new GeneralCompositeDataType(type, typeID);
         }
 
-
         @Override
         public String toString() {
             switch (getPrimitiveDataType()) {
-                case INT:
-                    return "INT";
-                case STRING:
-                    if (id == 0) {
-                        return "VARCHAR";
-                    } else {
-                        return "VARCHAR(" + id + ")";
-                    }
-                case BOOLEAN:
-                    return "BOOLEAN";
-                case NULL:
-                    return "NULL";
-                case VARTYPE:
-                    // TODO catch exception here
-                    return typeMap.get(id).toUpperCase();
-                default:
-                    throw new AssertionError(getPrimitiveDataType());
+            case INT:
+                return "INT";
+            case STRING:
+                if (id == 0) {
+                    return "VARCHAR";
+                } else {
+                    return "VARCHAR(" + id + ")";
+                }
+            case BOOLEAN:
+                return "BOOLEAN";
+            case NULL:
+                return "NULL";
+            case VARTYPE:
+                // TODO catch exception here
+                return typeMap.get(id).toUpperCase();
+            default:
+                throw new AssertionError(getPrimitiveDataType());
             }
         }
 

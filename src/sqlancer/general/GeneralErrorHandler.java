@@ -225,8 +225,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         CREATE_DATABASE, GENERAL_COMMAND,
         // Clause level nodes
         UNIQUE_INDEX, UPDATE_WHERE, PRIMARY_KEY, COLUMN_NUM, COLUMN_INT, COLUMN_BOOLEAN, COLUMN_STRING, JOIN,
-        INNER_JOIN, LEFT_JOIN,
-        RIGHT_JOIN, NATURAL_JOIN, LEFT_NATURAL_JOIN, RIGHT_NATURAL_JOIN, FULL_NATURAL_JOIN,
+        INNER_JOIN, LEFT_JOIN, RIGHT_JOIN, NATURAL_JOIN, LEFT_NATURAL_JOIN, RIGHT_NATURAL_JOIN, FULL_NATURAL_JOIN,
         SUBQUERY,
         // Expression level nodes
         UNARY_POSTFIX, UNARY_PREFIX, BINARY_COMPARISON, BINARY_LOGICAL, BINARY_ARITHMETIC, CAST, FUNC, BETWEEN, CASE,
@@ -243,8 +242,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         // Logical Operator nodes
         LOPAND, LOPOR,
         // Oracles
-        WHERE, NOREC, HAVING,
-        ;
+        WHERE, NOREC, HAVING,;
     }
 
     public double getNodeNum() {
@@ -375,14 +373,14 @@ public class GeneralErrorHandler implements ErrorHandler {
         disableOptions(fileName);
     }
 
-
     public static boolean checkFragmentAvailability(GeneralFragmentChoice fragment) {
         return !disabledFragments.contains(fragment.getFragmentName());
     }
 
     public void disableOptions(String fileName) {
         CSVParser csvParser = new CSVParserBuilder().withSeparator(';').build();
-        try (CSVReaderHeaderAware csvReader = new CSVReaderHeaderAwareBuilder(new FileReader(fileName)).withCSVParser(csvParser).build()) {
+        try (CSVReaderHeaderAware csvReader = new CSVReaderHeaderAwareBuilder(new FileReader(fileName))
+                .withCSVParser(csvParser).build()) {
             // String[] row;
             Map<String, String> rowValues;
             while ((rowValues = csvReader.readMap()) != null) {
@@ -607,21 +605,19 @@ public class GeneralErrorHandler implements ErrorHandler {
             file.write("Type" + delim + "Key" + delim + "Name" + delim + "Value" + delim + "Success" + delim + "Count"
                     + delim + "Example" + "\n");
             for (Map.Entry<GeneratorNode, Boolean> entry : generatorOptions.entrySet()) {
-                file.write(String.format(
-                        "NODE;;\"%s\";%s;%s;%s;\"%s\"\n", entry.getKey(), entry.getValue(),
+                file.write(String.format("NODE;;\"%s\";%s;%s;%s;\"%s\"\n", entry.getKey(), entry.getValue(),
                         allNodeSuccess.get(entry.getKey()), allNodeCount.get(entry.getKey()),
                         generatorExample.get(entry.getKey())));
             }
             for (Map.Entry<String, Boolean> entry : compositeGeneratorOptions.entrySet()) {
-                file.write(String.format(
-                        "COMPOSITE;;\"%s\";%s;%s;%s;\"%s\"\n", entry.getKey(), entry.getValue(),
+                file.write(String.format("COMPOSITE;;\"%s\";%s;%s;%s;\"%s\"\n", entry.getKey(), entry.getValue(),
                         allCompositeSuccess.get(entry.getKey()), allCompositeCount.get(entry.getKey()),
                         compositeExample.get(entry.getKey())));
             }
             for (Map.Entry<GeneralFragmentChoice, Boolean> entry : fragmentOptions.entrySet()) {
                 GeneralFragmentChoice fragmentChoice = entry.getKey();
-                file.write(String.format(
-                        "%s;%s;\"%s\";%s;%s;%s;\"%s\"\n", fragmentChoice.getType(), fragmentChoice.getKey(),fragmentChoice.getFragmentName(), entry.getValue(),
+                file.write(String.format("%s;%s;\"%s\";%s;%s;%s;\"%s\"\n", fragmentChoice.getType(),
+                        fragmentChoice.getKey(), fragmentChoice.getFragmentName(), entry.getValue(),
                         allFragmentSuccess.get(entry.getKey()), allFragmentCount.get(entry.getKey()),
                         fragmentExample.get(entry.getKey())));
             }

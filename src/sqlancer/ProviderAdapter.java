@@ -51,7 +51,6 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
         throw new UnsupportedOperationException();
     }
 
-
     @Override
     public Reproducer<G> generateAndTestDatabase(G globalState) throws Exception {
         try {

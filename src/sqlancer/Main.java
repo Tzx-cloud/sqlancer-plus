@@ -454,7 +454,8 @@ public final class Main {
                     if (!provider.reproduceBugFromFile(state)) {
                         throw new AssertionError("Could not reproduce bug from file" + options.getReproduceBugfile());
                     } else {
-                        throw new AssertionError("Successfully reproduced bug from file" + options.getReproduceBugfile());
+                        throw new AssertionError(
+                                "Successfully reproduced bug from file" + options.getReproduceBugfile());
                     }
                 }
                 Reproducer<G> reproducer = null;

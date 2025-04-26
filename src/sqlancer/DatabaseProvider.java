@@ -44,7 +44,6 @@ public interface DatabaseProvider<G extends GlobalState<O, ?, C>, O extends DBMS
      */
     void generateAndTestDatabaseWithQueryPlanGuidance(G globalState) throws Exception;
 
-
     /**
      * The experimental feature: Mask Template Learning.
      *

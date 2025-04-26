@@ -70,18 +70,16 @@ public enum GeneralDBFunction {
     private int nrArgs;
     private boolean isVariadic;
 
-    private static final List<GeneralDBFunction> BOOLEAN_FUNCTIONS = List.of(
-        CONTAINS, PREFIX, SUFFIX, NULLIF, IFNULL, IF, COALESCE
-    );
+    private static final List<GeneralDBFunction> BOOLEAN_FUNCTIONS = List.of(CONTAINS, PREFIX, SUFFIX, NULLIF, IFNULL,
+            IF, COALESCE);
 
-    private static final List<GeneralDBFunction> STRING_FUNCTIONS = List.of(
-        LENGTH, LOWER, UPPER, SUBSTRING, REVERSE, CONCAT, CONCAT_WS, INSTR, PRINTF, STRIP_ACCENTS, LTRIM, RTRIM, REPLACE, UNICODE, BIT_COUNT, BIT_LENGTH, LAST_DAY, MONTHNAME, DAYNAME, YEARWEEK, DAYOFMONTH, WEEKDAY, WEEKOFYEAR, DATE_PART, AGE
-    );
+    private static final List<GeneralDBFunction> STRING_FUNCTIONS = List.of(LENGTH, LOWER, UPPER, SUBSTRING, REVERSE,
+            CONCAT, CONCAT_WS, INSTR, PRINTF, STRIP_ACCENTS, LTRIM, RTRIM, REPLACE, UNICODE, BIT_COUNT, BIT_LENGTH,
+            LAST_DAY, MONTHNAME, DAYNAME, YEARWEEK, DAYOFMONTH, WEEKDAY, WEEKOFYEAR, DATE_PART, AGE);
 
-    private static final List<GeneralDBFunction> NUMERIC_FUNCTIONS = List.of(
-        ABS, CEIL, CEILING, FLOOR, LOG, LOG10, LOG2, LN, SQRT, POWER, CBRT, ROUND, SIGN, DEGREES, RADIANS, MOD, XOR, ACOS, ASIN, ATAN, COS, SIN, TAN, COT, ATAN2, PI
-    );
-
+    private static final List<GeneralDBFunction> NUMERIC_FUNCTIONS = List.of(ABS, CEIL, CEILING, FLOOR, LOG, LOG10,
+            LOG2, LN, SQRT, POWER, CBRT, ROUND, SIGN, DEGREES, RADIANS, MOD, XOR, ACOS, ASIN, ATAN, COS, SIN, TAN, COT,
+            ATAN2, PI);
 
     GeneralDBFunction(int nrArgs) {
         this(nrArgs, false);

@@ -156,7 +156,7 @@ public class GeneralTypedExpressionGenerator
                     GeneralFunction function = Randomly.fromList(applicableFunctions);
                     nullFlag = false;
                     NewFunctionNode<GeneralExpression, GeneralFunction> functionNode = new NewFunctionNode<>(
-                        generateFunctionExpressions(function, depth + 1, handler), function);
+                            generateFunctionExpressions(function, depth + 1, handler), function);
                     handler.addScore("FUNCTION-" + function.toString());
                     if (!nullFlag) {
                         handler.addScore(type.toString() + "-" + function.toString());
@@ -192,11 +192,11 @@ public class GeneralTypedExpressionGenerator
                 Operator op = GeneralBinaryOperator.getRandomByType(globalState.getHandler(), type);
                 if (op != null) {
                     List<GeneralCompositeDataType> availTypes = GeneralCompositeDataType.getSupportedTypes().stream()
-                            .filter(t -> handler.getCompositeOptionNullAsFalse("BINOP" + op.toString() + "-" + t.toString()))
+                            .filter(t -> handler
+                                    .getCompositeOptionNullAsFalse("BINOP" + op.toString() + "-" + t.toString()))
                             .collect(Collectors.toList());
                     GeneralCompositeDataType newType;
-                    if (availTypes.size() == 0
-                            || Randomly.getBooleanWithRatherLowProbability()) {
+                    if (availTypes.size() == 0 || Randomly.getBooleanWithRatherLowProbability()) {
                         newType = getRandomType();
                     } else {
                         newType = Randomly.fromList(availTypes);
@@ -336,8 +336,7 @@ public class GeneralTypedExpressionGenerator
             return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(getRandomType(), depth + 1),
                     GeneralUnaryPostfixOperator.getRandomByOptions(handler));
         case BINARY_OPERATOR:
-            return new NewBinaryOperatorNode<GeneralExpression>(
-                    generateExpression(getRandomType(), depth + 1),
+            return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(getRandomType(), depth + 1),
                     generateExpression(getRandomType(), depth + 1),
                     GeneralBinaryOperator.getRandomByType(globalState.getHandler(), GeneralDataType.BOOLEAN.get()));
         case IN:
@@ -422,7 +421,7 @@ public class GeneralTypedExpressionGenerator
             throw new AssertionError(type);
         }
     }
-    
+
     @Override
     public Node<GeneralExpression> generateConstant() {
         return generateConstant(GeneralCompositeDataType.getRandomWithoutNull(globalState));
@@ -445,7 +444,7 @@ public class GeneralTypedExpressionGenerator
         GeneralColumn column = Randomly
                 .fromList(columns.stream().filter(c -> c.getType() == type).collect(Collectors.toList()));
         // if (type.getPrimitiveDataType().equals(GeneralDataType.VARTYPE)) {
-        //     globalState.getLogger().writeCurrent("-- type " + type);
+        // globalState.getLogger().writeCurrent("-- type " + type);
         // }
         Node<GeneralExpression> columnReference = new GeneralColumnReference(column);
         return columnReference;

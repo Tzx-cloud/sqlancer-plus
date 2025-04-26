@@ -3,6 +3,7 @@ package sqlancer.general.ast;
 import sqlancer.common.ast.SelectBase;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.general.GeneralSchema.GeneralTable;
+
 public class GeneralSelect extends SelectBase<Node<GeneralExpression>> implements Node<GeneralExpression> {
 
     private boolean isDistinct;
@@ -34,7 +35,7 @@ public class GeneralSelect extends SelectBase<Node<GeneralExpression>> implement
         public String getName() {
             return name;
         }
-        
+
         public GeneralTable getTable() {
             return targetTable;
         }

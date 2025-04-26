@@ -117,8 +117,7 @@ public class GeneralBinaryOperator implements Operator {
         return op;
     }
 
-    public static Operator getRandomByType(GeneralErrorHandler handler,
-            GeneralCompositeDataType type) {
+    public static Operator getRandomByType(GeneralErrorHandler handler, GeneralCompositeDataType type) {
         Operator op;
         String node;
         do {

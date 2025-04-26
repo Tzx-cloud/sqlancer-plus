@@ -132,7 +132,8 @@ public class GeneralTableGenerator {
             sb.append(", PRIMARY KEY(");
             String pkCols = primaryKeyColumns.stream().map(c -> c.getName()).collect(Collectors.joining(", "));
             if (fragments.getLearn()) {
-                pkCols = primaryKeyColumns.stream().map(c -> "TEST_COLUMN" + columns.indexOf(c)).collect(Collectors.joining(", "));
+                pkCols = primaryKeyColumns.stream().map(c -> "TEST_COLUMN" + columns.indexOf(c))
+                        .collect(Collectors.joining(", "));
             }
             sb.append(pkCols);
             sb.append(")", 2);

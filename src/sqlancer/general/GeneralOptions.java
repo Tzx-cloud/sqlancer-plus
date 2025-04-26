@@ -75,7 +75,6 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
     @Parameter(names = "--enable-direct-validation", description = "Enable direct validation", arity = 1)
     public boolean enableDirectValidation = false;
 
-    
     public enum GeneralOracleFactory implements OracleFactory<GeneralGlobalState> {
         NOREC {
 
@@ -504,8 +503,7 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             public String getJDBCString(GeneralGlobalState globalState) {
                 return String.format("jdbc:mysql://localhost:10031/?user=root");
             }
-        }
-        ;
+        };
 
         private boolean isNewSchema = true;
 
