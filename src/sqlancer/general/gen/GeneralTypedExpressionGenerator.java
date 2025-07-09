@@ -391,9 +391,20 @@ public class GeneralTypedExpressionGenerator
                 GeneralBinaryComparisonOperator.getRandomByOptions(globalState.getHandler(), type));
     }
 
+    private boolean isTypeCompatible(GeneralCompositeDataType typeA, GeneralCompositeDataType typeB) {
+        if (typeA.getPrimitiveDataType() != typeB.getPrimitiveDataType()) {
+            return false;
+        }
+        if (typeA.getPrimitiveDataType() == GeneralDataType.STRING
+                && typeB.getPrimitiveDataType() == GeneralDataType.STRING) {
+            return true; // STRING is compatible with all VARTYPEs
+        }
+        return typeA.toString().equals(typeB.toString());
+    }
+
     @Override
     protected boolean canGenerateColumnOfType(GeneralCompositeDataType type) {
-        return columns.stream().anyMatch(c -> c.getType() == type);
+        return columns.stream().anyMatch(c -> isTypeCompatible(c.getType(), type));
     }
 
     @Override
@@ -442,7 +453,8 @@ public class GeneralTypedExpressionGenerator
     @Override
     protected Node<GeneralExpression> generateColumn(GeneralCompositeDataType type) {
         GeneralColumn column = Randomly
-                .fromList(columns.stream().filter(c -> c.getType() == type).collect(Collectors.toList()));
+                .fromList(columns.stream().filter(
+                        c -> isTypeCompatible(c.getType(), type)).collect(Collectors.toList()));
         // if (type.getPrimitiveDataType().equals(GeneralDataType.VARTYPE)) {
         // globalState.getLogger().writeCurrent("-- type " + type);
         // }
