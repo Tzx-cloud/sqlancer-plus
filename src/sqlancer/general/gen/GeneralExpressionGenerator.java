@@ -29,12 +29,12 @@ import sqlancer.general.ast.GeneralBinaryComparisonOperator;
 import sqlancer.general.ast.GeneralBinaryLogicalOperator;
 import sqlancer.general.ast.GeneralBinaryOperator;
 import sqlancer.general.ast.GeneralCast;
+import sqlancer.general.ast.GeneralCast.GeneralCastOperator;
 import sqlancer.general.ast.GeneralConstant;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralFunction;
 import sqlancer.general.ast.GeneralUnaryPostfixOperator;
 import sqlancer.general.ast.GeneralUnaryPrefixOperator;
-import sqlancer.general.ast.GeneralCast.GeneralCastOperator;
 
 public final class GeneralExpressionGenerator
         extends UntypedExpressionGenerator<Node<GeneralExpression>, GeneralColumn> {

@@ -11,13 +11,13 @@ import java.util.stream.Collectors;
 import sqlancer.Randomly;
 import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.general.GeneralErrorHandler;
-import sqlancer.general.GeneralSchema;
 import sqlancer.general.GeneralLearningManager.SQLFeature;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
+import sqlancer.general.GeneralSchema;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.learner.GeneralFragments;
-import sqlancer.general.learner.GeneralStringBuilder;
 import sqlancer.general.learner.GeneralFragments.GeneralFragmentChoice;
+import sqlancer.general.learner.GeneralStringBuilder;
 
 public class GeneralFunction {
     private static final String CONFIG_NAME = "functions.txt";
@@ -31,8 +31,8 @@ public class GeneralFunction {
     private static HashMap<String, Integer> functions = initFunctions();
     private static GeneralFunctionFragments fragments = new GeneralFunctionFragments();
 
-    private final static class GeneralFunctionFragments extends GeneralFragments {
-        public GeneralFunctionFragments() {
+    private static final class GeneralFunctionFragments extends GeneralFragments {
+        GeneralFunctionFragments() {
             super();
         }
 

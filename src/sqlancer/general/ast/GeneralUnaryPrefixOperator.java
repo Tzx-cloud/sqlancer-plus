@@ -1,10 +1,10 @@
 package sqlancer.general.ast;
 
+import sqlancer.Randomly;
 import sqlancer.common.ast.BinaryOperatorNode.Operator;
 import sqlancer.general.GeneralErrorHandler;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
-import sqlancer.Randomly;
 
 public enum GeneralUnaryPrefixOperator implements Operator {
 

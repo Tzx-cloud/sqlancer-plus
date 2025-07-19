@@ -18,8 +18,7 @@ public class GeneralLearningManager {
         DATATYPE("datatype", false), //
         FUNCTION("function", false), //
         CLAUSE("clause", true), //
-        OPERATOR("operator", false), //
-        ;
+        OPERATOR("operator", false);
 
         private final String name;
         private final boolean subFeature;
@@ -47,7 +46,7 @@ public class GeneralLearningManager {
     private int learnCount;
     // if True, then the topic is learned
     private static HashMap<String, String> topics = new HashMap<>();
-    private volatile static HashMap<String, Boolean> topicPool = new HashMap<>();
+    private static volatile HashMap<String, Boolean> topicPool = new HashMap<>();
 
     public String getTopic() {
         return curTopic;
@@ -83,7 +82,7 @@ public class GeneralLearningManager {
     }
 
     public void learnTypeByTopic(GeneralGlobalState globalState) {
-        GeneralFragments fragments = GeneralSchema.getFragments();// TODO: change it to feature
+        GeneralFragments fragments = GeneralSchema.getFragments(); // TODO: change it to feature
         // update topicPool HashMap
         if (topicPool.isEmpty()) {
             initializeTopicPool(fragments);

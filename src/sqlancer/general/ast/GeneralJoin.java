@@ -27,7 +27,7 @@ public class GeneralJoin implements Node<GeneralExpression> {
     public enum JoinType {
         INNER, NATURAL, LEFT, RIGHT;
 
-        private static final List<JoinType> valueNotNJ = List.of(INNER, LEFT, RIGHT);
+        private static final List<JoinType> VALUE_NOT_NJ = List.of(INNER, LEFT, RIGHT);
 
         public static JoinType getRandom() {
             return Randomly.fromOptions(values());
@@ -49,7 +49,7 @@ public class GeneralJoin implements Node<GeneralExpression> {
             JoinType joinType;
             GeneratorNode node;
             do {
-                joinType = Randomly.fromList(valueNotNJ);
+                joinType = Randomly.fromList(VALUE_NOT_NJ);
                 node = GeneratorNode.valueOf(joinType.name() + "_JOIN");
             } while (!handler.getOption(node) || !Randomly.getBoolean());
             handler.addScore(node);

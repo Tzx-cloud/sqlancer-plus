@@ -55,10 +55,6 @@ public class GeneralCast implements Node<GeneralExpression> {
     }
 
     public boolean isFunc() {
-        if (op == GeneralCastOperator.FUNC) {
-            return true;
-        } else {
-            return false;
-        }
+        return op == GeneralCastOperator.FUNC;
     }
 }

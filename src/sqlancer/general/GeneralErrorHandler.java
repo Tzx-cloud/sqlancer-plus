@@ -1,5 +1,7 @@
 package sqlancer.general;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,9 +15,6 @@ import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReaderHeaderAware;
 import com.opencsv.CSVReaderHeaderAwareBuilder;
-
-import java.io.File;
-import java.io.FileReader;
 
 import sqlancer.ErrorHandler;
 import sqlancer.IgnoreMeException;
@@ -116,7 +115,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         private HashMap<GeneralFragmentChoice, Integer> fragmentSuccess = new HashMap<>();
         private HashMap<GeneralFragmentChoice, Integer> fragmentCount = new HashMap<>();
 
-        public GeneratorInfoTable() {
+        GeneratorInfoTable() {
             this.generatorTable = new ArrayList<>();
         }
 

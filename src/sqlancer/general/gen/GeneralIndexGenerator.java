@@ -10,12 +10,12 @@ import sqlancer.common.ast.newast.Node;
 import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.common.schema.TableIndex;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
+import sqlancer.general.GeneralLearningManager.SQLFeature;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralToStringVisitor;
-import sqlancer.general.GeneralErrorHandler.GeneratorNode;
-import sqlancer.general.GeneralLearningManager.SQLFeature;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.learner.GeneralFragments;
 import sqlancer.general.learner.GeneralStringBuilder;
@@ -30,8 +30,8 @@ public final class GeneralIndexGenerator {
     private static final String STATEMENT = "CREATE_INDEX";
     private static final SQLFeature FEATURE = SQLFeature.CLAUSE;
 
-    private final static class GeneralIndexFragments extends GeneralFragments {
-        public GeneralIndexFragments() {
+    private static final class GeneralIndexFragments extends GeneralFragments {
+        GeneralIndexFragments() {
             super();
         }
 

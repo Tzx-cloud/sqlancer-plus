@@ -3,7 +3,7 @@ package sqlancer.general.ast;
 import sqlancer.common.ast.BinaryOperatorNode.Operator;
 import sqlancer.general.gen.GeneralTableGenerator;
 
-public class GeneralCollate implements Operator {
+public final class GeneralCollate implements Operator {
 
     private final String textRepr;
 

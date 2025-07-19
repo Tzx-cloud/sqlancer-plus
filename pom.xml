@@ -343,6 +343,11 @@
       <version>0.288.1</version>
     </dependency>
     <dependency>
+      <groupId>com.oracle.database.jdbc</groupId>
+      <artifactId>ojdbc8</artifactId>
+      <version>23.7.0.25.01</version>
+    </dependency>
+    <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
       <version>5.9.1</version>

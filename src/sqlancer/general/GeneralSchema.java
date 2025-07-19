@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,12 +32,12 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
     private static final SQLFeature FEATURE = SQLFeature.DATATYPE;
 
     private static int typeCounter = 0;
-    private volatile static HashMap<Integer, String> typeMap = new HashMap<>();
+    private static volatile HashMap<Integer, String> typeMap = new HashMap<>();
     private static HashMap<String, Boolean> typeAvailabilityMap = new HashMap<>();
     private static HashMap<String, List<String>> typeToFunction = new HashMap<>();
 
-    private final static class GeneralTypeFragments extends GeneralFragments {
-        public GeneralTypeFragments() {
+    private static final class GeneralTypeFragments extends GeneralFragments {
+        GeneralTypeFragments() {
             super();
         }
 
@@ -160,24 +161,26 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
 
         public void learnSpecificTopicFromLearner(GeneralGlobalState globalState, String type) {
             StringBuilder templateBuilder = new StringBuilder();
-            templateBuilder.append(String.format("CREATE TABLE test (c0 %s);\n", type));
-            templateBuilder.append(String.format("INSERT INTO test VALUES (%s);\n", fragments.get(type, globalState)));
+            templateBuilder.append(String.format("CREATE TABLE TEST_TABLE (COL %s);\n", type));
+            templateBuilder
+                    .append(String.format("INSERT INTO TEST_TABLE VALUES (%s);\n", fragments.get(type, globalState)));
             templateBuilder.append(String.format(
-                    "INSERT INTO test VALUES ({0}); -- Placeholder {0}: %s value or expression to insert\n", type));
-            templateBuilder.append(String.format(
-                    "INSERT INTO test VALUES ({1}()); -- Placeholder {1}: Deterministic function that returns a %s value with no parameters\n",
+                    "INSERT INTO TEST_TABLE VALUES ({0}); -- Placeholder {0}: %s value or expression to insert\n",
                     type));
             templateBuilder.append(String.format(
-                    "INSERT INTO test VALUES ({2}(NULL)); -- Placeholder {2}: Deterministic function with one parameter that returns a %s value\n",
+                    "INSERT INTO TEST_TABLE VALUES ({1}()); -- Placeholder {1}: Deterministic function that returns a %s value with no parameters\n",
                     type));
             templateBuilder.append(String.format(
-                    "INSERT INTO test VALUES ({3}(NULL, NULL)); -- Placeholder {3}: Deterministic function with two parameters that returns a %s value\n",
+                    "INSERT INTO TEST_TABLE VALUES ({2}(NULL)); -- Placeholder {2}: Deterministic function with one parameter that returns a %s value\n",
                     type));
             templateBuilder.append(String.format(
-                    "INSERT INTO test VALUES (NULL {4} NULL); -- Placeholder {4}: Deterministic operator whose return value is %s\n",
+                    "INSERT INTO TEST_TABLE VALUES ({3}(NULL, NULL)); -- Placeholder {3}: Deterministic function with two parameters that returns a %s value\n",
                     type));
             templateBuilder.append(String.format(
-                    "SELECT * FROM test WHERE c0 {5} c0; -- Placeholder {5}: Deterministic operator whose operands are %s value\n",
+                    "INSERT INTO TEST_TABLE VALUES (NULL {4} NULL); -- Placeholder {4}: Deterministic operator whose return value is %s\n",
+                    type));
+            templateBuilder.append(String.format(
+                    "SELECT * FROM TEST_TABLE WHERE COL {5} COL; -- Placeholder {5}: Deterministic operator whose operands are %s value\n",
                     type));
             String template = templateBuilder.toString();
             String variables = getVariables();
@@ -360,6 +363,11 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                 return dataType == other.dataType && id == other.id;
             }
             return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(dataType, id);
         }
 
         public GeneralDataType getPrimitiveDataType() {

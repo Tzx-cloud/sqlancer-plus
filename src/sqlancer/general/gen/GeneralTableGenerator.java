@@ -9,24 +9,27 @@ import java.util.stream.Collectors;
 import sqlancer.Randomly;
 import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.SQLQueryAdapter;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
+import sqlancer.general.GeneralLearningManager.SQLFeature;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.learner.GeneralFragments;
 import sqlancer.general.learner.GeneralStringBuilder;
-import sqlancer.general.GeneralErrorHandler.GeneratorNode;
-import sqlancer.general.GeneralLearningManager.SQLFeature;
 
-public class GeneralTableGenerator {
+public final class GeneralTableGenerator {
+
+    private GeneralTableGenerator() {
+    }
 
     private static GeneralTableFragments fragments = new GeneralTableFragments();
     private static final String CONFIG_NAME = "tablegenerator.txt";
     private static final String STATEMENT = "CREATE_TABLE";
     private static final SQLFeature FEATURE = SQLFeature.CLAUSE;
 
-    private final static class GeneralTableFragments extends GeneralFragments {
-        public GeneralTableFragments() {
+    private static final class GeneralTableFragments extends GeneralFragments {
+        GeneralTableFragments() {
             super();
         }
 

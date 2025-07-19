@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,11 +21,11 @@ import sqlancer.common.ast.newast.ColumnReferenceNode;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.gen.ExpressionGenerator;
 import sqlancer.general.GeneralErrorHandler;
-import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.GeneralLearningManager.SQLFeature;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralTable;
+import sqlancer.general.GeneralToStringVisitor;
 import sqlancer.general.ast.GeneralConstant;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.gen.GeneralRandomQuerySynthesizer;
@@ -159,6 +160,11 @@ public abstract class GeneralFragments {
             }
             GeneralFragmentChoice other = (GeneralFragmentChoice) obj;
             return fmtString.equals(other.fmtString) && vars.equals(other.vars) && key.equals(other.key);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(fmtString, vars, key);
         }
 
     }

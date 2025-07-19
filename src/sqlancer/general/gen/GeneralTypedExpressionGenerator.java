@@ -20,9 +20,9 @@ import sqlancer.common.ast.newast.NewUnaryPrefixOperatorNode;
 import sqlancer.common.ast.newast.Node;
 import sqlancer.common.gen.TypedExpressionGenerator;
 import sqlancer.general.GeneralErrorHandler;
-import sqlancer.general.GeneralSchema;
 import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
+import sqlancer.general.GeneralSchema;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.GeneralSchema.GeneralDataType;
@@ -31,13 +31,13 @@ import sqlancer.general.ast.GeneralBinaryComparisonOperator;
 import sqlancer.general.ast.GeneralBinaryLogicalOperator;
 import sqlancer.general.ast.GeneralBinaryOperator;
 import sqlancer.general.ast.GeneralCast;
+import sqlancer.general.ast.GeneralCast.GeneralCastOperator;
 import sqlancer.general.ast.GeneralColumnReference;
 import sqlancer.general.ast.GeneralConstant;
 import sqlancer.general.ast.GeneralExpression;
 import sqlancer.general.ast.GeneralFunction;
 import sqlancer.general.ast.GeneralUnaryPostfixOperator;
 import sqlancer.general.ast.GeneralUnaryPrefixOperator;
-import sqlancer.general.ast.GeneralCast.GeneralCastOperator;
 
 public class GeneralTypedExpressionGenerator
         extends TypedExpressionGenerator<Node<GeneralExpression>, GeneralColumn, GeneralCompositeDataType> {

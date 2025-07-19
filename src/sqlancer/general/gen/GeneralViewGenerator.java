@@ -7,14 +7,14 @@ import java.util.List;
 import sqlancer.Randomly;
 import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.SQLQueryAdapter;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.GeneralSchema.GeneralTable;
-import sqlancer.general.ast.GeneralSelect;
 import sqlancer.general.GeneralToStringVisitor;
-import sqlancer.general.GeneralErrorHandler.GeneratorNode;
+import sqlancer.general.ast.GeneralSelect;
 
 public final class GeneralViewGenerator {
 

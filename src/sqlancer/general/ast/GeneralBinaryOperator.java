@@ -28,8 +28,8 @@ public class GeneralBinaryOperator implements Operator {
     private static HashMap<String, GeneralCompositeDataType> operators = initOperators();
     private static GeneralBinaryOperatorFragments fragments = new GeneralBinaryOperatorFragments();
 
-    private final static class GeneralBinaryOperatorFragments extends GeneralFragments {
-        public GeneralBinaryOperatorFragments() {
+    private static final class GeneralBinaryOperatorFragments extends GeneralFragments {
+        GeneralBinaryOperatorFragments() {
             super();
         }
 

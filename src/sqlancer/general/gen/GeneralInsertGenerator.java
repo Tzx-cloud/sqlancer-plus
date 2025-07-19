@@ -7,13 +7,13 @@ import sqlancer.Randomly;
 import sqlancer.common.gen.AbstractInsertGenerator;
 import sqlancer.common.query.ExpectedErrors;
 import sqlancer.common.query.SQLQueryAdapter;
+import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 import sqlancer.general.GeneralErrors;
 import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.GeneralSchema.GeneralColumn;
 import sqlancer.general.GeneralSchema.GeneralCompositeDataType;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.GeneralToStringVisitor;
-import sqlancer.general.GeneralErrorHandler.GeneratorNode;
 
 public class GeneralInsertGenerator extends AbstractInsertGenerator<GeneralColumn> {
 

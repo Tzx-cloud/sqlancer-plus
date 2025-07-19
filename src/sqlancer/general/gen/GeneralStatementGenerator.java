@@ -11,15 +11,18 @@ import sqlancer.general.GeneralProvider.GeneralGlobalState;
 import sqlancer.general.learner.GeneralFragments;
 import sqlancer.general.learner.GeneralStringBuilder;
 
-public class GeneralStatementGenerator {
+public final class GeneralStatementGenerator {
+
+    private GeneralStatementGenerator() {
+    }
 
     private static GeneralStatementFragments fragments = new GeneralStatementFragments();
     private static final String CONFIG_NAME = "dmlgenerator.txt";
     private static final String STATEMENT = "DML";
     private static final SQLFeature FEATURE = SQLFeature.COMMAND;
 
-    private final static class GeneralStatementFragments extends GeneralFragments {
-        public GeneralStatementFragments() {
+    private static final class GeneralStatementFragments extends GeneralFragments {
+        GeneralStatementFragments() {
             super();
         }
 
