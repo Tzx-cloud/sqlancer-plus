@@ -20,7 +20,7 @@ import sqlancer.general.GeneralProvider.GeneralGlobalState;
 
 public class GeneralTemplateLearner implements FeatureLearner {
 
-    private final String chatUrl = "https://api.openai.com/v1/chat/completions";
+    private static final String CHAT_URL = "https://api.openai.com/v1/chat/completions";
     private final String apiKey = System.getenv("OPENAI_API_KEY");
 
     private String rawFragments = "";
@@ -170,7 +170,10 @@ public class GeneralTemplateLearner implements FeatureLearner {
         // user += "Note: Please do not call functions in DBMS that would bring
         // randomness to the query. Function calls should be deterministic.";
         String user = sb.toString();
-        System.out.println(user);
+        if (globalState.getOptions().debugLogs()) {
+            System.out.println("User prompt:");
+            System.out.println(user);
+        }
         try {
             response = getChatGPTResponse(model, system, user);
         } catch (IOException e) {
@@ -213,7 +216,7 @@ public class GeneralTemplateLearner implements FeatureLearner {
 
         RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json; charset=utf-8"));
 
-        Request request = new Request.Builder().url(chatUrl).post(body).addHeader("Content-Type", "application/json")
+        Request request = new Request.Builder().url(CHAT_URL).post(body).addHeader("Content-Type", "application/json")
                 .addHeader("Authorization", "Bearer " + apiKey).build();
         Response response = client.newCall(request).execute();
         return response.body().string();

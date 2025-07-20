@@ -102,8 +102,7 @@ public final class GeneralTableGenerator {
         } else {
             globalState.setTestObject("TEST_TABLE", tableName);
         }
-        GeneralStringBuilder<GeneralTableFragments> sb = new GeneralStringBuilder<GeneralTableFragments>(globalState,
-                fragments);
+        GeneralStringBuilder<GeneralTableFragments> sb = new GeneralStringBuilder<>(globalState, fragments);
         sb.append("CREATE ", 0);
         sb.append(" TABLE ");
         sb.append(" ");

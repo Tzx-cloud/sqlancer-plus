@@ -32,15 +32,15 @@ import sqlancer.general.learner.GeneralFragments.GeneralFragmentChoice;
 
 public class GeneralErrorHandler implements ErrorHandler {
 
-    private GeneratorInfoTable generatorTable;
+    private final GeneratorInfoTable generatorTable;
     private GeneratorInfo generatorInfo;
 
     // expression depth for each DATABASE --> it is thread unique parameter
     // TODO concurrent
     public class GeneratorInfo {
-        private HashMap<GeneratorNode, Integer> generatorScore;
-        private HashMap<String, Integer> compositeGeneratorScore;
-        private HashMap<GeneralFragmentChoice, Integer> fragmentScore;
+        private final Map<GeneratorNode, Integer> generatorScore;
+        private final Map<String, Integer> compositeGeneratorScore;
+        private final Map<GeneralFragmentChoice, Integer> fragmentScore;
         private boolean status;
         private boolean isQuery;
 
@@ -52,20 +52,19 @@ public class GeneralErrorHandler implements ErrorHandler {
             this.isQuery = false;
         }
 
-        public HashMap<GeneratorNode, Integer> getGeneratorScore() {
+        public Map<GeneratorNode, Integer> getGeneratorScore() {
             return generatorScore;
         }
 
-        public HashMap<String, Integer> getCompositeGeneratorScore() {
+        public Map<String, Integer> getCompositeGeneratorScore() {
             return compositeGeneratorScore;
         }
 
-        public HashMap<GeneralFragmentChoice, Integer> getFragmentScore() {
+        public Map<GeneralFragmentChoice, Integer> getFragmentScore() {
             return fragmentScore;
         }
 
-        public <N> void countSuccess(HashMap<N, Integer> success, HashMap<N, Integer> count,
-                HashMap<N, Integer> score) {
+        public <N> void countSuccess(Map<N, Integer> success, Map<N, Integer> count, Map<N, Integer> score) {
             // HashMap<N, Integer> generator = supplier.get();
             int executionStatus = status ? 1 : 0;
 
@@ -106,20 +105,20 @@ public class GeneralErrorHandler implements ErrorHandler {
     }
 
     private class GeneratorInfoTable {
-        private ArrayList<GeneratorInfo> generatorTable;
+        private final List<GeneratorInfo> generatorTable;
 
-        private HashMap<GeneratorNode, Integer> nodeSuccess = new HashMap<>();
-        private HashMap<GeneratorNode, Integer> nodeCount = new HashMap<>();
-        private HashMap<String, Integer> compositeSuccess = new HashMap<>();
-        private HashMap<String, Integer> compositeCount = new HashMap<>();
-        private HashMap<GeneralFragmentChoice, Integer> fragmentSuccess = new HashMap<>();
-        private HashMap<GeneralFragmentChoice, Integer> fragmentCount = new HashMap<>();
+        private final Map<GeneratorNode, Integer> nodeSuccess = new HashMap<>();
+        private final Map<GeneratorNode, Integer> nodeCount = new HashMap<>();
+        private final Map<String, Integer> compositeSuccess = new HashMap<>();
+        private final Map<String, Integer> compositeCount = new HashMap<>();
+        private final Map<GeneralFragmentChoice, Integer> fragmentSuccess = new HashMap<>();
+        private final Map<GeneralFragmentChoice, Integer> fragmentCount = new HashMap<>();
 
         GeneratorInfoTable() {
             this.generatorTable = new ArrayList<>();
         }
 
-        public ArrayList<GeneratorInfo> getGeneratorTable() {
+        public List<GeneratorInfo> getGeneratorTable() {
             return generatorTable;
         }
 
@@ -163,10 +162,9 @@ public class GeneralErrorHandler implements ErrorHandler {
             }
         }
 
-        public synchronized <N> HashMap<N, Double> calcAverageScore(HashMap<N, Integer> success,
-                HashMap<N, Integer> count, HashMap<N, Integer> allSuccess, HashMap<N, Integer> allCount, int minCnt,
-                boolean quickStart) {
-            HashMap<N, Double> average = new HashMap<>();
+        public synchronized <N> Map<N, Double> calcAverageScore(Map<N, Integer> success, Map<N, Integer> count,
+                Map<N, Integer> allSuccess, Map<N, Integer> allCount, int minCnt, boolean quickStart) {
+            Map<N, Double> average = new HashMap<>();
             // sum the success and count
             for (Map.Entry<N, Integer> entry : success.entrySet()) {
                 N key = entry.getKey();
@@ -190,28 +188,28 @@ public class GeneralErrorHandler implements ErrorHandler {
     }
 
     // volatile
-    private static HashMap<String, Integer> curDepth = new HashMap<>();
+    private static Map<String, Integer> curDepth = new HashMap<>();
     private static volatile int execDatabaseNum = 0;
-    private static volatile HashMap<String, GeneratorInfo> assertionGeneratorHistory = new HashMap<>();
-    private static volatile HashMap<GeneratorNode, Boolean> generatorOptions = new HashMap<>();
-    private static volatile HashMap<String, Boolean> compositeGeneratorOptions = new HashMap<>();
-    private static volatile HashMap<GeneralFragmentChoice, Boolean> fragmentOptions = new HashMap<>();
+    private static volatile Map<String, GeneratorInfo> assertionGeneratorHistory = new HashMap<>();
+    private static volatile Map<GeneratorNode, Boolean> generatorOptions = new HashMap<>();
+    private static volatile Map<String, Boolean> compositeGeneratorOptions = new HashMap<>();
+    private static volatile Map<GeneralFragmentChoice, Boolean> fragmentOptions = new HashMap<>();
     private static volatile List<String> disabledFragments = new ArrayList<>();
 
-    private static volatile HashMap<String, Integer> allCompositeSuccess = new HashMap<>();
-    private static volatile HashMap<String, Integer> allCompositeCount = new HashMap<>();
-    private static volatile HashMap<GeneralFragmentChoice, Integer> allFragmentSuccess = new HashMap<>();
-    private static volatile HashMap<GeneralFragmentChoice, Integer> allFragmentCount = new HashMap<>();
-    private static volatile HashMap<GeneratorNode, Integer> allNodeSuccess = new HashMap<>();
-    private static volatile HashMap<GeneratorNode, Integer> allNodeCount = new HashMap<>();
+    private static volatile Map<String, Integer> allCompositeSuccess = new HashMap<>();
+    private static volatile Map<String, Integer> allCompositeCount = new HashMap<>();
+    private static volatile Map<GeneralFragmentChoice, Integer> allFragmentSuccess = new HashMap<>();
+    private static volatile Map<GeneralFragmentChoice, Integer> allFragmentCount = new HashMap<>();
+    private static volatile Map<GeneratorNode, Integer> allNodeSuccess = new HashMap<>();
+    private static volatile Map<GeneratorNode, Integer> allNodeCount = new HashMap<>();
 
-    private static volatile HashMap<GeneratorNode, Double> generatorAverage = new HashMap<>();
-    private static volatile HashMap<String, Double> compositeAverage = new HashMap<>();
-    private static volatile HashMap<GeneralFragmentChoice, Double> fragmentAverage = new HashMap<>();
+    private static volatile Map<GeneratorNode, Double> generatorAverage = new HashMap<>();
+    private static volatile Map<String, Double> compositeAverage = new HashMap<>();
+    private static volatile Map<GeneralFragmentChoice, Double> fragmentAverage = new HashMap<>();
 
-    private static volatile HashMap<GeneratorNode, String> generatorExample = new HashMap<>();
-    private static volatile HashMap<String, String> compositeExample = new HashMap<>();
-    private static volatile HashMap<GeneralFragmentChoice, String> fragmentExample = new HashMap<>();
+    private static volatile Map<GeneratorNode, String> generatorExample = new HashMap<>();
+    private static volatile Map<String, String> compositeExample = new HashMap<>();
+    private static volatile Map<GeneralFragmentChoice, String> fragmentExample = new HashMap<>();
 
     private double nodeNum = GeneratorNode.values().length;
 
@@ -265,7 +263,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         updateGeneratorNodeNum();
     }
 
-    public HashMap<GeneratorNode, Boolean> getGeneratorOptions() {
+    public Map<GeneratorNode, Boolean> getGeneratorOptions() {
         return GeneralErrorHandler.generatorOptions;
     }
 
@@ -294,7 +292,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         }
     }
 
-    private synchronized <N> void updateByLeastOnce(HashMap<N, Double> score, HashMap<N, Boolean> options) {
+    private synchronized <N> void updateByLeastOnce(Map<N, Double> score, Map<N, Boolean> options) {
         for (Map.Entry<N, Double> entry : score.entrySet()) {
             if (options.containsKey(entry.getKey())) {
                 if (options.get(entry.getKey())) {
@@ -429,7 +427,7 @@ public class GeneralErrorHandler implements ErrorHandler {
     // }
 
     public void addScore(GeneratorNode generatorName) {
-        HashMap<GeneratorNode, Integer> score = generatorInfo.getGeneratorScore();
+        Map<GeneratorNode, Integer> score = generatorInfo.getGeneratorScore();
         if (score.containsKey(generatorName)) {
             score.put(generatorName, score.get(generatorName) + 1);
         } else {
@@ -438,7 +436,7 @@ public class GeneralErrorHandler implements ErrorHandler {
     }
 
     public void addScore(String generatorName) {
-        HashMap<String, Integer> score = generatorInfo.getCompositeGeneratorScore();
+        Map<String, Integer> score = generatorInfo.getCompositeGeneratorScore();
         if (score.containsKey(generatorName)) {
             score.put(generatorName, score.get(generatorName) + 1);
         } else {
@@ -447,7 +445,7 @@ public class GeneralErrorHandler implements ErrorHandler {
     }
 
     public void addScore(GeneralFragmentChoice fragment) {
-        HashMap<GeneralFragmentChoice, Integer> score = generatorInfo.getFragmentScore();
+        Map<GeneralFragmentChoice, Integer> score = generatorInfo.getFragmentScore();
         if (score.containsKey(fragment)) {
             score.put(fragment, score.get(fragment) + 1);
         } else {
@@ -463,8 +461,9 @@ public class GeneralErrorHandler implements ErrorHandler {
         generatorInfo.getCompositeGeneratorScore().put(generatorName, score);
     }
 
-    public void loadCompositeScore(HashMap<String, Integer> compositeScore) {
-        generatorInfo.compositeGeneratorScore = compositeScore;
+    public void loadCompositeScore(Map<String, Integer> compositeScore) {
+        generatorInfo.getCompositeGeneratorScore().clear();
+        generatorInfo.getCompositeGeneratorScore().putAll(compositeScore);
     }
 
     public void setExecutionStatus(boolean status) {
@@ -633,7 +632,7 @@ public class GeneralErrorHandler implements ErrorHandler {
         }
         for (Map.Entry<String, GeneratorInfo> entry : assertionGeneratorHistory.entrySet()) {
             String databaseName = entry.getKey();
-            HashMap<GeneratorNode, Integer> generatorScore = entry.getValue().getGeneratorScore();
+            Map<GeneratorNode, Integer> generatorScore = entry.getValue().getGeneratorScore();
             try (FileWriter file = new FileWriter("logs/general/generator/" + databaseName + "Options.txt")) {
                 for (Map.Entry<GeneratorNode, Integer> generator : generatorScore.entrySet()) {
                     file.write(generator.getKey() + " : " + generator.getValue() + "\n");

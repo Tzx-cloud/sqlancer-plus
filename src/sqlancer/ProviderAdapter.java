@@ -46,6 +46,7 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
         return optionClass;
     }
 
+    @Override
     public Reproducer<G> generateAndTestDatabaseWithMaskTemplateLearning(G globalState) throws Exception {
         // implement this method in the specific DBMS
         throw new UnsupportedOperationException();

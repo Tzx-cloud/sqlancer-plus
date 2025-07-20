@@ -585,7 +585,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             String[] rawqueries = sb.toString().split(";");
             List<String> queries = new ArrayList<>();
             for (String query : rawqueries) {
-                if (query.trim().length() > 0) {
+                if (!query.trim().isEmpty()) {
                     queries.add(query);
                 }
             }

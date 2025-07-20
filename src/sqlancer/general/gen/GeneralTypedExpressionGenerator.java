@@ -230,11 +230,10 @@ public class GeneralTypedExpressionGenerator
                 }
             case STRING:
                 // case BYTES: // TODO split
-                Node<GeneralExpression> stringExpr = generateStringExpression(depth);
-                // if (Randomly.getBoolean()) {
-                // stringExpr = new CockroachDBCollate(stringExpr, CockroachDBCommon.getRandomCollate());
-                // }
-                return stringExpr; // TODO
+                return generateStringExpression(depth);
+            // if (Randomly.getBoolean()) {
+            // stringExpr = new CockroachDBCollate(stringExpr, CockroachDBCommon.getRandomCollate());
+            // }
             case VARTYPE:
                 // TODO maybe learn the function here..
                 return generateLeafNode(type);
@@ -362,7 +361,7 @@ public class GeneralTypedExpressionGenerator
         Node<GeneralExpression> left = generateExpression(GeneralDataType.BOOLEAN.get(), depth + 1);
         for (int i = 0; i < Randomly.smallNumber() + 1; i++) {
             Node<GeneralExpression> right = generateExpression(GeneralDataType.BOOLEAN.get(), depth + 1);
-            left = new NewBinaryOperatorNode<GeneralExpression>(left, right,
+            left = new NewBinaryOperatorNode<>(left, right,
                     GeneralBinaryLogicalOperator.getRandomByOptions(globalState.getHandler()));
         }
         return left;
@@ -452,14 +451,12 @@ public class GeneralTypedExpressionGenerator
 
     @Override
     protected Node<GeneralExpression> generateColumn(GeneralCompositeDataType type) {
-        GeneralColumn column = Randomly
-                .fromList(columns.stream().filter(
-                        c -> isTypeCompatible(c.getType(), type)).collect(Collectors.toList()));
+        GeneralColumn column = Randomly.fromList(
+                columns.stream().filter(c -> isTypeCompatible(c.getType(), type)).collect(Collectors.toList()));
         // if (type.getPrimitiveDataType().equals(GeneralDataType.VARTYPE)) {
         // globalState.getLogger().writeCurrent("-- type " + type);
         // }
-        Node<GeneralExpression> columnReference = new GeneralColumnReference(column);
-        return columnReference;
+        return new GeneralColumnReference(column);
     }
 
     @Override

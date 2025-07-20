@@ -87,7 +87,11 @@ public class GeneralLearningManager {
         if (topicPool.isEmpty()) {
             initializeTopicPool(fragments);
         }
-        System.out.println(topicPool);
+
+        if (globalState.getOptions().debugLogs()) {
+            System.out.println("Topic pool: " + topicPool);
+        }
+        // System.out.println(topicPool);
         // update the fragments if fragments is empty
         if (fragments.getFragments().isEmpty()) {
             fragments.updateFragmentsFromLearner(globalState);
@@ -119,14 +123,17 @@ public class GeneralLearningManager {
             fragments.learnSpecificTopicFromLearner(globalState, topic);
             GeneralFunction.loadFunctionsFromFragments(globalState);
             GeneralBinaryOperator.loadOperatorsFromFragments(globalState);
-            System.out.println(GeneralFunction.getFuncNames());
-            System.out.println(GeneralBinaryOperator.getOperators());
+            // System.out.println(GeneralFunction.getFuncNames());
+            // System.out.println(GeneralBinaryOperator.getOperators());
             // globalState.getHandler().setCurDepth(globalState.getDatabaseName(), 2);
             // topicPool.put(topic, true);
         }
 
         setCurTopic(globalState);
-        System.out.println("Current topic for " + globalState.getDatabaseName() + "is: " + curTopic);
+        if (globalState.getOptions().debugLogs()) {
+            System.out.println("Current topic for " + globalState.getDatabaseName() + " is: " + curTopic);
+        }
+        // System.out.println("Current topic for " + globalState.getDatabaseName() + "is: " + curTopic);
 
     }
 

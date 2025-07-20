@@ -113,8 +113,7 @@ public final class GeneralStatementGenerator {
         if (stmt.equals(";")) {
             stmt = "ANALYZE;";
         }
-        SQLQueryAdapter q = new SQLQueryAdapter(stmt, errors, false, false);
-        return q;
+        return new SQLQueryAdapter(stmt, errors, false, false);
     }
 
     public static GeneralFragments getFragments() {

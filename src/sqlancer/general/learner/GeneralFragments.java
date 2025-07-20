@@ -203,7 +203,7 @@ public abstract class GeneralFragments {
         // avoid duplicate:
         for (GeneralFragmentChoice choice : fragments.get(key)) {
             if (choice.fmtString.equals(fmtString)) {
-                System.out.println("Duplicate fragment");
+                // System.out.println("Duplicate fragment");
                 return;
             }
         }
@@ -217,10 +217,10 @@ public abstract class GeneralFragments {
         GeneralFragmentChoice choice = new GeneralFragmentChoice(fmtString, vars, key);
         // check if it's disabled by the handler
         if (!GeneralErrorHandler.checkFragmentAvailability(choice)) {
-            System.out.println(String.format("Fragment %s is disabled", fmtString));
+            // System.out.println(String.format("Fragment %s is disabled", fmtString));
             return;
         }
-        System.out.println(String.format("Adding fragment %s", fmtString));
+        // System.out.println(String.format("Adding fragment %s", fmtString));
         fragments.get(key).add(choice);
         newFragments.get(key).add(choice);
     }
@@ -278,8 +278,8 @@ public abstract class GeneralFragments {
                     continue;
                 }
                 line = preprocessingLine(line);
-                String fragmentKey = line.substring(0, line.indexOf(";"));
-                String fragmentContent = line.substring(line.indexOf(";") + 1);
+                String fragmentKey = line.substring(0, line.indexOf(';'));
+                String fragmentContent = line.substring(line.indexOf(';') + 1);
                 String[] s = { fragmentKey, fragmentContent };
                 try {
                     if (isSpecific) {
@@ -288,9 +288,9 @@ public abstract class GeneralFragments {
                         parseFragments(s);
                     }
                 } catch (Exception e) {
-                    System.out.println(String.format("Error parsing %s for statement %s", String.join(" ", s),
-                            getStatementType()));
-                    System.err.println(e.getMessage());
+                    // System.out.println(String.format("Error parsing %s for statement %s", String.join(" ", s),
+                    //         getStatementType()));
+                    // System.err.println(e.getMessage());
                 }
             }
         } catch (IOException e) {
@@ -306,7 +306,7 @@ public abstract class GeneralFragments {
         parseFragments(s);
     }
 
-    protected void parseFragments(String[] s) {
+    protected void parseFragments(String... s) {
         // assume all the rows are in the format "integer index, <content>"
 
         try {
@@ -450,7 +450,9 @@ public abstract class GeneralFragments {
     }
 
     public void dumpFragments(GeneralGlobalState globalState) {
-        System.out.println(String.format("Dumping fragments for %s", getStatementType()));
+        if (globalState.getOptions().debugLogs()) {
+            System.out.println(String.format("Dumping fragments for %s", getStatementType()));
+        }
         File dir = globalState.getLogger().getLearnerFileDir();
         try (FileWriter writer = new FileWriter(
                 new File(dir, String.format("%s-%s-config.txt", globalState.getDatabaseName(), getStatementType())))) {

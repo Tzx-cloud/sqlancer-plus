@@ -55,6 +55,7 @@ public abstract class TypedExpressionGenerator<E, C, T> implements ExpressionGen
         return expressions;
     }
 
+    @Override
     public List<E> generateExpressions(int nr) {
         List<E> expressions = new ArrayList<>();
         for (int i = 0; i < nr; i++) {
@@ -64,6 +65,7 @@ public abstract class TypedExpressionGenerator<E, C, T> implements ExpressionGen
     }
 
     // override this class to also generate ASC, DESC
+    @Override
     public List<E> generateOrderBys() {
         return generateExpressions(Randomly.smallNumber() + 1);
     }

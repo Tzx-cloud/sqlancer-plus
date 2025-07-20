@@ -10,10 +10,12 @@ public abstract class UntypedExpressionGenerator<E, C> implements ExpressionGene
     protected List<C> columns;
     protected boolean allowAggregates;
 
+    @Override
     public E generateExpression() {
         return generateExpression(0);
     }
 
+    @Override
     public abstract E generateConstant();
 
     protected abstract E generateExpression(int depth);
@@ -34,6 +36,7 @@ public abstract class UntypedExpressionGenerator<E, C> implements ExpressionGene
         }
     }
 
+    @Override
     public List<E> generateExpressions(int nr) {
         List<E> expressions = new ArrayList<>();
         for (int i = 0; i < nr; i++) {
@@ -51,11 +54,13 @@ public abstract class UntypedExpressionGenerator<E, C> implements ExpressionGene
     }
 
     // override this class to also generate ASC, DESC
+    @Override
     public List<E> generateOrderBys() {
         return generateExpressions(Randomly.smallNumber() + 1);
     }
 
     // override this class to generate aggregate functions
+    @Override
     public E generateHavingClause() {
         allowAggregates = true;
         E expr = generateExpression();

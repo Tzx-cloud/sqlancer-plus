@@ -152,7 +152,7 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
         // GeneralExpression isTrue =
         // GeneralPostfixOperation.create(randomWhereCondition,
         // PostfixOperator.IS_TRUE);
-        Node<GeneralExpression> asText = new NewPostfixTextNode<GeneralExpression>(randomWhereCondition, " IS TRUE ");
+        Node<GeneralExpression> asText = new NewPostfixTextNode<>(randomWhereCondition, " IS TRUE ");
         select.setFetchColumns(Arrays.asList(asText));
         select.setFromList(tableList);
         // select.setSelectType(SelectType.ALL);

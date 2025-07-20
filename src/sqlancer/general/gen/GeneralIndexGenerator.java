@@ -79,6 +79,7 @@ public final class GeneralIndexGenerator {
             return CONFIG_NAME;
         }
 
+        @Override
         public String getStatementType() {
             return STATEMENT;
         }

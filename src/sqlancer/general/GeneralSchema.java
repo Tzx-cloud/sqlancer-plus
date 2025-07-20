@@ -66,6 +66,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             return CONFIG_NAME;
         }
 
+        @Override
         public String getStatementType() {
             return STATEMENT;
         }
@@ -89,7 +90,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
         }
 
         @Override
-        protected void parseFragments(String[] s) {
+        protected void parseFragments(String... s) {
             String key = s[0];
 
             Pattern pattern = Pattern.compile("<([^>]*)>");
@@ -159,6 +160,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
 
         }
 
+        @Override
         public void learnSpecificTopicFromLearner(GeneralGlobalState globalState, String type) {
             StringBuilder templateBuilder = new StringBuilder();
             templateBuilder.append(String.format("CREATE TABLE TEST_TABLE (COL %s);\n", type));
@@ -278,8 +280,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
     }
 
     public static SQLQueryAdapter getQuery(GeneralGlobalState globalState) {
-        GeneralStringBuilder<GeneralTypeFragments> sb = new GeneralStringBuilder<GeneralTypeFragments>(globalState,
-                fragments);
+        GeneralStringBuilder<GeneralTypeFragments> sb = new GeneralStringBuilder<>(globalState, fragments);
         sb.append("CREATE TABLE test (c0 ", 0);
         sb.append(");\n");
 

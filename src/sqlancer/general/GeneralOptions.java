@@ -193,8 +193,7 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             @Override
             public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
                     throws SQLException {
-                Connection conn = DriverManager.getConnection(getJDBCString(globalState));
-                return conn;
+                return DriverManager.getConnection(getJDBCString(globalState));
             }
         },
         POSTGRESQL {
@@ -268,8 +267,7 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
             @Override
             public Connection cleanOrSetUpDatabase(GeneralGlobalState globalState, String databaseName)
                     throws SQLException {
-                Connection conn = DriverManager.getConnection(getJDBCString(globalState));
-                return conn;
+                return DriverManager.getConnection(getJDBCString(globalState));
             }
         },
         UMBRA {
@@ -507,6 +505,7 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
 
         private boolean isNewSchema = true;
 
+        @Override
         public boolean isNewSchema() {
             return isNewSchema;
         }

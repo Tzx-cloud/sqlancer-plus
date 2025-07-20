@@ -98,8 +98,8 @@ public final class GeneralRandomQuerySynthesizer {
             GeneralColumn c = new GeneralColumn(String.format("col%d", i),
                     GeneralCompositeDataType.getRandomWithoutNull(), false, false);
             colRefs.add(c);
-            NewAliasNode<GeneralExpression> colExpr = new NewAliasNode<GeneralExpression>(
-                    gen.generateExpression(c.getType()), c.getName());
+            NewAliasNode<GeneralExpression> colExpr = new NewAliasNode<>(gen.generateExpression(c.getType()),
+                    c.getName());
             columns.add(colExpr);
         }
         // for (int i = 0; i < Randomly.smallNumber() + 1; i++) {

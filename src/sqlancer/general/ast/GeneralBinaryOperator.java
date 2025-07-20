@@ -36,8 +36,7 @@ public class GeneralBinaryOperator implements Operator {
         @Override
         public synchronized String genLearnStatement(GeneralGlobalState globalState) {
             setLearn(true);
-            String stmt = getQuery(globalState).getQueryString();
-            return stmt;
+            return getQuery(globalState).getQueryString();
         }
 
         @Override
@@ -53,6 +52,7 @@ public class GeneralBinaryOperator implements Operator {
             return CONFIG_NAME;
         }
 
+        @Override
         public String getStatementType() {
             return "OPERATOR";
         }
@@ -74,7 +74,7 @@ public class GeneralBinaryOperator implements Operator {
         }
 
         @Override
-        protected void parseFragments(String[] s) {
+        protected void parseFragments(String... s) {
             String key = s[0];
 
             StringBuffer fmtString = new StringBuffer();
@@ -149,13 +149,13 @@ public class GeneralBinaryOperator implements Operator {
         return fragments;
     }
 
+    @Override
     public String toString() {
         return name;
     }
 
     public static SQLQueryAdapter getQuery(GeneralGlobalState globalState) {
-        GeneralStringBuilder<GeneralBinaryOperatorFragments> sb = new GeneralStringBuilder<GeneralBinaryOperatorFragments>(
-                globalState, fragments);
+        GeneralStringBuilder<GeneralBinaryOperatorFragments> sb = new GeneralStringBuilder<>(globalState, fragments);
         sb.append("CREATE TABLE TEST_TABLE (a INT, b INT);");
         sb.append("SELECT * FROM TEST_TABLE WHERE a ", 0);
         sb.append("b;");
@@ -180,7 +180,10 @@ public class GeneralBinaryOperator implements Operator {
     public static void loadOperatorsFromFragments(GeneralGlobalState globalState) {
         // load operators from fragments
         HashMap<String, GeneralCompositeDataType> ops = new HashMap<>();
-        System.out.println("Operators: " + fragments.getFragments().keySet());
+        if (globalState.getOptions().debugLogs()) {
+            System.out.println("Loading operators from fragments...");
+            System.out.println("Operators: " + fragments.getFragments().keySet());
+        }
         for (String fragment : fragments.getFragments().keySet()) {
             List<GeneralFragmentChoice> choices = fragments.getFragments().get(fragment);
             for (GeneralFragmentChoice choice : choices) {

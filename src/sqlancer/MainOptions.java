@@ -151,16 +151,16 @@ public class MainOptions {
     private boolean keepLogs = false; // NOPMD
 
     @Parameter(names = "--debug-logs", description = "Should println logs for debug usage")
-    private boolean debugLogs = false;
+    private boolean debugLogs; // NOPMD
 
     @Parameter(names = "--enable-extra-features", description = "Use extra features for testing")
-    private boolean enableExtraFeatures = false;
+    private boolean enableExtraFeatures; // NOPMD
 
     @Parameter(names = "--enable-learning", description = "Learn features for testing")
-    private boolean enableLearning = false;
+    private boolean enableLearning; // NOPMD
 
     @Parameter(names = "--reproduce-bugfile", description = "The file that contains the bug to reproduce", arity = 1)
-    private String reproduceBugfile = "";
+    private String reproduceBugfile = ""; // NOPMD
 
     public int getMaxExpressionDepth() {
         return maxExpressionDepth;

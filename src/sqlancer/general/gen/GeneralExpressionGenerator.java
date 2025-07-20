@@ -45,6 +45,7 @@ public final class GeneralExpressionGenerator
         this.globalState = globalState;
     }
 
+    @Override
     public Node<GeneralExpression> generateExpression(boolean isTyped) {
         return generateExpression(0);
     }

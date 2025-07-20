@@ -16,7 +16,7 @@ public abstract class GlobalState<O extends DBMSSpecificOptions<?>, S extends Ab
     private StateToReproduce state;
     private Main.QueryManager<C> manager;
     private String databaseName;
-    private int successCaseNum = 0;
+    private int successCaseNum;
 
     public void setConnection(C con) {
         this.databaseConnection = con;

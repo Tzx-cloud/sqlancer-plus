@@ -39,8 +39,7 @@ public class GeneralFunction {
         @Override
         public synchronized String genLearnStatement(GeneralGlobalState globalState) {
             setLearn(true);
-            String stmt = getQuery(globalState).getQueryString();
-            return stmt;
+            return getQuery(globalState).getQueryString();
         }
 
         @Override
@@ -64,6 +63,7 @@ public class GeneralFunction {
             return CONFIG_NAME;
         }
 
+        @Override
         public String getStatementType() {
             return "FUNCTION";
         }
@@ -78,6 +78,7 @@ public class GeneralFunction {
             return FEATURE;
         }
 
+        @Override
         protected String getExamples() {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 3; i++) {
@@ -114,6 +115,7 @@ public class GeneralFunction {
         this(Math.abs(nrArgs), nrArgs < 0, name);
     }
 
+    @Override
     public String toString() {
         return name;
     }
@@ -127,8 +129,7 @@ public class GeneralFunction {
     }
 
     public static SQLQueryAdapter getQuery(GeneralGlobalState globalState) {
-        GeneralStringBuilder<GeneralFunctionFragments> sb = new GeneralStringBuilder<GeneralFunctionFragments>(
-                globalState, fragments);
+        GeneralStringBuilder<GeneralFunctionFragments> sb = new GeneralStringBuilder<>(globalState, fragments);
         // loop 1 to 4
         for (int i = 0; i < 4; i++) {
             sb.append("SELECT ", i);
