@@ -425,7 +425,7 @@ public final class Main {
             G state = getInitializedGlobalState(System.currentTimeMillis());
             provider.initializeFeatures(state);
         }
-
+        //TODO: Tang: run()函数是整个程序的入口
         public void run() throws Exception {
             G state = createGlobalState();
             stateToRepro = provider.getStateToReproduce(databaseName);
@@ -758,6 +758,7 @@ public final class Main {
         }
     }
 
+    //打印每5秒的执行进度
     private static synchronized void startProgressMonitor() {
         if (progressMonitorStarted) {
             /*

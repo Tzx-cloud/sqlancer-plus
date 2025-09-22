@@ -134,7 +134,7 @@ public class GeneralOptions implements DBMSSpecificOptions<GeneralOptions.Genera
         MYSQL {
             @Override
             public String getJDBCString(GeneralGlobalState globalState) {
-                return String.format("jdbc:mysql://localhost:23306/?user=root&password=root");
+                return String.format("jdbc:mysql://localhost:3306/?user=root&password=root");
             }
         },
         DOLT {
