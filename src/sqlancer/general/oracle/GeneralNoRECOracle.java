@@ -3,6 +3,7 @@ package sqlancer.general.oracle;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -109,6 +110,53 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
             return false;
         }
     }
+    //Tang: log each select statement
+    public void genSelect() throws SQLException {
+        GeneralTables randomTables = s.getRandomTableNonEmptyTables();
+        List<GeneralColumn> columns = randomTables.getColumns();
+        ExpressionGenerator<Node<GeneralExpression>> gen;
+        if (state.getHandler().getOption(GeneratorNode.UNTYPE_EXPR) && Randomly.getBooleanWithSmallProbability()) {
+            gen = new GeneralExpressionGenerator(state).setColumns(columns);
+            state.getHandler().addScore(GeneratorNode.UNTYPE_EXPR);
+        } else {
+            gen = new GeneralTypedExpressionGenerator(state).setColumns(columns);
+        }
+        Node<GeneralExpression> randomWhereCondition = gen.generateExpression();
+        List<GeneralTable> tables = randomTables.getTables();
+        List<TableReferenceNode<GeneralExpression, GeneralTable>> tableList = tables.stream()
+                .map(t -> new TableReferenceNode<GeneralExpression, GeneralTable>(t)).collect(Collectors.toList());
+        List<Node<GeneralExpression>> joins = GeneralJoin.getJoins(tableList, state);
+
+        optimizedSelect = new GeneralSelect();
+        List<Node<GeneralExpression>> allColumns = columns.stream()
+                .map((c) -> new ColumnReferenceNode<GeneralExpression, GeneralColumn>(c)).collect(Collectors.toList());
+
+        optimizedSelect.setFetchColumns(allColumns);
+        optimizedSelect.setFromList(new ArrayList<>(tableList));
+        optimizedSelect.setWhereClause(randomWhereCondition);
+        optimizedSelect.setJoinList(joins);
+        boolean orderBy = Randomly.getBooleanWithRatherLowProbability();
+        if (orderBy) {
+            optimizedSelect.setOrderByExpressions(gen.generateOrderBys());
+        }
+        optimizedQueryString = GeneralToStringVisitor.asString(optimizedSelect);
+        int firstCount = 0;
+        try (Statement stat = con.createStatement()) {
+            if (options.logEachSelect()) {
+                logger.writeCurrent(optimizedQueryString);
+            }
+            try (ResultSet rs = stat.executeQuery(optimizedQueryString)) {
+                while (rs.next()) {
+                    firstCount++;
+                }
+            }
+        } catch (SQLException e) {
+            state.getHandler().appendScoreToTable(false, true);
+            state.getLogger().writeCurrent(e.getMessage());
+            throw new IgnoreMeException();
+        }
+        state.getHandler().appendScoreToTable(true, true, optimizedQueryString);
+    }
 
     @Override
     public void check() throws SQLException {
@@ -204,6 +252,11 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
         // }
         // select.setSelectType(SelectType.ALL);
         optimizedSelect.setJoinList(joins);
+        boolean orderBy = Randomly.getBooleanWithRatherLowProbability();
+        if (orderBy) {
+            optimizedSelect.setOrderByExpressions(new
+                     GeneralExpressionGenerator(state).setColumns(columns).generateOrderBys());
+        }
         optimizedQueryString = GeneralToStringVisitor.asString(optimizedSelect);
         int firstCount = 0;
         try (Statement stat = con.createStatement()) {

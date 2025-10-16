@@ -1,6 +1,5 @@
 package sqlancer;
 import com.sun.jna.*;
-import com.sun.jna.ptr.PointerByReference;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -9,15 +8,21 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
-public class MySQLAFLMonitor {
-    // 常量
-    private static final int AFL_MAP_SIZE = 1533718;
-    private static final String AFL_SHM_ENV_VAR = "__AFL_SHM_ID";
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import static java.lang.Thread.sleep;
+
+public class AFLMonitor implements AutoCloseable {
+    // 常量
+    public static final int AFL_MAP_SIZE = 1533718;
+    private static final String AFL_SHM_ENV_VAR = "__AFL_SHM_ID";
+    private static final String   DBMS_PATH= "/usr/local/mysql/bin/mysqld";  // 请根据实际路径修改
     // SysV IPC 常量
     private static final int IPC_PRIVATE = 0;
     private static final int IPC_CREAT = 01000;
     private static final int IPC_RMID = 0;
+
+
 
     // JNA 接口
     public interface CLib extends Library {
@@ -32,8 +37,65 @@ public class MySQLAFLMonitor {
 
     private int shmId = -1;
     private Pointer shmPtr = null;
-    private volatile boolean running = false;
-    private final byte[] coverageBuf = new byte[AFL_MAP_SIZE];
+    private final AtomicBoolean running = new AtomicBoolean(false);
+    private final AtomicBoolean runningWatch = new AtomicBoolean(false);
+    public final byte[] coverageBuf = new byte[AFL_MAP_SIZE];
+    private static volatile AFLMonitor INSTANCE;
+    private Process dbmsProcess = null;
+    private final AtomicBoolean closed = new AtomicBoolean(false);
+
+    public byte[] getCoverageBuf() {
+        return coverageBuf;
+    }
+
+    private AFLMonitor() {
+        if (!createSharedMemory()) {
+            throw new IllegalStateException("共享内存初始化失败");
+        }
+        try {
+            dbmsProcess = startDBMS();
+            Thread.sleep(5000);
+        } catch (Exception e) {
+            cleanup();
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private void silentClose() {
+        try {
+            close();
+        } catch (Exception ignored) {}
+    }
+
+    @Override
+    public void close() throws InterruptedException {
+        if (!closed.compareAndSet(false, true)) return;
+        if (dbmsProcess != null && dbmsProcess.isAlive()) {
+            sleep(3000);
+            dbmsProcess.destroy(); // 发送 SIGTERM
+            try {
+                if (!dbmsProcess.waitFor(3, java.util.concurrent.TimeUnit.SECONDS)) {
+                    System.err.println("mysqld 退出超时，强制杀死");
+                    dbmsProcess.destroyForcibly();
+                    dbmsProcess.waitFor(3, java.util.concurrent.TimeUnit.SECONDS);
+                }
+            } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        cleanup();
+    }
+    public static AFLMonitor getInstance() {
+        if (INSTANCE == null) {
+            synchronized (AFLMonitor.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new AFLMonitor();
+                }
+            }
+        }
+        return INSTANCE;
+    }
 
     public boolean createSharedMemory() {
         shmId = CLib.INSTANCE.shmget(IPC_PRIVATE, AFL_MAP_SIZE, IPC_CREAT | 0600);
@@ -47,7 +109,7 @@ public class MySQLAFLMonitor {
             return false;
         }
         // 初始化置零
-        initShareMemory();
+        clearCoverage();
         CLib.INSTANCE.setenv(AFL_SHM_ENV_VAR, String.valueOf(shmId), 1);
 
         System.out.println("=== MySQL AFL Coverage Monitor ===");
@@ -57,55 +119,34 @@ public class MySQLAFLMonitor {
         return true;
     }
 
-    private void printUsage() {
-        System.out.println("\n=== 使用说明 ===");
-        System.out.println("1. 保持此监视器运行");
-        System.out.println("2. 另一个终端中编译 (已打 AFL 插桩) 的 MySQL:");
-        System.out.println("   export " + AFL_SHM_ENV_VAR + "=" + shmId);
-        System.out.println("   export CC=afl-gcc");
-        System.out.println("   export CXX=afl-g++");
-        System.out.println("   cmake . -DCMAKE_C_COMPILER=afl-gcc -DCMAKE_CXX_COMPILER=afl-g++");
-        System.out.println("   make");
-        System.out.println("3. 或运行已插桩 mysqld:");
-        System.out.println("   export " + AFL_SHM_ENV_VAR + "=" + shmId);
-        System.out.println("   ./mysqld --datadir=...");
-        System.out.println("4. 使用 mysql 客户端执行查询: mysql -e \"SELECT 1;\"\n");
+
+
+
+    /**
+     * 启动独立 mysqld 进程（AFL 插桩版）。
+
+     */
+    public Process startDBMS() throws IOException {
+        java.util.List<String> cmd = new java.util.ArrayList<>();
+        cmd.add(DBMS_PATH);
+//        if (args != null && args.length > 0) {
+//            cmd.addAll(java.util.Arrays.asList(args));
+//        }
+
+        ProcessBuilder pb = new ProcessBuilder(cmd);
+        java.util.Map<String,String> env = pb.environment();
+        env.put(AFL_SHM_ENV_VAR, String.valueOf(shmId));
+        env.put("AFL_MAP_SIZE", String.valueOf(AFL_MAP_SIZE));
+        env.put("AFL_IGNORE_PROBLEMS", "1");
+        env.put("AFL_DEBUG", "1");
+
+        // 可根据需要切换到数据目录:
+        // pb.directory(new java.io.File("/path/to/mysql/base"))
+        pb.inheritIO(); // 直接在当前控制台输出
+        return pb.start();
     }
 
-    public void startInteractive() {
-        running = true;
-        printUsage();
-        System.out.println("Commands:");
-        System.out.println("  r - 覆盖率报告");
-        System.out.println("  d - Top 20 热点边");
-        System.out.println("  c - 清空覆盖率");
-        System.out.println("  w - 监控模式");
-        System.out.println("  s - 保存覆盖率文件");
-        System.out.println("  h - 帮助");
-        System.out.println("  q - 退出\n");
-
-        Scanner sc = new Scanner(System.in, StandardCharsets.UTF_8);
-        while (running) {
-            System.out.print("mysql-afl> ");
-            if (!sc.hasNextLine()) break;
-            String line = sc.nextLine().trim();
-            if (line.isEmpty()) continue;
-            char cmd = line.charAt(0);
-            switch (cmd) {
-                case 'r' : showCoverageReport();break;
-                case 'd' : showDetailedCoverage();break;
-                case 'c' : clearCoverage();break;
-                case 'w' : watchMode(sc);break;
-                case 's' : saveCoverage();break;
-                case 'h' : printUsage();break;
-                case 'q' : running = false;break;
-                default : System.out.println("未知命令: " + cmd);
-            }
-        }
-        System.out.println("退出监视器");
-    }
-
-    private void refreshBuffer() {
+    public void refreshBuffer() {
         if (shmPtr == null) return;
         shmPtr.read(0, coverageBuf, 0, AFL_MAP_SIZE);
     }
@@ -185,13 +226,13 @@ public class MySQLAFLMonitor {
         int prevEdges = 0;
         Thread inputThread = new Thread(() -> {
             sc.nextLine();
-            runningWatch = false;
+            runningWatch.set(false);
         });
-        runningWatch = true;
+        runningWatch.set(true);
         inputThread.setDaemon(true);
         inputThread.start();
 
-        while (runningWatch) {
+        while (runningWatch.get()) {
             refreshBuffer();
             int edges = 0;
             long hits = 0;
@@ -210,13 +251,11 @@ public class MySQLAFLMonitor {
                     edges, edges - prevEdges, hits, rate);
             prevEdges = edges;
             try {
-                Thread.sleep(500);
+                sleep(500);
             } catch (InterruptedException ignored) {}
         }
         System.out.println("\n退出监控模式\n");
     }
-
-    private volatile boolean runningWatch = false;
 
     public void saveCoverage() {
         refreshBuffer();
@@ -237,28 +276,23 @@ public class MySQLAFLMonitor {
         }
         if (shmId >= 0) {
             CLib.INSTANCE.shmctl(shmId, IPC_RMID, Pointer.NULL);
+            shmId       = -1;
             System.out.println("共享内存已清理");
         }
     }
 
-    public void initShareMemory() {
-        for (int i = 0; i < AFL_MAP_SIZE; i++) {
-            shmPtr.setByte(i, (byte) 0);
-        }
-    }
-
-    public static void main(String[] args) {
-        MySQLAFLMonitor monitor = new MySQLAFLMonitor();
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("\n[Shutdown] 最终覆盖率：");
-            monitor.showCoverageReport();
-            monitor.cleanup();
-        }));
-        if (!monitor.createSharedMemory()) {
-            System.err.println("初始化失败");
-            return;
-        }
-        monitor.startInteractive();
-        monitor.cleanup();
-    }
+//    public static void main(String[] args) {
+//        AFLMonitor monitor=AFLMonitor.getInstance();
+//        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+//            System.out.println("\n[Shutdown] 最终覆盖率：");
+//            monitor.showCoverageReport();
+//            monitor.cleanup();
+//        }));
+//        if (!monitor.createSharedMemory()) {
+//            System.err.println("初始化失败");
+//            return;
+//        }
+//        monitor.startInteractive();
+//        monitor.cleanup();
+//    }
 }

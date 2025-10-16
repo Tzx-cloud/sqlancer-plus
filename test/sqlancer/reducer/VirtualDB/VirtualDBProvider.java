@@ -5,6 +5,7 @@ import sqlancer.DatabaseProvider;
 import sqlancer.Reproducer;
 import sqlancer.SQLConnection;
 import sqlancer.SQLProviderAdapter;
+import sqlancer.general.gen.Configuration.BaseConfigurationGenerator;
 
 @AutoService(DatabaseProvider.class)
 public class VirtualDBProvider extends SQLProviderAdapter<VirtualDBGlobalState, VirtualDBOptions> {
@@ -27,6 +28,16 @@ public class VirtualDBProvider extends SQLProviderAdapter<VirtualDBGlobalState, 
 
     @Override
     public void generateDatabase(VirtualDBGlobalState globalState) throws Exception {
+
+    }
+
+    @Override
+    public void generateConfiguration(VirtualDBGlobalState globalState, BaseConfigurationGenerator.ConfigurationAction action) throws Exception {
+
+    }
+
+    @Override
+    public void generateDefaultConfiguration(VirtualDBGlobalState globalState, BaseConfigurationGenerator.ConfigurationAction action) throws Exception {
 
     }
 

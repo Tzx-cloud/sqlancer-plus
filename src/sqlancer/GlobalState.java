@@ -1,9 +1,11 @@
 package sqlancer;
 
 import sqlancer.common.query.Query;
+import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.common.query.SQLancerResultSet;
 import sqlancer.common.schema.AbstractSchema;
 import sqlancer.common.schema.AbstractTable;
+import sqlancer.general.gen.Configuration.BaseConfigurationGenerator;
 
 public abstract class GlobalState<O extends DBMSSpecificOptions<?>, S extends AbstractSchema<?, ?>, C extends SQLancerDBConnection> {
 
@@ -17,6 +19,24 @@ public abstract class GlobalState<O extends DBMSSpecificOptions<?>, S extends Ab
     private Main.QueryManager<C> manager;
     private String databaseName;
     private int successCaseNum;
+    private AFLMonitor aflMonitor;
+    private BaseConfigurationGenerator configurationGenerator;
+
+    public BaseConfigurationGenerator getConfigurationGenerator() {
+        return configurationGenerator;
+    }
+
+    public void setConfigurationGenerator(BaseConfigurationGenerator configurationGenerator) {
+        this.configurationGenerator = configurationGenerator;
+    }
+
+    public void setAflMonitor(AFLMonitor aflMonitor) {
+            this.aflMonitor = aflMonitor;
+    }
+
+    public AFLMonitor getAflMonitor() {
+        return aflMonitor;
+    }
 
     public void setConnection(C con) {
         this.databaseConnection = con;

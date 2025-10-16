@@ -12,6 +12,10 @@ import sqlancer.common.DBMSCommon;
 import sqlancer.common.oracle.CompositeTestOracle;
 import sqlancer.common.oracle.TestOracle;
 import sqlancer.common.schema.AbstractSchema;
+import sqlancer.general.GeneralOptions;
+import sqlancer.general.gen.Configuration.BaseConfigurationGenerator;
+import sqlancer.general.gen.GeneralConfigurationGenerator;
+
 
 public abstract class ProviderAdapter<G extends GlobalState<O, ? extends AbstractSchema<G, ?>, C>, O extends DBMSSpecificOptions<? extends OracleFactory<G>>, C extends SQLancerDBConnection>
         implements DatabaseProvider<G, O, C> {
@@ -50,6 +54,60 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
     public Reproducer<G> generateAndTestDatabaseWithMaskTemplateLearning(G globalState) throws Exception {
         // implement this method in the specific DBMS
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void generateDatabaseWithConfigurationTraining(G globalState) throws Exception{
+        //Tang: 生成配置参数并进行训练
+        BaseConfigurationGenerator configGenerator = GeneralConfigurationGenerator
+                .createGenerator(globalState.getDbmsSpecificOptions().getDatabaseEngineFactory(),globalState);
+        globalState.setConfigurationGenerator(configGenerator);
+        OracleFactory<G> testOracleFactory = (OracleFactory<G>) GeneralOptions.GeneralOracleFactory.NOREC;
+
+
+        try {
+            for (BaseConfigurationGenerator.ConfigurationAction action :configGenerator.getAllActions()) {
+                globalState.getAflMonitor().clearCoverage();
+                for (int i = 0; i < BaseConfigurationGenerator.TRAINING_SAMPLES; i++) {
+                    generateConfiguration(globalState, action);
+                    generateDatabase(globalState);
+                    checkViewsAreValid(globalState);
+                    globalState.getManager().incrementCreateDatabase();
+                    globalState.setSuccessCaseNum(0);
+                    TestOracle<G> testOracle = testOracleFactory.create(globalState);
+                    for (int j = 0; j < globalState.getOptions().getNrQueries(); j++) {
+                        try (OracleRunReproductionState localState = globalState.getState().createLocalState()) {
+                            assert localState != null;
+                            try {
+
+                                testOracle.genSelect();
+                                globalState.getManager().incrementSelectQueryCount();
+                                globalState.incrementSuccessCaseNum();
+                            } catch (IgnoreMeException ignored) {
+                            } catch (AssertionError e) {
+                                if (globalState.checkIfDuplicate()) {
+                                    localState.executedWithoutError();
+                                    continue;
+                                }
+                                globalState.updateHandler(false);
+                                e.printStackTrace();
+                                throw e;
+                            }
+                            localState.executedWithoutError();
+                        }
+                    }
+                    globalState.updateHandler(true);
+                }
+                globalState.getAflMonitor().refreshBuffer();
+                byte[] edgeCoverage= globalState.getAflMonitor().getCoverageBuf();
+                BaseConfigurationGenerator.parameterEdgeCoverage.putIfAbsent(action.getName(), edgeCoverage.clone());
+                generateDefaultConfiguration(globalState, action);
+            }
+        }finally {
+            globalState.getConnection().close();
+        }
+        configGenerator.calculateParameterWeights();
+
     }
 
     @Override
@@ -92,6 +150,8 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
         return null;
     }
 
+
+
     protected abstract void checkViewsAreValid(G globalState) throws SQLException;
 
     protected TestOracle<G> getTestOracle(G globalState) throws Exception {
@@ -122,7 +182,8 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
     }
 
     public abstract void generateDatabase(G globalState) throws Exception;
-
+    public abstract void generateConfiguration(G globalState, BaseConfigurationGenerator.ConfigurationAction action) throws Exception;
+    public abstract void generateDefaultConfiguration(G globalState, BaseConfigurationGenerator.ConfigurationAction action) throws Exception;
     // QPG: entry function
     @Override
     public void generateAndTestDatabaseWithQueryPlanGuidance(G globalState) throws Exception {

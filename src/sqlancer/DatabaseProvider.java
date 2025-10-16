@@ -31,7 +31,7 @@ public interface DatabaseProvider<G extends GlobalState<O, ?, C>, O extends DBMS
      *
      */
     Reproducer<G> generateAndTestDatabase(G globalState) throws Exception;
-
+    void generateDatabaseWithConfigurationTraining(G globalState) throws Exception;
     /**
      * The experimental feature: Query Plan Guidance.
      *
@@ -57,6 +57,8 @@ public interface DatabaseProvider<G extends GlobalState<O, ?, C>, O extends DBMS
      *
      */
     Reproducer<G> generateAndTestDatabaseWithMaskTemplateLearning(G globalState) throws Exception;
+
+
 
     boolean reproduceBugFromFile(G globalState) throws Exception;
 

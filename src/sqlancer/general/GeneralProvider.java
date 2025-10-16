@@ -36,6 +36,7 @@ import sqlancer.general.GeneralOptions.GeneralDatabaseEngineFactory;
 import sqlancer.general.GeneralSchema.GeneralTable;
 import sqlancer.general.ast.GeneralBinaryOperator;
 import sqlancer.general.ast.GeneralFunction;
+import sqlancer.general.gen.Configuration.BaseConfigurationGenerator;
 import sqlancer.general.gen.GeneralAlterTableGenerator;
 import sqlancer.general.gen.GeneralDeleteGenerator;
 import sqlancer.general.gen.GeneralIndexGenerator;
@@ -103,27 +104,27 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     private static int mapActions(GeneralGlobalState globalState, Action a) {
         Randomly r = globalState.getRandomly();
         switch (a) {
-        case INSERT:
-            return r.getInteger(0, globalState.getOptions().getMaxNumberInserts());
-        case CREATE_INDEX:
-            if (!globalState.getDbmsSpecificOptions().testIndexes) {
-                return 0;
-            }
-            // fall through
-            return r.getInteger(1, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
-        case VACUUM: // seems to be ignored
-        case ANALYZE: // seems to be ignored
-            return r.getInteger(0, 2);
-        case UPDATE:
-            return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
-        case DELETE:
-        case ALTER_TABLE:
-        case CREATE_VIEW:
-            return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumViews + 1);
-        case GENERAL_COMMAND:
-            return r.getInteger(5, 10);
-        default:
-            throw new AssertionError(a);
+            case INSERT:
+                return r.getInteger(0, globalState.getOptions().getMaxNumberInserts());
+            case CREATE_INDEX:
+                if (!globalState.getDbmsSpecificOptions().testIndexes) {
+                    return 0;
+                }
+                // fall through
+                return r.getInteger(1, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
+            case VACUUM: // seems to be ignored
+            case ANALYZE: // seems to be ignored
+                return r.getInteger(0, 2);
+            case UPDATE:
+                return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumUpdates + 1);
+            case DELETE:
+            case ALTER_TABLE:
+            case CREATE_VIEW:
+                return r.getInteger(0, globalState.getDbmsSpecificOptions().maxNumViews + 1);
+            case GENERAL_COMMAND:
+                return r.getInteger(5, 10);
+            default:
+                throw new AssertionError(a);
         }
     }
 
@@ -324,7 +325,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         }
 
         public boolean checkIfQueriesAreValid(GeneralGlobalState globalState, List<String> queries,
-                String databaseName) {
+                                              String databaseName) {
             GeneralDatabaseEngineFactory databaseEngine = globalState.getDbmsSpecificOptions()
                     .getDatabaseEngineFactory();
             try (Connection conn = DriverManager.getConnection(databaseEngine.getJDBCString(globalState))) {
@@ -456,6 +457,28 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
     }
 
     @Override
+    public void generateConfiguration(GeneralGlobalState globalState, BaseConfigurationGenerator.ConfigurationAction action) throws Exception {
+            boolean success;
+            int nrTries = 0;
+            do {
+                SQLQueryAdapter config = globalState.getConfigurationGenerator().generateConfigForParameter(action);
+               success =  globalState.executeStatement( config);
+
+            } while (!success && nrTries++ < 100);
+    }
+
+    @Override
+    public void generateDefaultConfiguration(GeneralGlobalState globalState, BaseConfigurationGenerator.ConfigurationAction action) throws Exception {
+            boolean success;
+            int nrTries = 0;
+            do {
+                SQLQueryAdapter config = globalState.getConfigurationGenerator().generateDefaultConfigForParameter(action);
+                success =  globalState.executeStatement( config);
+
+            } while (!success && nrTries++ < 100);
+    }
+
+    @Override
     public void generateDatabase(GeneralGlobalState globalState) throws Exception {
         DatabaseEngineFactory<GeneralGlobalState> databaseEngineFactory = globalState.getDbmsSpecificOptions()
                 .getDatabaseEngineFactory();
@@ -480,14 +503,14 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
         }
         StatementExecutor<GeneralGlobalState, Action> se = new StatementExecutor<>(globalState,
                 Action.getAvailableActions(globalState.getHandler()), GeneralProvider::mapActions, (q) -> {
-                    if (globalState.getSchema().getDatabaseTables().isEmpty()) {
-                        throw new IgnoreMeException();
-                    }
-                    // check if the update table consumed
-                    if (q.couldAffectSchema() && globalState.getUpdateTable() != null) {
-                        throw new AssertionError();
-                    }
-                });
+            if (globalState.getSchema().getDatabaseTables().isEmpty()) {
+                throw new IgnoreMeException();
+            }
+            // check if the update table consumed
+            if (q.couldAffectSchema() && globalState.getUpdateTable() != null) {
+                throw new AssertionError();
+            }
+        });
         se.executeStatements();
         databaseEngineFactory.syncData(globalState);
         // execute the general commands

@@ -25,8 +25,13 @@ import com.beust.jcommander.JCommander.Builder;
 
 import sqlancer.common.log.Loggable;
 import sqlancer.common.query.Query;
+import sqlancer.common.query.SQLQueryAdapter;
 import sqlancer.common.query.SQLancerResultSet;
 import sqlancer.general.GeneralProvider;
+
+import static java.lang.Thread.sleep;
+import sqlancer.general.gen.GeneralConfigurationGenerator;
+import  sqlancer.general.gen.Configuration.BaseConfigurationGenerator;
 
 public final class Main {
 
@@ -425,11 +430,14 @@ public final class Main {
             G state = getInitializedGlobalState(System.currentTimeMillis());
             provider.initializeFeatures(state);
         }
+
         //TODO: Tang: run()函数是整个程序的入口
         public void run() throws Exception {
             G state = createGlobalState();
             stateToRepro = provider.getStateToReproduce(databaseName);
             stateToRepro.seedValue = r.getSeed();
+            //Tang: AFLMonitor是用来和AFL进行交互的类
+            state.setAflMonitor(AFLMonitor.getInstance());
             state.setState(stateToRepro);
             logger = new StateLogger(databaseName, provider, options);
             state.setRandomly(r);
@@ -450,7 +458,7 @@ public final class Main {
                     logger.writeCurrent(state.getState());
                 }
                 // evaluation usage
-                if (options.getReproduceBugfile().length() > 0) {
+                if (!options.getReproduceBugfile().isEmpty()) {
                     if (!provider.reproduceBugFromFile(state)) {
                         throw new AssertionError("Could not reproduce bug from file" + options.getReproduceBugfile());
                     } else {
@@ -463,7 +471,10 @@ public final class Main {
                     provider.generateAndTestDatabaseWithQueryPlanGuidance(state);
                 } else if (options.enableLearning()) {
                     reproducer = provider.generateAndTestDatabaseWithMaskTemplateLearning(state);
-                } else {
+                }else if(BaseConfigurationGenerator.isTrainingPhase){
+                    provider.generateDatabaseWithConfigurationTraining(state);
+                }
+                else {
                     reproducer = provider.generateAndTestDatabase(state);
                 }
                 try {
@@ -601,6 +612,9 @@ public final class Main {
             return options.getErrorExitCode();
         }
 
+        ExecutorService execService = Executors.newFixedThreadPool(options.getNumberConcurrentThreads());
+        DBMSExecutorFactory<?, ?, ?> executorFactory = nameToProvider.get(jc.getParsedCommand());
+
         Randomly.initialize(options);
         if (options.printProgressInformation()) {
             startProgressMonitor();
@@ -609,6 +623,19 @@ public final class Main {
 
                     @Override
                     public void run() {
+                        try {
+                                execService.shutdownNow();
+                                execService.awaitTermination(3, TimeUnit.SECONDS);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                        //Tang:close AFLMonitor
+                        try {
+                            AFLMonitor.getInstance().close();
+                            sleep(2000);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
                         System.out.println("Overall execution statistics");
                         System.out.println("============================");
                         System.out.println(formatInteger(nrQueries.get()) + " queries");
@@ -617,6 +644,7 @@ public final class Main {
                                 formatInteger(nrSuccessfulActions.get()) + " successfully-executed statements");
                         System.out.println(
                                 formatInteger(nrUnsuccessfulActions.get()) + " unsuccessfuly-executed statements");
+
                     }
 
                     private String formatInteger(long intValue) {
@@ -629,12 +657,9 @@ public final class Main {
                 }));
             }
         }
-
-        ExecutorService execService = Executors.newFixedThreadPool(options.getNumberConcurrentThreads());
-        DBMSExecutorFactory<?, ?, ?> executorFactory = nameToProvider.get(jc.getParsedCommand());
-
         if (options.performConnectionTest()) {
             try {
+                AFLMonitor.getInstance();
                 executorFactory.getDBMSExecutor(options.getDatabasePrefix() + "connectiontest", new Randomly())
                         .testConnection();
             } catch (Exception e) {
@@ -649,6 +674,35 @@ public final class Main {
             // load external functions
             executorFactory.getDBMSExecutor(options.getDatabasePrefix() + "feature", new Randomly()).getFeatures();
         }
+
+        //Tang: 1.参数优先级训练
+        DBMSExecutor<?, ?, ?> executor = executorFactory.getDBMSExecutor(options.getDatabasePrefix() + 0, new Randomly(System.currentTimeMillis()));
+        try {
+            BaseConfigurationGenerator.isTrainingPhase=true;
+            executor.run();
+
+        } catch (IgnoreMeException e) {
+
+        } catch (Throwable reduce) {
+            reduce.printStackTrace();
+            executor.getStateToReproduce().exception = reduce.getMessage();
+            executor.getLogger().logFileWriter = null;
+            executor.getLogger().logException(reduce, executor.getStateToReproduce());
+
+        } finally {
+            BaseConfigurationGenerator.isTrainingPhase=false;
+            try {
+                if (options.logEachSelect()) {
+                    if (executor.getLogger().currentFileWriter != null) {
+                        executor.getLogger().currentFileWriter.close();
+                    }
+                    executor.getLogger().currentFileWriter = null;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
 
         for (int i = 0; i < options.getTotalNumberTries(); i++) {
             final String databaseName = options.getDatabasePrefix() + i;
@@ -672,6 +726,10 @@ public final class Main {
                         int maxNrDbs = options.getMaxGeneratedDatabases();
                         // run without a limit if maxNrDbs == -1
                         for (int i = 0; i < maxNrDbs || maxNrDbs == -1; i++) {
+                            if (Thread.currentThread().isInterrupted()) {
+                                System.out.println("线程 " + databaseName + " 收到中断信号，正在退出...");
+                                break;
+                            }
                             String postfix = options.keepLogs() ? "_" + i : "";
                             Boolean continueRunning = run(options, execService, executorFactory, r,
                                     databaseName + postfix);

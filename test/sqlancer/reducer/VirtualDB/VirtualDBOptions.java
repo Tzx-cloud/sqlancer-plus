@@ -4,6 +4,7 @@ import com.beust.jcommander.Parameters;
 import sqlancer.DBMSSpecificOptions;
 import sqlancer.OracleFactory;
 import sqlancer.common.oracle.TestOracle;
+import sqlancer.general.GeneralOptions;
 import sqlancer.reducer.VirtualDB.VirtualDBOptions.VirtualDBFactory;
 
 import java.util.ArrayList;
@@ -18,6 +19,11 @@ public class VirtualDBOptions implements DBMSSpecificOptions<VirtualDBFactory> {
     @Override
     public List<VirtualDBFactory> getTestOracleFactory() {
         return factories;
+    }
+
+    @Override
+    public GeneralOptions.GeneralDatabaseEngineFactory getDatabaseEngineFactory() {
+        return null;
     }
 
     public static class VirtualDBFactory implements OracleFactory<VirtualDBGlobalState> {
