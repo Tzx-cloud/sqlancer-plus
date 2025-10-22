@@ -140,17 +140,14 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
             optimizedSelect.setOrderByExpressions(gen.generateOrderBys());
         }
         optimizedQueryString = GeneralToStringVisitor.asString(optimizedSelect);
-        int firstCount = 0;
+
         try (Statement stat = con.createStatement()) {
             if (options.logEachSelect()) {
                 logger.writeCurrent(optimizedQueryString);
             }
-            try (ResultSet rs = stat.executeQuery(optimizedQueryString)) {
-                while (rs.next()) {
-                    firstCount++;
-                }
-            }
+            stat.executeQuery(optimizedQueryString);
         } catch (SQLException e) {
+            Main.nrUnsuccessfulActions.addAndGet(1);
             state.getHandler().appendScoreToTable(false, true);
             state.getLogger().writeCurrent(e.getMessage());
             throw new IgnoreMeException();

@@ -462,11 +462,15 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             int nrTries = 0;
             do {
                 SQLQueryAdapter config = globalState.getConfigurationGenerator().generateConfigForParameter(action);
-               success =  globalState.executeStatement( config);
-
+                 success =  globalState.executeStatement( config);
+                System.out.println(config.getQueryString());
             } while (!success && nrTries++ < 100);
-    }
 
+    }
+    @Override
+    public void clearSchema(GeneralGlobalState globalState){
+        globalState.setSchema(new ArrayList<>());
+    }
     @Override
     public void generateDefaultConfiguration(GeneralGlobalState globalState, BaseConfigurationGenerator.ConfigurationAction action) throws Exception {
             boolean success;
@@ -474,7 +478,7 @@ public class GeneralProvider extends SQLProviderAdapter<GeneralProvider.GeneralG
             do {
                 SQLQueryAdapter config = globalState.getConfigurationGenerator().generateDefaultConfigForParameter(action);
                 success =  globalState.executeStatement( config);
-
+                System.out.println(config.getQueryString());
             } while (!success && nrTries++ < 100);
     }
 

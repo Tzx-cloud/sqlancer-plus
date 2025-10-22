@@ -48,7 +48,7 @@ public class MySQLConfigurationGenerator extends BaseConfigurationGenerator{
      */
     private enum Action implements ConfigurationAction{
 
-        AUTOCOMMIT("autocommit", (r) -> 1, Scope.GLOBAL, Scope.SESSION), //
+        //       AUTOCOMMIT("autocommit", (r) -> 1, Scope.GLOBAL, Scope.SESSION),
         BIG_TABLES("big_tables", (r) -> Randomly.fromOptions("OFF", "ON"), Scope.GLOBAL, Scope.SESSION), //
         COMPLETION_TYPE("completion_type",
                 (r) -> Randomly.fromOptions("'NO_CHAIN'", "'CHAIN'", "'RELEASE'", "0", "1", "2"), Scope.GLOBAL), //

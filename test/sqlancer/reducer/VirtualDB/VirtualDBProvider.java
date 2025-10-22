@@ -51,6 +51,11 @@ public class VirtualDBProvider extends SQLProviderAdapter<VirtualDBGlobalState, 
     }
 
     @Override
+    public void clearSchema(VirtualDBGlobalState globalState) {
+
+    }
+
+    @Override
     public Class<VirtualDBGlobalState> getGlobalStateClass() {
         return super.getGlobalStateClass();
     }

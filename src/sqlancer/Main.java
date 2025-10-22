@@ -430,6 +430,42 @@ public final class Main {
             G state = getInitializedGlobalState(System.currentTimeMillis());
             provider.initializeFeatures(state);
         }
+        public void runConfigurationTraining() throws Exception {
+            G state = createGlobalState();
+            stateToRepro = provider.getStateToReproduce(databaseName);
+            stateToRepro.seedValue = r.getSeed();
+            //Tang: AFLMonitor是用来和AFL进行交互的类
+            state.setAflMonitor(AFLMonitor.getInstance());
+            state.setState(stateToRepro);
+            logger = new StateLogger(databaseName, provider, options);
+            state.setRandomly(r);
+            state.setDatabaseName(databaseName);
+            state.setMainOptions(options);
+            state.setDbmsSpecificOptions(command);
+            state.setSuccessCaseNum(0);
+            state.setStateLogger(logger);
+
+            BaseConfigurationGenerator configGenerator = GeneralConfigurationGenerator
+                    .createGenerator(state.getDbmsSpecificOptions().getDatabaseEngineFactory(),state);
+            state.setConfigurationGenerator(configGenerator);
+            for (BaseConfigurationGenerator.ConfigurationAction action :configGenerator.getAllActions()) {
+
+                try (C con = provider.createDatabase(state)) {
+                    QueryManager<C> manager = new QueryManager<>(state);
+                    state.setManager(manager);
+                    state.setConnection(con);
+                    if (options.logEachSelect()) {
+                        logger.writeCurrent(state.getState());
+                    }
+                    state.getAflMonitor().clearCoverage();
+                    provider.generateDatabaseWithConfigurationTraining(state,action);
+                    AFLMonitor.getInstance().refreshBuffer();
+                    byte[] coverageBuf = AFLMonitor.getInstance().getCoverageBuf();
+                    BaseConfigurationGenerator.parameterEdgeCoverage.putIfAbsent(action.getName(), coverageBuf.clone());
+                }
+            }
+            configGenerator.calculateParameterWeights();
+        }
 
         //TODO: Tang: run()函数是整个程序的入口
         public void run() throws Exception {
@@ -444,6 +480,7 @@ public final class Main {
             state.setDatabaseName(databaseName);
             state.setMainOptions(options);
             state.setDbmsSpecificOptions(command);
+
             try (C con = provider.createDatabase(state)) {
                 QueryManager<C> manager = new QueryManager<>(state);
                 try {
@@ -471,8 +508,6 @@ public final class Main {
                     provider.generateAndTestDatabaseWithQueryPlanGuidance(state);
                 } else if (options.enableLearning()) {
                     reproducer = provider.generateAndTestDatabaseWithMaskTemplateLearning(state);
-                }else if(BaseConfigurationGenerator.isTrainingPhase){
-                    provider.generateDatabaseWithConfigurationTraining(state);
                 }
                 else {
                     reproducer = provider.generateAndTestDatabase(state);
@@ -679,7 +714,7 @@ public final class Main {
         DBMSExecutor<?, ?, ?> executor = executorFactory.getDBMSExecutor(options.getDatabasePrefix() + 0, new Randomly(System.currentTimeMillis()));
         try {
             BaseConfigurationGenerator.isTrainingPhase=true;
-            executor.run();
+            executor.runConfigurationTraining();
 
         } catch (IgnoreMeException e) {
 

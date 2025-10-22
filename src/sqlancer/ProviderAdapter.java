@@ -1,10 +1,7 @@
 package sqlancer;
 
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import sqlancer.StateToReproduce.OracleRunReproductionState;
@@ -13,6 +10,8 @@ import sqlancer.common.oracle.CompositeTestOracle;
 import sqlancer.common.oracle.TestOracle;
 import sqlancer.common.schema.AbstractSchema;
 import sqlancer.general.GeneralOptions;
+import sqlancer.general.GeneralProvider;
+import sqlancer.general.GeneralSchema;
 import sqlancer.general.gen.Configuration.BaseConfigurationGenerator;
 import sqlancer.general.gen.GeneralConfigurationGenerator;
 
@@ -57,31 +56,23 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
     }
 
     @Override
-    public void generateDatabaseWithConfigurationTraining(G globalState) throws Exception{
+    public void generateDatabaseWithConfigurationTraining(G globalState, BaseConfigurationGenerator.ConfigurationAction action) throws Exception{
         //Tang: 生成配置参数并进行训练
-        BaseConfigurationGenerator configGenerator = GeneralConfigurationGenerator
-                .createGenerator(globalState.getDbmsSpecificOptions().getDatabaseEngineFactory(),globalState);
-        globalState.setConfigurationGenerator(configGenerator);
         OracleFactory<G> testOracleFactory = (OracleFactory<G>) GeneralOptions.GeneralOracleFactory.NOREC;
-
-
         try {
-            for (BaseConfigurationGenerator.ConfigurationAction action :configGenerator.getAllActions()) {
-                globalState.getAflMonitor().clearCoverage();
                 for (int i = 0; i < BaseConfigurationGenerator.TRAINING_SAMPLES; i++) {
                     generateConfiguration(globalState, action);
                     generateDatabase(globalState);
                     checkViewsAreValid(globalState);
                     globalState.getManager().incrementCreateDatabase();
-                    globalState.setSuccessCaseNum(0);
                     TestOracle<G> testOracle = testOracleFactory.create(globalState);
-                    for (int j = 0; j < globalState.getOptions().getNrQueries(); j++) {
+                    for (int j = 0; j <10000; j++) {
                         try (OracleRunReproductionState localState = globalState.getState().createLocalState()) {
                             assert localState != null;
                             try {
-
-                                testOracle.genSelect();
                                 globalState.getManager().incrementSelectQueryCount();
+                                testOracle.genSelect();
+                                Main.nrSuccessfulActions.addAndGet(1);
                                 globalState.incrementSuccessCaseNum();
                             } catch (IgnoreMeException ignored) {
                             } catch (AssertionError e) {
@@ -96,17 +87,13 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
                             localState.executedWithoutError();
                         }
                     }
-                    globalState.updateHandler(true);
                 }
-                globalState.getAflMonitor().refreshBuffer();
-                byte[] edgeCoverage= globalState.getAflMonitor().getCoverageBuf();
-                BaseConfigurationGenerator.parameterEdgeCoverage.putIfAbsent(action.getName(), edgeCoverage.clone());
+                globalState.updateHandler(true);
                 generateDefaultConfiguration(globalState, action);
-            }
         }finally {
+            clearSchema(globalState);
             globalState.getConnection().close();
         }
-        configGenerator.calculateParameterWeights();
 
     }
 
@@ -180,7 +167,7 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
             }).collect(Collectors.toList()), globalState);
         }
     }
-
+    public abstract void clearSchema(G globalState);
     public abstract void generateDatabase(G globalState) throws Exception;
     public abstract void generateConfiguration(G globalState, BaseConfigurationGenerator.ConfigurationAction action) throws Exception;
     public abstract void generateDefaultConfiguration(G globalState, BaseConfigurationGenerator.ConfigurationAction action) throws Exception;

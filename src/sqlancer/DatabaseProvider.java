@@ -1,6 +1,7 @@
 package sqlancer;
 
 import sqlancer.common.log.LoggableFactory;
+import sqlancer.general.gen.Configuration.BaseConfigurationGenerator;
 
 public interface DatabaseProvider<G extends GlobalState<O, ?, C>, O extends DBMSSpecificOptions<?>, C extends SQLancerDBConnection> {
 
@@ -31,7 +32,7 @@ public interface DatabaseProvider<G extends GlobalState<O, ?, C>, O extends DBMS
      *
      */
     Reproducer<G> generateAndTestDatabase(G globalState) throws Exception;
-    void generateDatabaseWithConfigurationTraining(G globalState) throws Exception;
+    void generateDatabaseWithConfigurationTraining(G globalState, BaseConfigurationGenerator.ConfigurationAction action) throws Exception;
     /**
      * The experimental feature: Query Plan Guidance.
      *

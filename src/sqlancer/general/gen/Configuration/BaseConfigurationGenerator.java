@@ -16,7 +16,7 @@ public abstract class BaseConfigurationGenerator {
     // 训练相关的静态变量
     protected static Map<String, Double> databaseParameterProbabilities = new HashMap<>();
     public static boolean isTrainingPhase = false;
-    public static final int TRAINING_SAMPLES = 10;
+    public static final int TRAINING_SAMPLES = 1;
 
     // 覆盖率相关
     public static Map<String, byte[]> parameterEdgeCoverage = new HashMap<>();
