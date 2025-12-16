@@ -235,18 +235,19 @@ public class MySQLConfigurationGenerator extends BaseConfigurationGenerator{
 
         // 选择作用域
         Scope[] scopes = action.getScopes();
-        Scope randomScope = Randomly.fromOptions(scopes);
 
-        switch (randomScope) {
-            case GLOBAL:
-                sb.append("GLOBAL");
-                break;
-            case SESSION:
-                sb.append("SESSION");
-                break;
-            default:
-                throw new AssertionError(randomScope);
-        }
+        if(scopes.length==2||scopes[0]==Scope.GLOBAL )sb.append("GLOBAL");
+        else sb.append("SESSION");
+//        switch (randomScope) {
+//            case GLOBAL:
+//                sb.append("GLOBAL");
+//                break;
+//            case SESSION:
+//                sb.append("SESSION");
+//                break;
+//            default:
+//                throw new AssertionError(randomScope);
+//        }
 
         sb.append(" ");
         sb.append(action.getName());

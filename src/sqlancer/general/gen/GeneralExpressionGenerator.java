@@ -36,21 +36,23 @@ import sqlancer.general.ast.GeneralFunction;
 import sqlancer.general.ast.GeneralUnaryPostfixOperator;
 import sqlancer.general.ast.GeneralUnaryPrefixOperator;
 
-public final class GeneralExpressionGenerator
+public final class
+
+GeneralExpressionGenerator
         extends UntypedExpressionGenerator<Node<GeneralExpression>, GeneralColumn> {
 
     private final GeneralGlobalState globalState;
-
+    private static double[] curProbabilities = new double[Expression.values().length];
     public GeneralExpressionGenerator(GeneralGlobalState globalState) {
         this.globalState = globalState;
     }
-
+    private final ParameterAwareGenerator parameterAwareGenerator = null; //
     @Override
     public Node<GeneralExpression> generateExpression(boolean isTyped) {
         return generateExpression(0);
     }
 
-    private enum Expression {
+    public enum Expression {
         UNARY_POSTFIX(GeneralUnaryPostfixOperator.values().length),
         UNARY_PREFIX(GeneralUnaryPrefixOperator.values().length),
         BINARY_COMPARISON(GeneralBinaryComparisonOperator.values().length),
@@ -72,22 +74,40 @@ public final class GeneralExpressionGenerator
             }
             return total;
         }
-
+        // 修改此方法以使用 ParameterAwareGenerator
         public static Expression getRandomByProportion(GeneralErrorHandler handler) {
-            double rand = Randomly.getPercentage();
-            double total = getTotal();
-            double sum = 0;
-            for (Expression e : Expression.values()) {
-                sum += e.numOptions / total;
-                if (!handler.getOption(GeneratorNode.valueOf(e.toString()))) {
-                    continue;
-                }
-                if (rand < sum) {
-                    return e;
-                }
-            }
-            return Randomly.fromOptions(values());
+
+                    double rand = Randomly.getPercentage();
+                    double cumulativeProbability = 0.0;
+
+                    for (int i = 0; i < Expression.values().length; i++) {
+                        Expression e = Expression.values()[i];
+                        if (!handler.getOption(GeneratorNode.valueOf(e.toString()))) {
+                            continue;
+                        }
+                        cumulativeProbability += curProbabilities[i];
+                         if (rand < cumulativeProbability) {
+                            return e;
+                        }
+                    }
+                    return Randomly.fromOptions(values());
         }
+
+//        public static Expression getRandomByProportion(GeneralErrorHandler handler) {
+//            double rand = Randomly.getPercentage();
+//            double total = getTotal();
+//            double sum = 0;
+//            for (Expression e : Expression.values()) {
+//                sum += e.numOptions / total;
+//                if (!handler.getOption(GeneratorNode.valueOf(e.toString()))) {
+//                    continue;
+//                }
+//                if (rand < sum) {
+//                    return e;
+//                }
+//            }
+//            return Randomly.fromOptions(values());
+//        }
     }
 
     @Override
@@ -98,6 +118,7 @@ public final class GeneralExpressionGenerator
                 || Randomly.getBooleanWithRatherLowProbability()) {
             return generateLeafNode();
         }
+        // 将 parameterAwareGenerator 传递给选择方法
         Expression expr = Expression.getRandomByProportion(handler);
         // TODO Handle IllegalArgumentException
         globalState.getHandler().addScore(GeneratorNode.valueOf(expr.toString()));
