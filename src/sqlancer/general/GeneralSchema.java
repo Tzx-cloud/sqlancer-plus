@@ -458,6 +458,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
                 // TODO an exception here
                 typeID = Randomly.fromList(List.copyOf(typeMap.keySet()));
                 break;
+
             default:
                 throw new AssertionError(type);
             }
@@ -483,6 +484,7 @@ public class GeneralSchema extends AbstractSchema<GeneralGlobalState, GeneralTab
             case VARTYPE:
                 // TODO catch exception here
                 return typeMap.get(id).toUpperCase();
+
             default:
                 throw new AssertionError(getPrimitiveDataType());
             }

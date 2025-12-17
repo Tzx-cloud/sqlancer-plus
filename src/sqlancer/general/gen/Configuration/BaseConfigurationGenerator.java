@@ -15,6 +15,7 @@ public abstract class BaseConfigurationGenerator {
 
     // 训练相关的静态变量
     protected static Map<String, Double> databaseParameterProbabilities = new HashMap<>();
+    public static Map<String, double[]> parameterFeatureProbabilities = new HashMap<>();
     public static boolean isTrainingPhase = false;
     public static final int TRAINING_SAMPLES = 1;
 

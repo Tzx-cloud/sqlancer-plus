@@ -115,7 +115,8 @@ public class GeneralNoRECOracle extends NoRECBase<GeneralGlobalState> implements
         GeneralTables randomTables = s.getRandomTableNonEmptyTables();
         List<GeneralColumn> columns = randomTables.getColumns();
         ExpressionGenerator<Node<GeneralExpression>> gen;
-        if (state.getHandler().getOption(GeneratorNode.UNTYPE_EXPR) && Randomly.getBooleanWithSmallProbability()) {
+//        state.getHandler().getOption(GeneratorNode.UNTYPE_EXPR) &&
+        if (!Randomly.getBooleanWithSmallProbability()) {
             gen = new GeneralExpressionGenerator(state).setColumns(columns);
             state.getHandler().addScore(GeneratorNode.UNTYPE_EXPR);
         } else {

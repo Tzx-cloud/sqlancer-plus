@@ -2,6 +2,7 @@ package sqlancer.general.gen;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import sqlancer.IgnoreMeException;
 import sqlancer.Randomly;
@@ -36,6 +37,9 @@ import sqlancer.general.ast.GeneralFunction;
 import sqlancer.general.ast.GeneralUnaryPostfixOperator;
 import sqlancer.general.ast.GeneralUnaryPrefixOperator;
 
+import static sqlancer.general.gen.Configuration.BaseConfigurationGenerator.isTrainingPhase;
+import static sqlancer.general.gen.ParameterAwareGenerator.featureSet;
+
 public final class
 
 GeneralExpressionGenerator
@@ -49,6 +53,7 @@ GeneralExpressionGenerator
     private final ParameterAwareGenerator parameterAwareGenerator = null; //
     @Override
     public Node<GeneralExpression> generateExpression(boolean isTyped) {
+
         return generateExpression(0);
     }
 
@@ -58,8 +63,12 @@ GeneralExpressionGenerator
         BINARY_COMPARISON(GeneralBinaryComparisonOperator.values().length),
         BINARY_LOGICAL(GeneralBinaryLogicalOperator.values().length),
         BINARY_OPERATOR(GeneralBinaryOperator.getOperators().size()),
-        BINARY_ARITHMETIC(GeneralBinaryArithmeticOperator.values().length), CAST(GeneralCastOperator.values().length),
-        FUNC(GeneralFunction.getNrFunctionsNum() / 10), BETWEEN(1), CASE(1), IN(1);
+        BINARY_ARITHMETIC(GeneralBinaryArithmeticOperator.values().length),
+        CAST(GeneralCastOperator.values().length),
+        FUNC(GeneralFunction.getNrFunctionsNum() / 10),
+        BETWEEN(1),
+        CASE(1),
+        IN(1);
 
         private int numOptions;
 
@@ -77,6 +86,7 @@ GeneralExpressionGenerator
         // 修改此方法以使用 ParameterAwareGenerator
         public static Expression getRandomByProportion(GeneralErrorHandler handler) {
 
+                    if (isTrainingPhase)return Randomly.fromOptions(values());
                     double rand = Randomly.getPercentage();
                     double cumulativeProbability = 0.0;
 
@@ -123,43 +133,61 @@ GeneralExpressionGenerator
         // TODO Handle IllegalArgumentException
         globalState.getHandler().addScore(GeneratorNode.valueOf(expr.toString()));
         switch (expr) {
+
+            case UNARY_POSTFIX:
+                featureSet.add(Expression.UNARY_POSTFIX);
+                return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
+                        GeneralUnaryPostfixOperator.getRandomByOptions(handler));
         case UNARY_PREFIX:
+            featureSet.add(Expression.UNARY_PREFIX);
             return new NewUnaryPrefixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     GeneralUnaryPrefixOperator.getRandomByOptions(handler));
-        case UNARY_POSTFIX:
-            return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                    GeneralUnaryPostfixOperator.getRandomByOptions(handler));
         case BINARY_COMPARISON:
+            featureSet.add(Expression.BINARY_COMPARISON);
             return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     generateExpression(depth + 1), GeneralBinaryComparisonOperator.getRandomByOptions(handler));
         case BINARY_LOGICAL:
+            featureSet.add(Expression.BINARY_LOGICAL);
             return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     generateExpression(depth + 1), GeneralBinaryLogicalOperator.getRandomByOptions(handler));
+
+            case BINARY_OPERATOR:
+                featureSet.add(Expression.BINARY_OPERATOR);
+                return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
+                        generateExpression(depth + 1), GeneralBinaryOperator.getRandomByOptions(handler));
         case BINARY_ARITHMETIC:
+            featureSet.add(Expression.BINARY_ARITHMETIC);
             return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     generateExpression(depth + 1), GeneralBinaryArithmeticOperator.getRandomByOptions(handler));
-        case BINARY_OPERATOR:
-            return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                    generateExpression(depth + 1), GeneralBinaryOperator.getRandomByOptions(handler));
+
         case CAST:
+            featureSet.add(Expression.CAST);
             return new GeneralCast(generateExpression(depth + 1), GeneralCompositeDataType.getRandomWithoutNull(),
                     GeneralCastOperator.getRandomByOptions(handler));
         case FUNC:
+            featureSet.add(Expression.FUNC);
             // GeneralDBFunction func = GeneralDBFunction.getRandomByOptions(handler);
             GeneralFunction func = GeneralFunction.getRandomByOptions(handler);
-            return new NewFunctionNode<GeneralExpression, GeneralFunction>(
-                    generateExpressions(func.getNrArgs(), depth + 1), func);
-        case BETWEEN:
+            if (func != null) {
+                return new NewFunctionNode<GeneralExpression, GeneralFunction>(
+                        generateExpressions(func.getNrArgs(), depth + 1), func);
+            }
+            case BETWEEN:
+            featureSet.add(Expression.BETWEEN);
             return new NewBetweenOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     generateExpression(depth + 1), generateExpression(depth + 1), Randomly.getBoolean());
-        case IN:
-            return new NewInOperatorNode<GeneralExpression>(generateExpression(depth + 1),
-                    generateExpressions(Randomly.smallNumber() + 1, depth + 1), Randomly.getBoolean());
+
         case CASE:
+            featureSet.add(Expression.CASE);
             int nr = Randomly.smallNumber() + 1;
             return new NewCaseOperatorNode<GeneralExpression>(generateExpression(depth + 1),
                     generateExpressions(nr, depth + 1), generateExpressions(nr, depth + 1),
                     generateExpression(depth + 1));
+            case IN:
+                featureSet.add(Expression.IN);
+                return new NewInOperatorNode<GeneralExpression>(generateExpression(depth + 1),
+                        generateExpressions(Randomly.smallNumber() + 1, depth + 1), Randomly.getBoolean());
+
         default:
             throw new AssertionError();
         }

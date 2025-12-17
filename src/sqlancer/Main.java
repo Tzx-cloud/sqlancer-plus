@@ -32,6 +32,7 @@ import sqlancer.general.GeneralProvider;
 import static java.lang.Thread.sleep;
 import sqlancer.general.gen.GeneralConfigurationGenerator;
 import  sqlancer.general.gen.Configuration.BaseConfigurationGenerator;
+import sqlancer.general.gen.ParameterAwareGenerator;
 
 public final class Main {
 
@@ -448,8 +449,8 @@ public final class Main {
             BaseConfigurationGenerator configGenerator = GeneralConfigurationGenerator
                     .createGenerator(state.getDbmsSpecificOptions().getDatabaseEngineFactory(),state);
             state.setConfigurationGenerator(configGenerator);
-            for (BaseConfigurationGenerator.ConfigurationAction action :configGenerator.getAllActions()) {
 
+            for (BaseConfigurationGenerator.ConfigurationAction action :configGenerator.getAllActions()) {
                 try (C con = provider.createDatabase(state)) {
                     QueryManager<C> manager = new QueryManager<>(state);
                     state.setManager(manager);
@@ -457,14 +458,13 @@ public final class Main {
                     if (options.logEachSelect()) {
                         logger.writeCurrent(state.getState());
                     }
-                    state.getAflMonitor().clearCoverage();
+//                    state.getAflMonitor().clearCoverage();
                     provider.generateDatabaseWithConfigurationTraining(state,action);
-                    AFLMonitor.getInstance().refreshBuffer();
-                    byte[] coverageBuf = AFLMonitor.getInstance().getCoverageBuf();
-                    BaseConfigurationGenerator.parameterEdgeCoverage.putIfAbsent(action.getName(), coverageBuf.clone());
+//                    AFLMonitor.getInstance().refreshBuffer();
+//                    byte[] coverageBuf = AFLMonitor.getInstance().getCoverageBuf();
                 }
             }
-            configGenerator.calculateParameterWeights();
+//            configGenerator.calculateParameterWeights();
         }
 
         //TODO: Tang: run()函数是整个程序的入口

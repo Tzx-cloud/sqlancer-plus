@@ -39,7 +39,7 @@ public class AFLMonitor implements AutoCloseable {
     private Pointer shmPtr = null;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final AtomicBoolean runningWatch = new AtomicBoolean(false);
-    public final byte[] coverageBuf = new byte[AFL_MAP_SIZE];
+    public final static byte[] coverageBuf = new byte[AFL_MAP_SIZE];
     private static volatile AFLMonitor INSTANCE;
     private Process dbmsProcess = null;
     private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -214,10 +214,7 @@ public class AFLMonitor implements AutoCloseable {
 
     public void clearCoverage() {
         if (shmPtr == null) return;
-        for (int i = 0; i < AFL_MAP_SIZE; i++) {
-            shmPtr.setByte(i, (byte) 0);
-        }
-        System.out.println("已清空覆盖率\n");
+        shmPtr.setMemory(0, AFL_MAP_SIZE, (byte) 0);
     }
 
     public void watchMode(Scanner sc) {

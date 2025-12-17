@@ -39,6 +39,8 @@ import sqlancer.general.ast.GeneralFunction;
 import sqlancer.general.ast.GeneralUnaryPostfixOperator;
 import sqlancer.general.ast.GeneralUnaryPrefixOperator;
 
+import static sqlancer.general.gen.ParameterAwareGenerator.featureSet;
+
 public class GeneralTypedExpressionGenerator
         extends TypedExpressionGenerator<Node<GeneralExpression>, GeneralColumn, GeneralCompositeDataType> {
 
@@ -143,6 +145,7 @@ public class GeneralTypedExpressionGenerator
             return generateLeafNode(type);
         } else {
             if (Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.FUNC)) {
+                featureSet.add(GeneralExpressionGenerator.Expression.FUNC);
                 handler.addScore(GeneratorNode.FUNC);
                 List<GeneralFunction> applicableFunctions = new ArrayList<>();
                 try {
@@ -166,11 +169,13 @@ public class GeneralTypedExpressionGenerator
                 }
             }
             if (Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.CAST)) {
+                featureSet.add(GeneralExpressionGenerator.Expression.CAST);
                 handler.addScore(GeneratorNode.CAST);
                 return new GeneralCast(generateExpression(getRandomType(), depth + 1), type,
                         GeneralCastOperator.getRandomByOptions(handler));
             }
             if (Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.CASE)) {
+                featureSet.add(GeneralExpressionGenerator.Expression.CASE);
                 handler.addScore(GeneratorNode.CASE);
                 GeneralCompositeDataType condType = getRandomType();
                 List<Node<GeneralExpression>> conditions = new ArrayList<>();
@@ -188,6 +193,7 @@ public class GeneralTypedExpressionGenerator
 
             }
             if (Randomly.getBooleanWithRatherLowProbability() && handler.getOption(GeneratorNode.BINARY_OPERATOR)) {
+                featureSet.add(GeneralExpressionGenerator.Expression.BINARY_OPERATOR);
                 handler.addScore(GeneratorNode.BINARY_OPERATOR);
                 Operator op = GeneralBinaryOperator.getRandomByType(globalState.getHandler(), type);
                 if (op != null) {
@@ -321,26 +327,33 @@ public class GeneralTypedExpressionGenerator
         Node<GeneralExpression> expr;
         switch (exprType) {
         case UNARY_PREFIX:
+            featureSet.add(GeneralExpressionGenerator.Expression.UNARY_PREFIX);
             return new NewUnaryPrefixOperatorNode<GeneralExpression>(
                     generateExpression(GeneralDataType.BOOLEAN.get(), depth + 1), GeneralUnaryPrefixOperator.NOT);
         case BINARY_COMPARISON:
+            featureSet.add(GeneralExpressionGenerator.Expression.BINARY_COMPARISON);
             return getBinaryComparison(depth);
         case BINARY_LOGICAL:
+            featureSet.add(GeneralExpressionGenerator.Expression.BINARY_LOGICAL);
             return getAndOrChain(depth);
         // case REGEX:
         // return new CockroachDBRegexOperation(generateExpression(GeneralDataType.STRING.get(), depth + 1),
         // generateExpression(GeneralDataType.STRING.get(), depth + 1),
         // CockroachDBRegexOperator.getRandom());
         case UNARY_POSTFIX:
+            featureSet.add(GeneralExpressionGenerator.Expression.UNARY_POSTFIX);
             return new NewUnaryPostfixOperatorNode<GeneralExpression>(generateExpression(getRandomType(), depth + 1),
                     GeneralUnaryPostfixOperator.getRandomByOptions(handler));
         case BINARY_OPERATOR:
+            featureSet.add(GeneralExpressionGenerator.Expression.BINARY_OPERATOR);
             return new NewBinaryOperatorNode<GeneralExpression>(generateExpression(getRandomType(), depth + 1),
                     generateExpression(getRandomType(), depth + 1),
                     GeneralBinaryOperator.getRandomByType(globalState.getHandler(), GeneralDataType.BOOLEAN.get()));
         case IN:
+            featureSet.add(GeneralExpressionGenerator.Expression.IN);
             return getInOperation(depth);
         case BETWEEN:
+            featureSet.add(GeneralExpressionGenerator.Expression.BETWEEN);
             GeneralCompositeDataType type = getRandomType();
             expr = generateExpression(type, depth + 1);
             Node<GeneralExpression> left = generateExpression(type, depth + 1);

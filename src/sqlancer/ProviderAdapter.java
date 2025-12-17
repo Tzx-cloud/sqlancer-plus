@@ -14,6 +14,9 @@ import sqlancer.general.GeneralProvider;
 import sqlancer.general.GeneralSchema;
 import sqlancer.general.gen.Configuration.BaseConfigurationGenerator;
 import sqlancer.general.gen.GeneralConfigurationGenerator;
+import sqlancer.general.gen.ParameterAwareGenerator;
+
+import static sqlancer.general.gen.ParameterAwareGenerator.featureSet;
 
 
 public abstract class ProviderAdapter<G extends GlobalState<O, ? extends AbstractSchema<G, ?>, C>, O extends DBMSSpecificOptions<? extends OracleFactory<G>>, C extends SQLancerDBConnection>
@@ -58,6 +61,7 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
     @Override
     public void generateDatabaseWithConfigurationTraining(G globalState, BaseConfigurationGenerator.ConfigurationAction action) throws Exception{
         //Tang: 生成配置参数并进行训练
+        ParameterAwareGenerator parameterAwareGenerator = new ParameterAwareGenerator();
         OracleFactory<G> testOracleFactory = (OracleFactory<G>) GeneralOptions.GeneralOracleFactory.NOREC;
         try {
                 for (int i = 0; i < BaseConfigurationGenerator.TRAINING_SAMPLES; i++) {
@@ -71,7 +75,12 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
                             assert localState != null;
                             try {
                                 globalState.getManager().incrementSelectQueryCount();
+                                featureSet.clear();
+                                AFLMonitor.getInstance().clearCoverage();
                                 testOracle.genSelect();
+                                AFLMonitor.getInstance().refreshBuffer();
+                                parameterAwareGenerator.updateCounts();
+
                                 Main.nrSuccessfulActions.addAndGet(1);
                                 globalState.incrementSuccessCaseNum();
                             } catch (IgnoreMeException ignored) {
@@ -91,6 +100,8 @@ public abstract class ProviderAdapter<G extends GlobalState<O, ? extends Abstrac
                 globalState.updateHandler(true);
                 generateDefaultConfiguration(globalState, action);
         }finally {
+            double[] featureProbabilities = parameterAwareGenerator.getFeatureProbabilities();
+            BaseConfigurationGenerator.parameterFeatureProbabilities.putIfAbsent(action.getName(), featureProbabilities.clone());
             clearSchema(globalState);
             globalState.getConnection().close();
         }
